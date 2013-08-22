@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% block head %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/x-icon" href="{{url_for('static', filename='img/clanicons/WHY.png')}}">
+    <script src="https://code.jquery.com/jquery.js"></script>
+    <script src="{{url_for('static', filename='js/jquery.confirm.js')}}"></script>
+    <script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
+    <link href="{{url_for('static', filename='css/bootstrap.min.css')}}" rel="stylesheet" media="screen">
+    <link href="{{url_for('static', filename='css/whyattend.css')}}" rel="stylesheet" media="screen">
+    <link href="https://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+
+    <script>
+        $(document).ready(function() {
+            setTimeout(function() {
+                $('ul.flashes').slideUp('fast');
+            }, 20000);
+        });
+    </script>
+
+    <title>{% block title %}{% endblock %} - WHY/WHO CW Attendance</title>
+    {% endblock %}
+  </head>
+  <body>
+    <div class="container" id="container">
+      <div class="text-center"><img style="width: 1138px" src="{{url_for('static', filename='img/whowhyheader.jpg')}}"/></div>
+      <!-- Navigation -->
+      <nav class="navbar navbar-inverse" role="navigation">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="{{url_for('index')}}">
+            {% if g.player %}
+            <img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/clanicons/' + g.player.clan + '.png')}}">
+            {% else %}
+            <img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/clanicons/WHY.png')}}">
+            {% endif %}
+        </a>
+      </div>
+
+      <!-- Collect the nav links, forms, and other content for toggling -->
+      <div class="collapse navbar-collapse navbar-ex1-collapse">
+        <ul class="nav navbar-nav ">
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><img style="margin-right: 5px; width: 16px; height:16px;" src="{{url_for('static', filename='img/swords.png')}}">Battles <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+                <li><a href="{{url_for('create_battle_from_replay')}}">Add battle</a></li>
+                <li class="divider"></li>
+                {% for clan in g.clans %}
+                <li><a href="{{url_for('battles', clan=clan)}}"><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> {{clan}}</a></li>
+                {% endfor %}
+            </ul>
+          </li>
+        </ul>
+
+        <ul class="nav navbar-nav ">
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i style="margin-right:5px; color: white" class="icon-group"></i>Players <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                {% for clan in g.clans %}
+                <li><a href="{{url_for('players', clan=clan)}}"><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> {{clan}}</a></li>
+                {% endfor %}
+            </ul>
+          </li>
+        </ul>
+
+        {% if g.player and g.player.role in g.PAYOUT_ROLES or g.player.name == "fantastico" %}
+        <ul class="nav navbar-nav ">
+          <li><a href="{{url_for('payout', clan=g.player.clan)}}"><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/gold_coin_stack.png')}}"> Payout</a></li>
+        </ul>
+        {% endif %}
+
+        <ul class="nav navbar-nav navbar-right">
+          {% if g.player %}
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown">{% if g.player %} <strong>{{g.player.name}} ({{g.roles[g.player.role] or 'Member'}})</strong></strong> <img style="width:16px; height:16px;" src="{{url_for('static', filename='img/clanicons/' + g.player.clan + '.png')}}"> {% endif %} <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="{{url_for('logout')}}">Logout</a></li>
+            </ul>
+          </li>
+          {% else %}
+            <li><a href="/login">Log in</a></li>
+          {% endif %}
+        </ul>
+      </div><!-- /.navbar-collapse -->
+    </nav>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul class="flashes">
+            {% for category, message in messages %}
+              <li><div class="alert alert-{{'danger' if category == 'error' else category}}">{{ message }}</div></li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        <div id="content-wrapper">
+        {% block content %}{% endblock %}
+        </div>
+        <div id="footer">
+            <hr>
+            <small>Developed by <a href="http://worldoftanks.eu/community/accounts/501615100-fantastico/"><img title="WHY" style="height:16px; width:16px;" src="{{url_for('static', filename='img/clanicons/WHY.png')}}"/> fantastico</a></small>
+            <div style="float:right">
+            <small><a href="{{url_for('attributions')}}">Attributions</a></small>
+            </div>
+        </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+{% block title %}Welcome{% endblock %}
+{% block content %}
+    <h2>Clan Wars of {{', '.join(g.clans)}}</h2>
+
+    <p class="alert alert-warning">Under development. Bugs and issues are to be expected.
+        Player and battle data might be lost any time the development version is updated.
+    </p>
+{% endblock %}

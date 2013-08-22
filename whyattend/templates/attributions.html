@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block title %}Attributions{% endblock %}
+{% block content %}
+  <h2>Image attributions</h2>
+  <p>Many thanks to the authors of the art used on this site:</p>
+  <p><img style="background-color: black" src="{{url_for('static', filename='img/swords.png')}}"/> by Valera Zvonko</p>
+  <p><img src="{{url_for('static', filename='img/clanicons/WHY.png')}}"/> by Paul Davey</p>
+  <p><img src="{{url_for('static', filename='img/clanicons/WHO.png')}}"/> by Paul Davey</p>
+  <p>Font Awesome by Dave Gandy - <a href="http://fontawesome.io">http://fontawesome.io</a></p>
+{% endblock %}

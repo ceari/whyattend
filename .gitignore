@@ -1,0 +1,10 @@
+*~
+*.pyc
+*.pyo
+/env
+.idea
+*local_config.py
+tmp
+*test.db
+createdb.py
+*.wotreplay

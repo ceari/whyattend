@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+  <h2>Sign in</h2>
+  <form action="" method=post>
+    {% if error %}<p class=error><strong>Error:</strong> {{ error }}</p>{% endif %}
+      <input class="btn btn-primary" type=submit value="Login with Wargaming.net OpenID">
+      </input>
+      <input type=hidden name=next value="{{ next }}">
+  </form>
+
+  <p>
+      OpenID is an easy and secure way to access all Wargaming.net services and partner websites with<br>
+      your unified Wargaming.net account.
+      Read more about Wargaming OpenID on <a href="https://support.worldoftanks.eu/Knowledgebase/Article/View/90/0/what-is-openid-and-how-do-we-use-it">worldoftanks.eu</a>
+  </p>
+{% endblock %}

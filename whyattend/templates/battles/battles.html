@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+{% block title %}Battles of {{ clan }}{% endblock %}
+{% block head %}
+    {{super()}}
+    <script src="{{url_for('static', filename='js/jquery.dataTables.min.js')}}" type="text/javascript"></script>
+    <script src="{{url_for('static', filename='js/dataTables.bootstrap.js')}}" type="text/javascript"></script>
+    <link href="{{url_for('static', filename='css/dataTables.bootstrap.css')}}" rel="stylesheet" media="screen">
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            $('#battles').dataTable({
+                "oLanguage": {
+                    "sLengthMenu": "Display _MENU_ battles per page",
+                    "sZeroRecords": "No battles yet.",
+                    "sInfo": "Showing _START_ to _END_ of _TOTAL_ battles",
+                    "sInfoEmpty": "Showing 0 to 0 of 0 battles",
+                    "sInfoFiltered": "(filtered from _MAX_ total battles)"
+                }
+            });
+
+            $('#battles_filter label input').addClass('form-control');
+            $('#battles_length label select').addClass('form-control');
+
+            $(".confirm_sign").confirm({
+                title: '<strong>Sign in as reserve player for this battle?</strong>',
+                text: "Please make sure you actually count as reserve for this battle, i.e. you were in the training " +
+                        "but you weren't picked by the Commander.",
+            });
+
+            $(".confirm_delete").confirm({
+                title: '<strong>Delete this battle?</strong>',
+                text: "All information will be lost!",
+            });
+        });
+    </script>
+{% endblock %}
+{% block content %}
+  <h2>Battles of {{ clan }} <img style="height: 32px; width: 32px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"></h2>
+  <table id="battles" class="table table-striped">
+      <thead>
+        <tr>
+            <th>Date</th>
+            <th>Map</th>
+            <th>Province</th>
+            <th>Added By</th>
+            <th>Outcome</th>
+            <th>Enemy Clan</th>
+            <th># player</th>
+            <th># reserve</th>
+            <th></th>
+            <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for battle in battles %}
+        <tr>
+            <td><a href="{{url_for('battle_details', battle_id=battle.id)}}">{{battle.date.strftime('%d.%m.%Y %H:%M:%S')}}</a></td>
+            <td>{{battle.map_name}}</td>
+            <td>{{battle.map_province}}</td>
+            <td>{{battle.creator.name}}</td>
+            <td>{{battle.outcome_str()}}</td>
+            <td>{{battle.enemy_clan}}</td>
+            <td>{{battle.get_players()|length}}</td>
+            <td>{{battle.get_reserve_players()|length}}</td>
+            <td>
+                {% if not battle.has_player(g.player) and not battle.has_reserve(g.player) %}
+                <a href="{{url_for('sign_as_reserve', battle_id=battle.id)}}" href="#myModal" data-toggle="modal" class="confirm_sign btn btn-primary btn-sm">Sign as reserve</a>
+                {% elif battle.has_reserve(g.player) %}
+                <a href="{{url_for('unsign_as_reserve', battle_id=battle.id)}}" class="btn btn-danger btn-sm">Remove from reserve</a>
+                {% endif %}
+
+                <a href="{{url_for('delete_battle', battle_id=battle.id)}}" href="#myModal" data-toggle="modal" class="confirm_delete btn btn-danger btn-sm">Delete</a>
+            </td>
+            <td>
+                {% if battle.paid %}
+                <span class="label label-success">paid</span>
+                {% endif %}
+            </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+  </table>
+
+{% endblock %}

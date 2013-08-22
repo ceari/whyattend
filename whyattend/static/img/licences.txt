@@ -1,0 +1,4 @@
+swords.png: https://www.iconfinder.com/icons/103115/swords_icon#size=64 (CC BY 3.0) Valera Zvonko
+gold_coin_stack.png: free to use in commercial projects, no commercial redistribution etc.
+clanicons/WHY.png: CC Attribution-Noncommercial-Share Alike 3.0 Paul Davey http://mattahan.deviantart.com/
+clanicons/WHO.png: CC Attribution-Noncommercial-Share Alike 3.0 Paul Davey http://mattahan.deviantart.com/

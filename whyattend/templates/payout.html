@@ -1,0 +1,162 @@
+{% extends "layout.html" %}
+{% block title %}Payout{% endblock %}
+{% block head %}
+    {{super()}}
+    <script src="{{url_for('static', filename='js/jquery.dataTables.min.js')}}" type="text/javascript"></script>
+    <script src="{{url_for('static', filename='js/dataTables.bootstrap.js')}}" type="text/javascript"></script>
+    <link href="{{url_for('static', filename='css/dataTables.bootstrap.css')}}" rel="stylesheet" media="screen">
+    <script src="{{url_for('static', filename='js/jquery-ui-1.10.3.custom.min.js')}}" type="text/javascript"></script>
+    <link href="{{url_for('static', filename='css/ui-darkness/jquery-ui-1.10.3.custom.min.css')}}" rel="stylesheet" media="screen">
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $( "#fromDate" ).datepicker({
+                dateFormat: "dd.mm.yy"
+            });
+            $( "#toDate" ).datepicker({
+                dateFormat: "dd.mm.yy"
+            });
+
+            $.fn.dataTableExt.oApi.fnReloadAjax = function ( oSettings, sNewSource, fnCallback, bStandingRedraw )
+            {
+                if ( sNewSource !== undefined && sNewSource !== null ) {
+                    oSettings.sAjaxSource = sNewSource;
+                }
+
+                // Server-side processing should just call fnDraw
+                if ( oSettings.oFeatures.bServerSide ) {
+                    this.fnDraw();
+                    return;
+                }
+
+                this.oApi._fnProcessingDisplay( oSettings, true );
+                var that = this;
+                var iStart = oSettings._iDisplayStart;
+                var aData = [];
+
+                this.oApi._fnServerParams( oSettings, aData );
+
+                oSettings.fnServerData.call( oSettings.oInstance, oSettings.sAjaxSource, aData, function(json) {
+                    /* Clear the old information from the table */
+                    that.oApi._fnClearTable( oSettings );
+
+                    /* Got the data - add it to the table */
+                    var aData =  (oSettings.sAjaxDataProp !== "") ?
+                        that.oApi._fnGetObjectDataFn( oSettings.sAjaxDataProp )( json ) : json;
+
+                    for ( var i=0 ; i<aData.length ; i++ )
+                    {
+                        that.oApi._fnAddData( oSettings, aData[i] );
+                    }
+
+                    oSettings.aiDisplay = oSettings.aiDisplayMaster.slice();
+
+                    that.fnDraw();
+
+                    if ( bStandingRedraw === true )
+                    {
+                        oSettings._iDisplayStart = iStart;
+                        that.oApi._fnCalculateEnd( oSettings );
+                        that.fnDraw( false );
+                    }
+
+                    that.oApi._fnProcessingDisplay( oSettings, false );
+
+                    /* Callback user function - for event handlers etc */
+                    if ( typeof fnCallback == 'function' && fnCallback !== null )
+                    {
+                        fnCallback( oSettings );
+                    }
+                }, oSettings );
+            };
+
+            var battles_table = $('#battles').dataTable({
+                //"bProcessing": true,
+                "sAjaxSource": "{{url_for('payout_battles_json', clan=clan)}}",
+                "fnCreatedRow": function(nRow, aData, iDataIndex) {
+                    $('td:eq(0)', nRow).html('<a href="/battles/' + aData[0] + '">Details</a>');
+                    //$(nRow).click( function() {
+                    //    $(this).toggleClass('active');
+                    //});
+                },
+                "fnServerParams": function ( aoData ) {
+                    aoData.push({
+                        "name": "victories_only",
+                        "value": $('#victories_only').is(':checked') ? 'on' : 'off'
+                    });
+                    aoData.push({
+                        "name": "fromDate",
+                        "value": $('#fromDate').val()
+                    });
+                    aoData.push({
+                        "name": "toDate",
+                        "value": $('#toDate').val()
+                    });
+                    x = aoData;
+                },
+                "oLanguage": {
+                    "sLengthMenu": "Display _MENU_ battles per page",
+                    "sZeroRecords": "No battles yet.",
+                    "sInfo": "Showing _START_ to _END_ of _TOTAL_ battles",
+                    "sInfoEmpty": "Showing 0 to 0 of 0 battles",
+                    "sInfoFiltered": "(filtered from _MAX_ total battles)"
+                },
+                "bPaginate": false,
+                "bLengthChange": false,
+                "bFilter": false,
+                "bSort": true,
+                "bInfo": false,
+                "bAutoWidth": false
+            });
+
+
+            $('#battles_filter label input').addClass('form-control');
+            $('#battles_length label select').addClass('form-control');
+
+            $( "#fromDate").change(function() {
+                battles_table.fnReloadAjax();
+            });
+
+            $( "#toDate").change(function() {
+                battles_table.fnReloadAjax();
+            });
+
+            $( "#victories_only").change(function() {
+                battles_table.fnReloadAjax();
+            });
+        });
+    </script>
+
+    <style>
+        #fromDate { width: 150px; }
+        #toDate {width: 150px; }
+        #gold {width: 150px; }
+        form {margin-bottom: 20px; }
+    </style>
+{% endblock %}
+{% block content %}
+    <h2>Payout <img style="width:32px; height:32px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> </h2>
+    <form class="form-inline" action="{{url_for('payout_battles', clan=clan)}}" method="GET">
+    From <input class="form-control" type="datetime" id="fromDate" name="fromDate" placeholder="dd.mm.yyyy">
+        to <input class="form-control" type="datetime" id="toDate" name="toDate" placeholder="dd.mm.yyyy">
+        Victories only: <input type="checkbox" name="victories_only" id="victories_only" checked="checked">
+        Gold: <input id="gold" class="form-control" type="text" name="gold" placeholder="amount of gold">
+    <h4>Battles in the selected range:</h4>
+    <table class="table" id="battles">
+        <thead>
+            <tr>
+                <th>Battle</th>
+                <th>Date</th>
+                <th>Enemy Clan</th>
+                <th>Added By</th>
+                <th>Outcome</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+
+        <input class="btn btn-default" type="submit" value="Pay out battles">
+
+    </form>
+{% endblock %}

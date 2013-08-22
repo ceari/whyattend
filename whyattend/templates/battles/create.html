@@ -1,0 +1,163 @@
+{% extends "layout.html" %}
+{% block title %}Add battle{% endblock %}
+{% block head %}
+    {{super()}}
+    <link href="{{url_for('static', filename='css/multi-select.css')}}" rel="stylesheet">
+    <script src="{{url_for('static', filename='js/jquery.multi-select.js')}}" type="text/javascript"></script>
+    <script src="{{url_for('static', filename='js/jquery.quicksearch.js')}}" type="text/javascript"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#players').multiSelect({
+                selectableHeader: "<strong>Clan players</strong>",
+                selectionHeader: "<strong>Attending players</strong>",
+            });
+        });
+    </script>
+{% endblock %}
+{% block content %}
+    <h2>Add battle</h2>
+        <div class="row">
+        <div class="col-lg-8">
+            {% if filename %}
+            <p class="alert alert-info"><strong>Please check</strong> if the information below obtained from the replay is complete and confirm by pressing
+            'Create Battle' at the bottom.</p>
+            {% else %}
+            <p class="alert alert-warning"><strong>Note</strong> that the preferred way of adding battles is by <a href="{{url_for('create_battle_from_replay')}}">uploading a replay</a>.</p>
+            {% endif %}
+            <form class="form-horizontal" action="" method="POST" role="form" enctype="multipart/form-data">
+
+              <div class="form-group">
+                <label for="date" class="col-lg-2 control-label">Date &amp; Time</label>
+                <div class="col-lg-10">
+                <input placeholder="dd.mm.yyyy hh:mm:ss" class="form-control" type="text" id="date" name="date" value="{{date.strftime('%d.%m.%Y %H:%M:%S') if date else ''}}">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="map_name" class="col-lg-2 control-label">Map</label>
+                <div class="col-lg-10">
+                <input  class="form-control" type="text" id="map_name" name="map_name" value="{{map_name}}">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="province" class="col-lg-2 control-label">Province(s)</label>
+                <div class="col-lg-10">
+                <input class="form-control" type="text" id="province" name="province" value="{{province}}">
+                </div>
+              </div>
+
+              <div class="form-group">
+                  <label for="battle_commander" class="col-lg-2 control-label">Battle commander</label>
+                  <div class="col-lg-10">
+                  <select class="form-control" id="battle_commander" name="battle_commander">
+                      {% for player in all_players %}
+                      <option value="{{player.id}}" {{'selected="selected"' if player.id==battle_commander else ''}}>{{player.name}}</option>
+                      {% endfor %}
+                  </select>
+                  </div>
+              </div>
+
+              <div class="form-group">
+                <label for="enemy_clan" class="col-lg-2 control-label">Enemy clan</label>
+                <div class="col-lg-10">
+                <input placeholder="Enemy clan tag" class="form-control" type="text" id="enemy_clan" name="enemy_clan" value="{{enemy_clan}}">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-lg-2 control-label">Outcome</label>
+                    <div class="col-lg-10">
+                      <div class="radio">
+                      <input type="radio" name="battle_result" id="battle_result_victory" value="victory" {% if battle_result == 'victory' %}checked{% endif%}> Victory
+                      </div>
+                      <div class="radio">
+                      <input type="radio" name="battle_result" id="battle_result_defeat" value="defeat" {% if battle_result == 'defeat' %}checked{% endif%}> Defeat
+                      </div>
+                      <div class="radio">
+                      <input type="radio" name="battle_result" id="battle_result_draw" value="draw" {% if battle_result == 'draw' %}checked{% endif%}> Draw
+                      </div>
+                    </div>
+              </div>
+
+              <div class="form-group">
+                <label for="description" class="col-lg-2 control-label">Description</label>
+                <div class="col-lg-10">
+                <textarea rows=4 placeholder="Description of the battle, such as province, encounter/defense/assault etc." class="form-control" id="description" name="description">{{description}}</textarea>
+                </div>
+              </div>
+
+              <div class="form-group">
+                  <label for="players" class="col-lg-2 control-label">Players</label>
+                  <div class="col-lg-10">
+                  <select class="form-control" multiple="multiple" id="players" name="players">
+                      {% for player in all_players %}
+                      <option value="{{player.id}}" {% if player in players %}selected{%endif%}>{{player.name}}</option>
+                      {% endfor %}
+                  </select>
+
+                  <p class="help-block">Move the players that played in this battle to the right.</p>
+                  </div>
+              </div>
+
+              <div class="form-group">
+                <label for="replay" class="col-lg-2 control-label">Replay</label>
+                <div class="col-lg-10">
+                {% if filename %}
+                <p class="form-control-static">{{filename}}</p>
+                {% else %}
+                <input type="file" id="replay" name="replay">
+                {% endif %}
+                </div>
+              </div>
+
+              <input type="hidden" name="filename" value="{{filename}}">
+
+
+                <div class="col-lg-offset-2 col-lg-10"><button type="submit" class="btn btn-success">Click create this battle</button></div>
+
+            </form>
+        </div>
+        <div class="col-lg-4">
+            {% if replay %}
+            <h4>Replay information</h4>
+            <dl>
+              <dd><img title="{{g.player.clan}}" alt="{{g.player.cla}}" src="{{url_for('static', filename='img/clanicons/' + g.player.clan + '.png')}}"></dd>
+              <dt>Recorded by</dt>
+              <dd>{{replay.first.playerName}}</dd>
+              <dt>Time</dt>
+              <dd>{{replay.first.dateTime}}</dd>
+              <dt>Map</dt>
+              <dd>{{replay.first.mapDisplayName}}</dd>
+            </dl>
+              <small>
+              <div class="row">
+                  <div class="col-lg-6">
+                      <strong>Team 1</strong>
+
+                          <ul style="padding-left: 5px;">
+                              {% for player in replays.players_list(replay, 1) %}
+                                <li>[{{player.clanAbbrev}}] {{player.name}}</li>
+                              {% endfor %}
+                          </ul>
+                  </div>
+
+                  <div class="col-lg-6">
+                      <strong>Team 2</strong>
+                          <ul style="padding-left: 5px;">
+                              {% for player in replays.players_list(replay, 2) %}
+                                <li>[{{player.clanAbbrev}}] {{player.name}}</li>
+                              {% endfor %}
+                          </ul>
+                  </div>
+
+              </div>
+              </small>
+            {% endif %}
+        </div>
+       </div>
+
+
+
+{% endblock %}

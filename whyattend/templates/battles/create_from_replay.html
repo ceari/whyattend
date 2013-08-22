@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block title %}Add battle{% endblock %}
+{% block content %}
+    <h2>Add battle</h2>
+    <p>Upload a <strong>clan war replay</strong> or <a href="{{url_for('create_battle')}}">enter the data manually</a></p>
+    <form action="" method="POST" role="form" enctype="multipart/form-data">
+      <div class="form-group">
+        <input type="file" id="replay" name="replay">
+      </div>
+      <button type="submit" class="btn btn-success">Click to add this replay</button>
+    </form>
+
+{% endblock %}

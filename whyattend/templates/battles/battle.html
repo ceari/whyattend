@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+{% block title %}Battles of {{ clan }}{% endblock %}
+{% block head %}
+    {{super()}}
+
+{% endblock %}
+{% block content %}
+    <h2>Battle details <img style="width:32px; height:32px;" src="{{url_for('static', filename='img/clanicons/' + battle.clan + '.png')}}"/> {{battle.clan}}  vs. {{battle.enemy_clan}}</h2>
+    <dl>
+        <dt>Battle added by</dt>
+        <dd>{{battle.creator.name}}</dd>
+        <dt>Map</dt>
+        <dd>{{battle.map_name}}</dd>
+        <dt>Province</dt>
+        <dd>{{battle.map_province}}</dd>
+        <dt>Battle Commander</dt>
+        <dd>{{battle.battle_commander.name}}</dd>
+        <dt>Date</dt>
+        <dd>{{battle.date.strftime('%d.%m.%Y %H:%M:%S')}}</dd>
+        {% if battle.description %}
+        <dt>Description</dt>
+        <dd>{{battle.description}}</dd>
+        {% endif %}
+        <dt>Players</dt>
+        <dd>
+            <ul>
+            {% for player in battle.get_players() %}
+                <li>{{player.name}}</li>
+            {% endfor %}
+            </ul>
+        </dd>
+        <dt>Reserve Players</dt>
+        <dd>
+            <ul>
+            {% for player in battle.get_reserve_players() %}
+                <li>{{player.name}}</li>
+            {% endfor %}
+            </ul>
+        </dd>
+        <dt>Replay</dt>
+        <dd><a href="{{url_for('download_replay', battle_id=battle.id)}}">Download</a></dd>
+    </dl>
+
+{% endblock %}
