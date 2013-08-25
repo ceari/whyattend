@@ -23,6 +23,9 @@ UPLOAD_FOLDER = 'tmp/uploads'
 API_TOKEN = ''
 API_URL = ''
 
+# Key for attendance tracker API functions
+API_KEY = 'testkey'
+
 # Map WoT API clan roles to displayed name
 ROLE_LABELS = {
     'leader': 'Commander',

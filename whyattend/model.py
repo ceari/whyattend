@@ -18,10 +18,11 @@ class Player(db.Model):
     name = db.Column(db.String(100), unique=True)
     clan = db.Column(db.String(10))
     role = db.Column(db.String(50))  # one of {leader, vice_leader, commander, recruiter, private (=soldier), recruit}
+    locked = db.Column(db.Boolean)
 
     gold_earned = db.Column(db.Integer)
 
-    def __init__(self, wot_id, openid, member_since, name, clan, role):
+    def __init__(self, wot_id, openid, member_since, name, clan, role, locked=False):
         self.wot_id = wot_id
         self.openid = openid
         self.member_since = member_since
@@ -29,6 +30,7 @@ class Player(db.Model):
         self.clan = clan
         self.role = role
         self.gold_earned = 0
+        self.locked = locked
 
     def battles_played(self):
         return BattleAttendance.query.filter_by(player=self, reserve=False)

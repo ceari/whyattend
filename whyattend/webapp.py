@@ -39,6 +39,9 @@ def lookup_current_user():
     if 'openid' in session:
         # Checking if player exists for every request might be overkill
         g.player = Player.query.filter_by(openid=session.get('openid')).first()
+        if g.player and g.player.locked:
+            g.player = None
+            session.pop('openid', None)
 
 
 @app.before_request
@@ -51,7 +54,7 @@ def inject_constants():
 def require_login(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if g.player is None:
+        if g.player is None or g.player.locked:
             return redirect(url_for('login', next=request.url))
         return f(*args, **kwargs)
     return decorated_function
@@ -83,8 +86,7 @@ def require_role(f, roles):
         return f(*args, **kwargs)
     return decorated_f
 
-############## Request handlers
-
+############## API request handlers
 
 @app.route('/createdb')
 def create_db():
@@ -92,24 +94,56 @@ def create_db():
         db.create_all()
     return redirect(url_for('index'))
 
-@app.route('/import-players')
-def import_players():
-    if app.config['DEBUG']:
-        for id in ('500014725', '500017822', '500024400'):
-            import time
-            time.sleep(0.1)
-            clan_info = wotapi.get_clan(id)
-            for player in clan_info['data']['members']:
-                print "Adding player ", player['account_name']
-                if Player.query.filter_by(wot_id=str(player['account_id'])).first(): continue
-                p = Player(str(player['account_id']), 'https://eu.wargaming.net/id/' + str(player['account_id']) + '-' + player['account_name'] + '/',
-                           wotapi.get_member_since_date(wotapi.get_player(str(player['account_id']))),  player['account_name'],
-                           clan_info['data']['abbreviation'], player['role'])
-                db.session.add(p)
-                db.session.commit()
+
+@app.route('/sync-players/<int:clan_id>')
+def sync_players(clan_id):
+    """
+    Synchronize players in database with Wargaming clan data
+    :param clan_id:
+    :return:
+    """
+    if config.API_KEY == request.args['API_KEY']:
+        import time
+        time.sleep(0.1) # Rate limiting
+        clan_info = wotapi.get_clan(str(clan_id))
+        processed = set()
+        for player in clan_info['data']['members']:
+            print "Checking player ", player['account_name']
+            player_data = wotapi.get_player(str(player['account_id']))
+            if not player_data: continue # API Error?
+            p = Player.query.filter_by(wot_id=str(player['account_id'])).first()
+            if p:
+                # Player exists, update information
+                print "Player " + p.name + " exists. Updating information"
+                processed.add(p.id)
+                p.locked = False
+                p.clan = clan_info['data']['abbreviation']
+                p.role = player['role'] # role might have changed
+                p.member_since = wotapi.get_member_since_date(player_data) # might have rejoined
+            else:
+                # New player
+                p = Player(str(player['account_id']),
+                           'https://eu.wargaming.net/id/' + str(player['account_id']) + '-' + player['account_name'] + '/',
+                           wotapi.get_member_since_date(player_data), player['account_name'], clan_info['data']['abbreviation'],
+                           player['role'])
+                print "Adding new player " + p.name
+            db.session.add(p)
+
+        # All players of the clan in the DB, which are no longer in the clan
+        for player in Player.query.filter_by(clan=clan_info['data']['abbreviation']):
+            if player.id in processed: continue
+            player.locked = True
+            print "Locking " + player.name + " because he is no longer in the clan."
+            db.session.add(player)
+
+        db.session.commit()
+
+    else:
+        abort(403)
 
     return redirect(url_for('index'))
 
+############## Request handlers Public request handlers
 
 @app.route("/")
 def index():
@@ -213,7 +247,7 @@ def create_battle_from_replay():
 @require_login
 @require_role(roles=config.CREATE_BATTLE_ROLES)
 def create_battle():
-    all_players = Player.query.all()
+    all_players = Player.query.filter_by(clan=g.player.clan).order_by('lower(name)').all()
 
     # Prefill form with data from replay
     enemy_clan = ''
@@ -344,6 +378,7 @@ def battle_details(battle_id):
 @require_role(config.DELETE_BATTLE_ROLES)
 def delete_battle(battle_id):
     battle = Battle.query.get(battle_id) or abort(404)
+    if battle.clan != g.player.clan: abort(403)
     for ba in battle.attendances:
         db.session.delete(ba)
     db.session.delete(battle)

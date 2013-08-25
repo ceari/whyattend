@@ -16,7 +16,22 @@
                     "sInfo": "Showing _START_ to _END_ of _TOTAL_ battles",
                     "sInfoEmpty": "Showing 0 to 0 of 0 battles",
                     "sInfoFiltered": "(filtered from _MAX_ total battles)"
-                }
+                },
+                "aoColumns": [
+                    { "sType": "date-euro"},
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+
+                ]
+
+
             });
 
             $('#battles_filter label input').addClass('form-control');
@@ -70,8 +85,8 @@
                     {% elif battle.has_reserve(g.player) %}
                     <a href="{{url_for('unsign_as_reserve', battle_id=battle.id)}}" class="btn btn-danger btn-sm">Remove from reserve</a>
                     {% endif %}
-                {% endif %}
                 <a href="{{url_for('delete_battle', battle_id=battle.id)}}" href="#myModal" data-toggle="modal" class="confirm_delete btn btn-danger btn-sm">Delete</a>
+                {% endif %}
             </td>
             <td>
                 {% if battle.paid %}
