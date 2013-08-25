@@ -20,3 +20,11 @@ ul.flashes li {
 #footer {
     margin-bottom: 5px;
 }
+
+.header {
+    max-width: 1140px;
+}
+
+.navbar {
+    border-radius: 0;
+}

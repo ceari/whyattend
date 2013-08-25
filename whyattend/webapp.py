@@ -239,8 +239,10 @@ def create_battle():
             if clan not in config.CLAN_NAMES or clan != g.player.clan:
                 flash(u'Error: "Friendly" clan was not in the list of clans supported by this website or you are not a member', 'error')
             map_name = replay['first']['mapDisplayName']
-            all_players = Player.query.filter_by(clan=clan)
-            players = Player.query.filter(Player.name.in_(replays.player_team(replay))).all()
+            all_players = Player.query.filter_by(clan=clan).order_by('lower(name)')
+            players = Player.query.filter(Player.name.in_(replays.player_team(replay))).order_by('lower(name)').all()
+            if g.player in players:
+                battle_commander = g.player.id
             enemy_clan = replays.guess_enemy_clan(replay)
             date = datetime.datetime.strptime(replay['first']['dateTime'], '%d.%m.%Y %H:%M:%S')
             if replays.player_won(replay):

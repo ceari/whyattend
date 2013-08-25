@@ -9,8 +9,9 @@
     <script type="text/javascript">
         $(document).ready(function () {
             $('#players').multiSelect({
+                keepOrder: true,
                 selectableHeader: "<strong>Clan players</strong>",
-                selectionHeader: "<strong>Attending players</strong>",
+                selectionHeader: "<strong>Attending players</strong>"
             });
         });
     </script>
@@ -137,7 +138,7 @@
                       <strong>Team 1</strong>
 
                           <ul style="padding-left: 5px;">
-                              {% for player in replays.players_list(replay, 1) %}
+                              {% for player in replays.players_list(replay, 1)|sort %}
                                 <li>[{{player.clanAbbrev}}] {{player.name}}</li>
                               {% endfor %}
                           </ul>
@@ -146,7 +147,7 @@
                   <div class="col-lg-6">
                       <strong>Team 2</strong>
                           <ul style="padding-left: 5px;">
-                              {% for player in replays.players_list(replay, 2) %}
+                              {% for player in replays.players_list(replay, 2)|sort %}
                                 <li>[{{player.clanAbbrev}}] {{player.name}}</li>
                               {% endfor %}
                           </ul>
