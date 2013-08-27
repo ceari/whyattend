@@ -1,5 +1,5 @@
 body {
-
+    font-family: 'Open Sans'
 }
 
 ul.flashes li {
@@ -27,4 +27,20 @@ ul.flashes li {
 
 .navbar {
     border-radius: 0;
+}
+
+span.leader {
+    color: #FFB100;
+}
+
+span.vice_leader {
+    color: #FFC540;
+}
+
+span.commander {
+    color: #e48806;
+}
+
+span.treasurer {
+    color: #e48806;
 }

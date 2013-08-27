@@ -52,7 +52,7 @@
       <tbody>
         {% for player in players %}
         <tr>
-            <td>{{g.roles[player.role]}}</td>
+            <td><span class="{{player.role}}">{{g.roles[player.role]}}</span></td>
             <td>{{player.name}}</td>
             <td>{{player.member_since.strftime('%d.%m.%Y %H:%M')}}</td>
             <td>{{played[player]}}</td>
