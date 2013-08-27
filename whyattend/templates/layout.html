@@ -4,13 +4,15 @@
     {% block head %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" type="image/x-icon" href="{{url_for('static', filename='img/clanicons/WHY.png')}}">
+
     <script src="https://code.jquery.com/jquery.js"></script>
-    <script src="{{url_for('static', filename='js/jquery.confirm.js')}}"></script>
-    <script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
-      <script src="{{url_for('static', filename='js/whyattend.js')}}"></script>
-    <link href="{{url_for('static', filename='css/bootstrap.min.css')}}" rel="stylesheet" media="screen">
-    <link href="{{url_for('static', filename='css/whyattend.css')}}" rel="stylesheet" media="screen">
+    <link href="//netdna.bootstrapcdn.com/bootswatch/3.0.0/cyborg/bootstrap.min.css" rel="stylesheet">
     <link href="https://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+
+    <script src="{{url_for('static', filename='js/jquery.confirm.js')}}"></script>
+    <script src="{{url_for('static', filename='js/whyattend.js')}}"></script>
+    <link href="{{url_for('static', filename='css/whyattend.css')}}" rel="stylesheet" media="screen">
 
     <script>
         $(document).ready(function() {
