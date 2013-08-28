@@ -1,0 +1,8 @@
+{% extends "layout.html" %}
+{% block title %}[{{player.clan}}] {{ player.name  }}{% endblock %}
+{% block content %}
+  <h2><img style="height: 32px; width: 32px;" src="{{url_for('static', filename='img/clanicons/' + player.clan + '.png')}}"> <span class="{{player.role}}">{{player.name}}</span></h2>
+  <h4>WoTLabs Signature (might be outdated):</h4>
+  <img src="http://wotlabs.net/sig_cust/EEEEEE/060606/{{g.WOT_SERVER_REGION_CODE}}/{{player.name}}/signature.png"/>
+
+{% endblock %}

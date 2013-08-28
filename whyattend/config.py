@@ -23,6 +23,9 @@ UPLOAD_FOLDER = 'tmp/uploads'
 API_TOKEN = ''
 API_URL = ''
 
+# WoT Server region code
+WOT_SERVER_REGION_CODE = 'eu'
+
 # Key for attendance tracker API functions
 API_KEY = 'testkey'
 
@@ -30,7 +33,7 @@ API_KEY = 'testkey'
 ROLE_LABELS = {
     'leader': 'Commander',
     'vice_leader': 'Deputy Commander',
-    'commander': 'Company Commander',
+    'commander': 'Field Commander',
     'recruiter': 'Recruiter',
     'private': 'Soldier',
     'recruit': 'Recruit',

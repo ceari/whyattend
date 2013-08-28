@@ -1,5 +1,8 @@
 body {
-    font-family: 'Open Sans'
+    font-family: 'Open Sans';
+    padding-left: 5px;
+    padding-right: 5px;
+
 }
 
 ul.flashes li {
@@ -22,7 +25,7 @@ ul.flashes li {
 }
 
 .header {
-    max-width: 1140px;
+    text-align:center;
 }
 
 .navbar {
@@ -43,4 +46,8 @@ span.commander {
 
 span.treasurer {
     color: #e48806;
+}
+
+span.recruiter {
+    color: #379337;
 }

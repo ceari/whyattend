@@ -49,6 +49,7 @@ def inject_constants():
     g.clans = config.CLAN_NAMES
     g.roles = config.ROLE_LABELS
     g.PAYOUT_ROLES = config.PAYOUT_ROLES
+    g.WOT_SERVER_REGION_CODE = config.WOT_SERVER_REGION_CODE
 
 
 def require_login(f):
@@ -177,7 +178,7 @@ def create_or_login(resp):
     """
     session['openid'] = resp.identity_url
     session['nickname'] = resp.nickname
-    player = Player.query.filter_by(openid=resp.identity_url).first()
+    player = Player.query.filter_by(openid=resp.identity_url, locked=False).first()
     if player is not None:
         flash(u'Successfully signed in', 'success')
         g.player = player
@@ -247,7 +248,7 @@ def create_battle_from_replay():
 @require_login
 @require_role(roles=config.CREATE_BATTLE_ROLES)
 def create_battle():
-    all_players = Player.query.filter_by(clan=g.player.clan).order_by('lower(name)').all()
+    all_players = Player.query.filter_by(clan=g.player.clan, locked=False).order_by('lower(name)').all()
 
     # Prefill form with data from replay
     enemy_clan = ''
@@ -273,7 +274,7 @@ def create_battle():
             if clan not in config.CLAN_NAMES or clan != g.player.clan:
                 flash(u'Error: "Friendly" clan was not in the list of clans supported by this website or you are not a member', 'error')
             map_name = replay['first']['mapDisplayName']
-            all_players = Player.query.filter_by(clan=clan).order_by('lower(name)')
+            all_players = Player.query.filter_by(clan=clan, locked=False).order_by('lower(name)')
             players = Player.query.filter(Player.name.in_(replays.player_team(replay))).order_by('lower(name)').all()
             if g.player in players:
                 battle_commander = g.player.id
@@ -391,7 +392,7 @@ def delete_battle(battle_id):
 def players(clan):
     if not clan in config.CLAN_NAMES:
         abort(404)
-    players = Player.query.options(joinedload_all('battles.battle')).filter_by(clan=clan).all()
+    players = Player.query.options(joinedload_all('battles.battle')).filter_by(clan=clan, locked=False).all()
     possible = dict((p, 0) for p in players)
     reserve = dict((p, 0) for p in players)
     played = dict((p, 0) for p in players)
@@ -410,6 +411,13 @@ def players(clan):
 
     return render_template('players/players.html', clan=clan, players=players,
                            played=played, present=present, possible=possible, reserve=reserve)
+
+
+@app.route('/players/<int:player_id>')
+def player(player_id):
+    player = Player.query.get(player_id) or abort(404)
+
+    return render_template('players/player.html', player=player)
 
 
 @app.route('/battles/<int:battle_id>/sign-reserve')
@@ -525,7 +533,7 @@ def payout_battles(clan):
 @require_login
 def players_json():
     clan = request.args.get('clan')
-    players = Player.query.filter_by(clan=clan).all()
+    players = Player.query.filter_by(clan=clan, locked=False).all()
 
     return jsonify(
         {"players": [player.to_dict() for player in players]}

@@ -100,6 +100,11 @@ class Battle(db.Model):
     replay_id = db.Column(db.Integer, db.ForeignKey('replay.id'))
     replay = db.relationship("Replay", backref="battle", uselist=False)
 
+    battle_group_id = db.Column(db.Integer, db.ForeignKey('battlegroup.id'))
+    battle_group = db.relationship("BattleGroup", backref="battles")
+    # Is this the "final battle" of the group? Exactly one per group should be true
+    battle_group_final = db.Column(db.Boolean)
+
     def __init__(self, date, clan, enemy_clan, victory, draw, creator, battle_commander, map_name, map_province,
                  description='', replay=None, paid=False):
         self.date = date
@@ -141,6 +146,14 @@ class Battle(db.Model):
 
     def get_reserve_players(self):
         return [ba.player for ba in BattleAttendance.query.filter_by(battle=self, reserve=True)]
+
+
+class BattleGroup(db.Model):
+    """
+        Representation of grouped battles, e.g. landings which span across multiple battles.
+    """
+    __tablename__ = 'battlegroup'
+    id = db.Column(db.Integer, primary_key=True)
 
 
 class Replay(db.Model):
