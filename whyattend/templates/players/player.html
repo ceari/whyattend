@@ -2,7 +2,12 @@
 {% block title %}[{{player.clan}}] {{ player.name  }}{% endblock %}
 {% block content %}
   <h2><img style="height: 32px; width: 32px;" src="{{url_for('static', filename='img/clanicons/' + player.clan + '.png')}}"> <span class="{{player.role}}">{{player.name}}</span></h2>
-  <h4>WoTLabs Signature (might be outdated):</h4>
-  <img src="http://wotlabs.net/sig_cust/EEEEEE/060606/{{g.WOT_SERVER_REGION_CODE}}/{{player.name}}/signature.png"/>
-
+  <dl>
+      <dt>Position</dt>
+      <dd><span class="{{player.role}}">{{g.roles[player.role]}}</span></dd>
+      <dt>World of Tanks Profile</dt>
+      <dd><a href="{{player.openid}}">Link</a></dd>
+      <dt>WoTLabs Signature (might be outdated):</dt>
+      <dd><img src="http://wotlabs.net/sig_cust/EEEEEE/060606/{{g.WOT_SERVER_REGION_CODE}}/{{player.name}}/signature.png"/></dd>
+  </dl>
 {% endblock %}

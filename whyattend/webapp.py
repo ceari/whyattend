@@ -16,7 +16,7 @@ from werkzeug.utils import secure_filename
 import config
 import replays
 import wotapi
-from model import db, Player, Battle, BattleAttendance, Replay
+from model import db, Player, Battle, BattleAttendance, Replay, BattleGroup
 
 # Set up Flask application
 app = Flask(__name__)
@@ -260,6 +260,11 @@ def create_battle():
     province = ''
     battle_commander = None
     date = datetime.datetime.now()
+    battle_groups = BattleGroup.query.filter_by(clan=g.player.clan).order_by('date').all()
+    battle_group = '-1'
+    battle_group_title = ''
+    battle_group_description = ''
+    battle_group_final = False
     filename = request.args.get('filename', '')
     if filename:
         file_blob = open(os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(filename)), 'rb').read()
@@ -292,6 +297,10 @@ def create_battle():
         battle_result = request.form.get('battle_result', '')
         battle_commander = Player.query.get(int(request.form['battle_commander']))
         description = request.form.get('description', '')
+        battle_group = int(request.form['battle_group'])
+        battle_group_title = request.form.get('battle_group_title', '')
+        battle_group_description = request.form.get('battle_group_description', '')
+        battle_group_final = request.form.get('battle_group_final', '') == 'on'
 
         errors = False
         date = None
@@ -332,10 +341,26 @@ def create_battle():
             flash(u'Battle already exists (same date, clan and enemy clan).', 'error')
             errors = True
 
+        bg = None
+        if battle_group == -1:
+            # new group
+            bg = BattleGroup(battle_group_title, battle_group_description, g.player.clan, date)
+        elif battle_group >= 0:
+            # existing group
+            bg = BattleGroup.query.get(battle_group) or abort(500)
+            if bg.get_final_battle() and battle_group_final:
+                flash(u'Selected battle group already contains a battle marked as final')
+                errors = True
+
         if not errors:
             battle = Battle(date, g.player.clan, enemy_clan, victory=(battle_result == 'victory'), map_name=map_name,
                             map_province=province, draw=(battle_result == 'draw'), creator=g.player,
                             battle_commander=battle_commander, description=description)
+
+            if bg:
+                battle.battle_group_final = battle_group_final
+                battle.battle_group = bg
+                db.session.add(bg)
 
             if config.STORE_REPLAYS_IN_DB:
                 battle.replay = Replay(file_blob, pickle.dumps(replay))
@@ -355,7 +380,9 @@ def create_battle():
     return render_template('battles/create.html', CLAN_NAMES=config.CLAN_NAMES, all_players=all_players, players=players,
                            enemy_clan=enemy_clan, filename=filename, replay=replay, battle_commander=battle_commander,
                            map_name=map_name, province=province, description=description, replays=replays,
-                           battle_result=battle_result, date=date)
+                           battle_result=battle_result, date=date, battle_groups=battle_groups,
+                           battle_group=battle_group, battle_group_title=battle_group_title,
+                           battle_group_description=battle_group_description, battle_group_final=battle_group_final)
 
 
 @app.route('/battles/list/<clan>')

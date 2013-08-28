@@ -17,8 +17,9 @@
                     "sInfoEmpty": "Showing 0 to 0 of 0 battles",
                     "sInfoFiltered": "(filtered from _MAX_ total battles)"
                 },
+                "aaSorting": [[0, "desc"]],
                 "aoColumns": [
-                    { "sType": "date-euro"},
+                    { "sType": "date-euro-anchor"},
                     null,
                     null,
                     null,
@@ -27,11 +28,9 @@
                     null,
                     null,
                     null,
-                    null
-
+                    {"bSortable": false},
+                    {"bSortable": false}
                 ]
-
-
             });
 
             $('#battles_filter label input').addClass('form-control');
@@ -47,6 +46,8 @@
                 title: '<strong>Delete this battle?</strong>',
                 text: "All information will be lost!",
             });
+
+            $('.battle_group_tooltip').tooltip();
         });
     </script>
 {% endblock %}
@@ -56,9 +57,10 @@
       <thead>
         <tr>
             <th>Date</th>
+            <th>Type</th>
             <th>Map</th>
             <th>Province</th>
-            <th>Added By</th>
+            <th>Commander</th>
             <th>Outcome</th>
             <th>Enemy Clan</th>
             <th># player</th>
@@ -71,9 +73,22 @@
         {% for battle in battles %}
         <tr>
             <td><a href="{{url_for('battle_details', battle_id=battle.id)}}">{{battle.date.strftime('%d.%m.%Y %H:%M:%S')}}</a></td>
+            <td>
+                {% if battle.battle_group %}
+                    <abbr class="battle_group_tooltip" title="Part of battle group: {{battle.battle_group.title}}">
+                    {% if battle.battle_group_final %}
+                        Battle against owner
+                    {% else %}
+                        Landing battle
+                    {% endif %}
+                    </abbr>
+                {% else %}
+                    Normal
+                {% endif %}
+            </td>
             <td>{{battle.map_name}}</td>
             <td>{{battle.map_province}}</td>
-            <td>{{battle.creator.name}}</td>
+            <td><span class="{{battle.battle_commander.role}}">{{battle.battle_commander.name}}</span></td>
             <td>{{battle.outcome_str()}}</td>
             <td>{{battle.enemy_clan}}</td>
             <td>{{battle.get_players()|length}}</td>

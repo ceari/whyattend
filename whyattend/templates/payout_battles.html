@@ -1,8 +1,5 @@
 {% extends "layout.html" %}
 {% block title %}Payout battles{% endblock %}
-{% block head %}
-    {{super()}}
-{% endblock %}
 {% block content %}
     <form>
         <input type="hidden" name="fromDate" value="{{fromDate}}">
@@ -31,7 +28,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for player in players %}
+            {% for player in players|sort(attribute="name") %}
             <tr>
                 <td>{{player.name}}</td>
                 <td>{{player_played[player]}}</td>

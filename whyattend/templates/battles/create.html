@@ -13,6 +13,26 @@
                 selectableHeader: "<strong>Clan players</strong>",
                 selectionHeader: "<strong>Attending players</strong>"
             });
+
+            $('#battle_group_create').hide();
+            $('#battle_group_final_div').hide();
+
+            $('#battle_group').change(function() {
+                var id = parseInt($('#battle_group option:selected').val());
+                if (id === -2) {
+                    // "not in a group"
+                    $('#battle_group_create').hide('fast');
+                    $('#battle_group_final_div').hide('fast');
+                } else if (id === -1) {
+                    $('#battle_group_create').show('fast');
+                    $('#battle_group_final_div').show('fast');
+                } else {
+                    $('#battle_group_create').hide('fast');
+                    $('#battle_group_final_div').show('fast');
+                }
+            });
+
+            $('#battle_group').change();
         });
     </script>
 {% endblock %}
@@ -80,6 +100,33 @@
                       <input type="radio" name="battle_result" id="battle_result_draw" value="draw" {% if battle_result == 'draw' %}checked{% endif%}> Draw
                       </div>
                     </div>
+              </div>
+
+              <div class="form-group">
+                  <label for="battle_commander" class="col-lg-2 control-label">Battle Group</label>
+                  <div class="col-lg-10">
+
+                  <select class="form-control" id="battle_group" name="battle_group">
+                      <option value="-2">Not in a group</option>
+                      <option value="-1">Create a new group</option>
+                      {% for battle_group in battle_groups %}
+                        <option value="{{battle_group.id}}">{{battle_group.date.strftime('%d.%m.%Y %H:%M:%S')}} - {{battle_group.title}}</option>
+                      {% endfor %}
+                  </select>
+                  <div id="battle_group_create">
+                     <strong>Title:</strong>
+                     <input class="form-control" type="text" name="battle_group_title" id="battle_group_title" placeholder="Short title for this battle group">
+                     <strong>Description:</strong>
+                     <textarea rows=4 placeholder="Description of the battle group" class="form-control" id="battle_group_description" name="battle_group_description">{{battle_group_description}}</textarea>
+                  </div>
+                  <div id="battle_group_final_div">
+                   <div class="checkbox">
+                    <label>
+                      <input type="checkbox" id="battle_group_final" name="battle_group_final"> Final landing battle (against province owner)
+                    </label>
+                  </div>
+                  </div>
+                  </div>
               </div>
 
               <div class="form-group">

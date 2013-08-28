@@ -155,6 +155,23 @@ class BattleGroup(db.Model):
     __tablename__ = 'battlegroup'
     id = db.Column(db.Integer, primary_key=True)
 
+    title = db.Column(db.String(100))
+    description = db.Column(db.Text)
+    clan = db.Column(db.String(10))
+    date = db.Column(db.DateTime)
+
+    def __init__(self, title, description, clan, date):
+        self.title = title
+        self.description = description
+        self.clan = clan
+        self.date = date
+
+    def get_final_battle(self):
+        for battle in self.battles:
+            if battle.battle_group_final:
+                return battle
+        return None
+
 
 class Replay(db.Model):
     __tablename__ = 'replay'
