@@ -52,3 +52,15 @@ span.treasurer {
 span.recruiter {
     color: #379337;
 }
+
+.victory {
+    color: darkgreen;
+}
+
+.defeat {
+    color: darkred;
+}
+
+.draw {
+    color: darkorange;
+}

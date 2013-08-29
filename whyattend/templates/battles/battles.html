@@ -118,7 +118,7 @@
             <td>{{battle.map_name}}</td>
             <td>{{battle.map_province}}</td>
             <td><span class="{{battle.battle_commander.role}}">{{battle.battle_commander.name}}</span></td>
-            <td>{{battle.outcome_str()}}</td>
+            <td><span class="{{battle.outcome_str().lower()}}">{{battle.outcome_str()}}</span></td>
             <td>{{battle.enemy_clan}}</td>
             <td>{{battle.get_players()|length}}</td>
             <td>{{battle.get_reserve_players()|length}}</td>
