@@ -36,16 +36,45 @@
             $('#battles_filter label input').addClass('form-control');
             $('#battles_length label select').addClass('form-control');
 
-            $(".confirm_sign").confirm({
-                title: '<strong>Sign in as reserve player for this battle?</strong>',
-                text: "Please make sure you actually count as reserve for this battle, i.e. you were in the training " +
-                        "but you weren't picked by the Commander.",
+
+            $("a.confirm-sign").on("click", function(e) {
+                var link = this;
+
+                e.preventDefault();
+
+                $("<div style=\"font-size: normal\">Sign in as reserve?<br>" +
+                        "<br><strong style=\"color: red\">Make sure you count as reserve. Abuse of the system by signing yourself " +
+                        "as reserve if you weren't will have consequences.</strong></div>").dialog({
+                    width: 600,
+                    buttons: {
+                        "Sign as reserve": function() {
+                            window.location = link.href;
+                        },
+                        "Cancel": function() {
+                            $(this).dialog("close");
+                        }
+                    }
+                });
             });
 
-            $(".confirm_delete").confirm({
-                title: '<strong>Delete this battle?</strong>',
-                text: "All information will be lost!",
+
+            $("a.confirm-delete").on("click", function(e) {
+                var link = this;
+
+                e.preventDefault();
+
+                $("<div>Are you sure you want to delete this battle?</div>").dialog({
+                    buttons: {
+                        "Delete": function() {
+                            window.location = link.href;
+                        },
+                        "Cancel": function() {
+                            $(this).dialog("close");
+                        }
+                    }
+                });
             });
+
 
             $('.battle_group_tooltip').tooltip();
         });
@@ -96,11 +125,11 @@
             <td>
                 {% if g.player.clan == clan %}
                     {% if not battle.has_player(g.player) and not battle.has_reserve(g.player) %}
-                    <a href="{{url_for('sign_as_reserve', battle_id=battle.id)}}" href="#myModal" data-toggle="modal" class="confirm_sign btn btn-primary btn-sm">Sign as reserve</a>
+                    <a href="{{url_for('sign_as_reserve', battle_id=battle.id)}}" class="confirm-sign btn btn-primary btn-sm">Sign as reserve</a>
                     {% elif battle.has_reserve(g.player) %}
                     <a href="{{url_for('unsign_as_reserve', battle_id=battle.id)}}" class="btn btn-danger btn-sm">Remove from reserve</a>
                     {% endif %}
-                <a href="{{url_for('delete_battle', battle_id=battle.id)}}" href="#myModal" data-toggle="modal" class="confirm_delete btn btn-danger btn-sm">Delete</a>
+                <a href="{{url_for('delete_battle', battle_id=battle.id)}}" class="confirm-delete btn btn-danger btn-sm">Delete</a>
                 {% endif %}
             </td>
             <td>

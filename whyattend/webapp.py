@@ -409,6 +409,9 @@ def delete_battle(battle_id):
     if battle.clan != g.player.clan: abort(403)
     for ba in battle.attendances:
         db.session.delete(ba)
+    if battle.battle_group and len(battle.battle_group.battles) == 1:
+        # last battle in battle group, delete the group as well
+        db.session.delete(battle.battle_group)
     db.session.delete(battle)
     db.session.commit()
     return redirect(url_for('battles', clan=g.player.clan))
