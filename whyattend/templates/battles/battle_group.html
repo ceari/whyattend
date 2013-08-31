@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% block title %}Battles of {{ clan }}{% endblock %}
+{% block title %}Landing tournament{% endblock %}
 {% block head %}
     {{super()}}
     <script src="{{url_for('static', filename='js/jquery.dataTables.min.js')}}" type="text/javascript"></script>
@@ -36,7 +36,6 @@
 
             $('#battles_filter label input').addClass('form-control');
             $('#battles_length label select').addClass('form-control');
-
 
             $("a.confirm-sign").on("click", function(e) {
                 var link = this;
@@ -75,16 +74,20 @@
                     }
                 });
             });
+
+            $('.battle_group_tooltip').tooltip();
         });
     </script>
 {% endblock %}
 {% block content %}
-  <h2>Battles of {{ clan }} <img style="height: 32px; width: 32px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"></h2>
-  <p>
-      <i class="icon-info icon-2x"></i> Only one of the battles of a landing tournament is shown in the table.
-      Follow the "Show battles" links to view all tournament battles.
-  </p>
-        <hr>
+  <h2>Battle group: {{battle_group.title}}</h2>
+  {% if battle_group.description %}
+  <dl>
+      <dd>Description</dd>
+      <dt>{{battle_group.description}}</dt>
+  </dl>
+  {% endif %}
+  <hr>
   <table id="battles" class="table table-striped">
       <thead>
         <tr>
@@ -104,20 +107,13 @@
       </thead>
       <tbody>
         {% for battle in battles %}
-        {% if not battle.battle_group or (battle.battle_group and battle.battle_group.get_representative_battle() == battle) %}
-        <tr>
+        <tr {% if battle.battle_group_final %}style="font-weight: bold"{% endif %}>
             <td><a href="{{url_for('battle_details', battle_id=battle.id)}}">{{battle.date.strftime('%d.%m.%Y %H:%M:%S')}}</a></td>
             <td>
-                {% if battle.battle_group %}
-                    <a href="{{url_for('battle_group', group_id=battle.battle_group.id)}}">
-                    {% if battle.battle_group_final %}
-                        Final
-                    {% else %}
-                        Landing battle
-                    {% endif %}
-                    </a>
+                {% if battle.battle_group_final %}
+                    <strong>Final</strong>
                 {% else %}
-                    Normal
+                    Landing battle
                 {% endif %}
             </td>
             <td>{{battle.map_name}}</td>
@@ -128,7 +124,7 @@
             <td>{{battle.get_players()|length}}</td>
             <td>{{battle.get_reserve_players()|length}}</td>
             <td>
-                {% if not battle.battle_group %}
+
                 {% if g.player.clan == clan %}
                     {% if not battle.has_player(g.player) and not battle.has_reserve(g.player) %}
                     <a href="{{url_for('sign_as_reserve', battle_id=battle.id)}}" class="confirm-sign btn btn-primary btn-sm">Sign as reserve</a>
@@ -136,15 +132,11 @@
                     <a href="{{url_for('unsign_as_reserve', battle_id=battle.id)}}" class="btn btn-danger btn-sm">Remove from reserve</a>
                     {% endif %}
                 {% endif %}
-                {% endif %}
+
             </td>
             <td>
-                {% if not battle.battle_group %}
                 {% if g.player.clan == clan %}
                     <a href="{{url_for('delete_battle', battle_id=battle.id)}}" class="confirm-delete btn btn-danger btn-sm">Delete</a>
-                {% endif %}
-                {% else %}
-                    <a href="{{url_for('battle_group', group_id=battle.battle_group.id)}}" class="btn btn-primary btn-sm">Show battles</a>
                 {% endif %}
             </td>
             <td>
@@ -154,7 +146,6 @@
             </td>
 
         </tr>
-        {% endif %}
         {% endfor %}
       </tbody>
   </table>

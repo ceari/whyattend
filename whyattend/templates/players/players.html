@@ -25,6 +25,7 @@
                     null,
                     { "sType": "percent"},
                     { "sType": "percent"},
+                    null,
                     null
                 ]
             });
@@ -36,6 +37,12 @@
 {% endblock %}
 {% block content %}
   <h2>Players of {{ clan }} <img style="height: 32px; width: 32px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"></h2>
+  <p>
+      <i class="icon-info icon-2x"></i> Attending in multiple battles in a landing tournament only counts once. For example, playing<br>
+      in all landing battles only counts as a single battle played. Being reserve in multiple landing battles only<br>
+      counts once as well - and only if you did not play in one of the other battles.
+  </p>
+  <hr>
   <table id="players" class="table table-striped">
       <thead>
         <tr>
@@ -44,9 +51,10 @@
             <th>Member Since</th>
             <th>#played</th>
             <th>#reserve</th>
-            <th>#played / #total</th>
-            <th>#present / #total</th>
-            <th><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/gold_coin_stack.png')}}">Gold earned</th>
+            <th>#played / #possible</th>
+            <th>#present / #possible</th>
+            <th><abbr title="Only taking battles into account since player joined the clan">#possible</abbr></th>
+            <th><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/gold_coin_stack.png')}}"><abbr title="Gold paid out so far">Gold paid</abbr></th>
         </tr>
       </thead>
       <tbody>
@@ -60,6 +68,7 @@
             <td>{{reserve[player]}}</td>
             <td>{{'%i' % (played[player] / possible[player] * 100.0 if possible[player] else 0)}} %</td>
             <td>{{'%i' % (present[player] / possible[player] * 100.0 if possible[player] else 0)}} %</td>
+            <td>{{possible[player]}}</td>
             <td>{{player.gold_earned}}</td>
         </tr>
         {% endfor %}

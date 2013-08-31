@@ -10,6 +10,7 @@ import pickle
 from functools import wraps
 from flask import Flask, g, session, render_template, flash, redirect, request, url_for, abort, make_response, jsonify
 from flask.ext.openid import OpenID
+from sqlalchemy import or_
 from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename
 
@@ -202,7 +203,7 @@ def create_profile():
             return render_template('create_profile.html', next_url=oid.get_next_url())
 
         player_data = wotapi.get_player(wot_id)
-        if not player_data:
+        if not player_data or not player_data['data'] or not player_data['data']['clan']:
             flash(u'Error: Could not retrieve player information from Wargaming. Contact an admin for help :-)',
                   'error')
             return render_template('create_profile.html', next_url=oid.get_next_url())
@@ -266,14 +267,14 @@ def create_battle():
     battle_group_description = ''
     battle_group_final = False
     filename = request.args.get('filename', '')
+    if request.method == 'POST':
+        filename = request.form.get('filename', '')
+
     if filename:
         file_blob = open(os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(filename)), 'rb').read()
         replay = replays.parse_replay(file_blob)
-        if not replay or not replay['second']:
-            flash(u'Error: Uploaded replay file is incomplete (Battle was left before it ended). ' +
-                  u'Can not determine information automatically.', 'info')
-        elif not replays.is_cw(replay):
-            flash(u'Error: Uploaded replay file is probably not from a clan war', 'error')
+        if not replay:
+            flash(u'Error: Parsing replay file failed :-(.', 'error')
         else:
             clan = replays.guess_clan(replay)
             if clan not in config.CLAN_NAMES or clan != g.player.clan:
@@ -282,11 +283,19 @@ def create_battle():
             all_players = Player.query.filter_by(clan=clan, locked=False).order_by('lower(name)')
             players = Player.query.filter(Player.name.in_(replays.player_team(replay))).order_by('lower(name)').all()
             if g.player in players:
-                battle_commander = g.player.id
-            enemy_clan = replays.guess_enemy_clan(replay)
+                    battle_commander = g.player.id
             date = datetime.datetime.strptime(replay['first']['dateTime'], '%d.%m.%Y %H:%M:%S')
-            if replays.player_won(replay):
-                battle_result = 'victory'
+
+            if not replay['second']:
+                flash(u'Error: Uploaded replay file is incomplete (Battle was left before it ended). ' +
+                  u'Can not determine all information automatically.', 'error')
+            elif not replays.is_cw(replay):
+                flash(u'Error: Uploaded replay file is probably not from a clan war (Detected different clan tags in one of the team' + \
+                      u' or players from the same clan on both sides)', 'error')
+            else:
+                enemy_clan = replays.guess_enemy_clan(replay)
+                if replays.player_won(replay):
+                    battle_result = 'victory'
 
     if request.method == 'POST':
         players = map(int, request.form.getlist('players'))
@@ -353,8 +362,9 @@ def create_battle():
                 errors = True
 
         if not errors:
-            battle = Battle(date, g.player.clan, enemy_clan, victory=(battle_result == 'victory'), map_name=map_name,
-                            map_province=province, draw=(battle_result == 'draw'), creator=g.player,
+            battle = Battle(date, g.player.clan, enemy_clan, victory=(battle_result in ('victory', 'victory_draw')),
+                            map_name=map_name, map_province=province,
+                            draw=(battle_result in ('defeat_draw', 'victory_draw')), creator=g.player,
                             battle_commander=battle_commander, description=description)
 
             if bg:
@@ -390,8 +400,17 @@ def create_battle():
 def battles(clan):
     if not clan in config.CLAN_NAMES:
         abort(404)
-    battles = Battle.query.filter_by(clan=clan)
+    battles = Battle.query.options(joinedload_all('battle_group.battles')).options(joinedload_all('attendances.player')).filter_by(clan=clan).all()
     return render_template('battles/battles.html', clan=clan, battles=battles)
+
+
+@app.route('/battles/group/<int:group_id>')
+@require_login
+def battle_group(group_id):
+    battle_group = BattleGroup.query.options(joinedload_all('battles.attendances.player')).get(group_id) or abort(404)
+
+    return render_template('battles/battle_group.html', battle_group=battle_group, battles=battle_group.battles,
+                           clan=battle_group.clan)
 
 
 @app.route('/battles/<int:battle_id>')
@@ -431,13 +450,23 @@ def players(clan):
     for player in players:
         for battle in clan_battles:
             if battle.date < player.member_since: continue
+            if battle.battle_group and not battle.battle_group_final: continue # only finals will count
             possible[player] += 1
-            if battle.has_player(player):
-                played[player] += 1
-                present[player] += 1
-            elif battle.has_reserve(player):
-                reserve[player] += 1
-                present[player] += 1
+
+            if battle.battle_group:
+                if player in battle.battle_group.get_players():
+                    played[player] += 1
+                    present[player] += 1
+                elif player in battle.battle_group.get_reserves():
+                    reserve[player] += 1
+                    present[player] += 1
+            else:
+                if battle.has_player(player):
+                    played[player] += 1
+                    present[player] += 1
+                elif battle.has_reserve(player):
+                    reserve[player] += 1
+                    present[player] += 1
 
     return render_template('players/players.html', clan=clan, players=players,
                            played=played, present=present, possible=possible, reserve=reserve)

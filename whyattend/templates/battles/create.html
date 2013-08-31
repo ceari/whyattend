@@ -5,6 +5,7 @@
     <link href="{{url_for('static', filename='css/multi-select.css')}}" rel="stylesheet">
     <script src="{{url_for('static', filename='js/jquery.multi-select.js')}}" type="text/javascript"></script>
     <script src="{{url_for('static', filename='js/jquery.quicksearch.js')}}" type="text/javascript"></script>
+    <script src="{{url_for('static', filename='js/wotdata.js')}}" type="text/javascript"></script>
 
     <script type="text/javascript">
         $(document).ready(function () {
@@ -33,6 +34,32 @@
             });
 
             $('#battle_group').change();
+
+            var updateProvinces = function() {
+                var provinces = PROVINCES_BY_MAP[$('#map_name').val()];
+                if (provinces) {
+                    var output = [];
+                    $('#province').html("");
+                    $.each(provinces, function(key, value)
+                    {
+                      output.push('<option value="'+ value +'">'+ value +'</option>');
+                    });
+                    $('#province').html(output.join(''));
+                }
+                return true;
+            }
+
+            $('#map_name').keyup(function() {
+                updateProvinces();
+            });
+
+            $('#map_name').blur(function() {
+                updateProvinces();
+            });
+
+            {% if map_name %}
+            updateProvinces();
+            {% endif %}
         });
     </script>
 {% endblock %}
@@ -65,7 +92,11 @@
               <div class="form-group">
                 <label for="province" class="col-lg-2 control-label">Province(s)</label>
                 <div class="col-lg-10">
-                <input class="form-control" type="text" id="province" name="province" value="{{province}}">
+                <select size="1" class="form-control" id="province" name="province">
+                    {% if province %}
+                    <option value="{{province}}">{{province}}</option>
+                    {% endif %}
+                </select>
                 </div>
               </div>
 
@@ -94,10 +125,13 @@
                       <input type="radio" name="battle_result" id="battle_result_victory" value="victory" {% if battle_result == 'victory' %}checked{% endif%}> Victory
                       </div>
                       <div class="radio">
+                        <input type="radio" name="battle_result" id="battle_result_victory_draw" value="victory_draw" {% if battle_result == 'victory_draw' %}checked{% endif%}> Victory (Draw)
+                      </div>
+                      <div class="radio">
                       <input type="radio" name="battle_result" id="battle_result_defeat" value="defeat" {% if battle_result == 'defeat' %}checked{% endif%}> Defeat
                       </div>
                       <div class="radio">
-                      <input type="radio" name="battle_result" id="battle_result_draw" value="draw" {% if battle_result == 'draw' %}checked{% endif%}> Draw
+                      <input type="radio" name="battle_result" id="battle_result_defeat_draw" value="defeat_draw" {% if battle_result == 'defeat_draw' %}checked{% endif%}> Defeat (Draw)
                       </div>
                     </div>
               </div>
@@ -179,6 +213,7 @@
               <dt>Map</dt>
               <dd>{{replay.first.mapDisplayName}}</dd>
             </dl>
+              {% if replay.second %}
               <small>
               <div class="row">
                   <div class="col-lg-6">
@@ -202,6 +237,9 @@
 
               </div>
               </small>
+              {% else %}
+               <strong>Replay incomplete. Can't determine enemy team.</strong>
+              {% endif %}
             {% endif %}
         </div>
        </div>

@@ -6,7 +6,7 @@
 """
 
 # Database URI (see http://docs.sqlalchemy.org/en/latest/core/engines.html#supported-databases)
-DATABASE_URI = 'sqlite:///test.db'
+DATABASE_URI = 'sqlite:///../tmp/test.db'
 
 # Path to temporary folder for OpenID authentication files
 OID_STORE_PATH = 'tmp/oid'

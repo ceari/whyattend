@@ -118,14 +118,14 @@ class Battle(db.Model):
         self.map_name = map_name
         self.map_province = map_province
         self.paid = paid
-        if victory and draw:
-            raise Exception('Battle can not be a victory and draw at the same time')
 
     def outcome_str(self):
-        if self.victory:
+        if self.victory and not self.draw:
             return 'Victory'
-        elif self.draw:
-            return 'Draw'
+        elif self.victory and self.draw:
+            return 'Victory (Draw)'
+        elif not self.victory and self.draw:
+            return 'Defeat (Draw)'
         else:
             return 'Defeat'
 
@@ -142,10 +142,10 @@ class Battle(db.Model):
         return False
 
     def get_players(self):
-        return [ba.player for ba in BattleAttendance.query.filter_by(battle=self, reserve=False)]
+        return [ba.player for ba in self.attendances if not ba.reserve]
 
     def get_reserve_players(self):
-        return [ba.player for ba in BattleAttendance.query.filter_by(battle=self, reserve=True)]
+        return [ba.player for ba in self.attendances if ba.reserve]
 
 
 class BattleGroup(db.Model):
@@ -166,10 +166,34 @@ class BattleGroup(db.Model):
         self.clan = clan
         self.date = date
 
+    def get_players(self):
+        players = set()
+        for battle in self.battles:
+            for ba in battle.attendances:
+                if not ba.reserve:
+                    players.add(ba.player)
+        return players
+
+    def get_reserves(self):
+        players = set()
+        for battle in self.battles:
+            for ba in battle.attendances:
+                if ba.reserve:
+                    players.add(ba.player)
+        return players
+
     def get_final_battle(self):
         for battle in self.battles:
             if battle.battle_group_final:
                 return battle
+        return None
+
+    def get_representative_battle(self):
+        for battle in self.battles:
+            if battle.battle_group_final:
+                return battle
+        if self.battles:
+            return self.battles[0]
         return None
 
 
