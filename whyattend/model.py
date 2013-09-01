@@ -2,6 +2,8 @@
     Database mapping
 """
 
+import pickle
+
 from flask.ext.sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
@@ -129,6 +131,16 @@ class Battle(db.Model):
         else:
             return 'Defeat'
 
+    def outcome_repr(self):
+        if self.victory and not self.draw:
+            return 'victory'
+        elif self.victory and self.draw:
+            return 'victory_draw'
+        elif not self.victory and self.draw:
+            return 'defeat_draw'
+        else:
+            return 'defeat'
+
     def has_player(self, player):
         for ba in self.attendances:
             if ba.player == player and not ba.reserve:
@@ -146,6 +158,9 @@ class Battle(db.Model):
 
     def get_reserve_players(self):
         return [ba.player for ba in self.attendances if ba.reserve]
+
+    def __str__(self):
+        return "%s vs. %s on %s" %(self.clan, self.enemy_clan, self.map_name)
 
 
 class BattleGroup(db.Model):
@@ -207,3 +222,5 @@ class Replay(db.Model):
         self.replay_pickle = replay_pickle
         self.replay_blob = replay_blob
 
+    def unpickle(self):
+        return pickle.loads(self.replay_pickle)

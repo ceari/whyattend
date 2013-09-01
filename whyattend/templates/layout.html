@@ -55,8 +55,10 @@
           <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><img style="margin-right: 5px; width: 16px; height:16px;" src="{{url_for('static', filename='img/swords.png')}}">Battles <b class="caret"></b></a>
             <ul class="dropdown-menu">
+                {% if g.player.role in g.CREATE_BATTLE_ROLES or g.player.name == "fantastico" %}
                 <li><a href="{{url_for('create_battle_from_replay')}}">Add battle</a></li>
                 <li class="divider"></li>
+                {% endif %}
                 {% for clan in g.clans %}
                 <li><a href="{{url_for('battles', clan=clan)}}"><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> {{clan}}</a></li>
                 {% endfor %}

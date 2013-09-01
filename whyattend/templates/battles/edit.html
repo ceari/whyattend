@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% block title %}Add battle{% endblock %}
+{% block title %}Edit battle{% endblock %}
 {% block head %}
     {{super()}}
     <link href="{{url_for('static', filename='css/multi-select.css')}}" rel="stylesheet">
@@ -64,15 +64,9 @@
     </script>
 {% endblock %}
 {% block content %}
-    <h2>Add battle</h2>
+    <h2>Edit battle - {{battle}}</h2>
         <div class="row">
         <div class="col-lg-8">
-            {% if filename %}
-            <p class="alert alert-info"><strong>Please check</strong> if the information below obtained from the replay is complete and confirm by pressing
-            'Create Battle' at the bottom.</p>
-            {% else %}
-            <p class="alert alert-warning"><strong>Note</strong> that the preferred way of adding battles is by <a href="{{url_for('create_battle_from_replay')}}">uploading a replay</a>.</p>
-            {% endif %}
             <form class="form-horizontal" action="" method="POST" role="form" enctype="multipart/form-data">
 
               <div class="form-group">
@@ -105,7 +99,7 @@
                   <div class="col-lg-10">
                   <select class="form-control" id="battle_commander" name="battle_commander">
                       {% for player in all_players %}
-                      <option value="{{player.id}}" {{'selected="selected"' if player.id==battle_commander else ''}}>{{player.name}}</option>
+                      <option value="{{player.id}}" {{'selected' if player.id==battle_commander.id else ''}}>{{player.name}}</option>
                       {% endfor %}
                   </select>
                   </div>
@@ -143,8 +137,8 @@
                   <select class="form-control" id="battle_group" name="battle_group">
                       <option value="-2">Not in a group</option>
                       <option value="-1">Create a new group</option>
-                      {% for battle_group in battle_groups %}
-                        <option value="{{battle_group.id}}">{{battle_group.date.strftime('%d.%m.%Y %H:%M:%S')}} - {{battle_group.title}}</option>
+                      {% for bg in battle_groups %}
+                        <option value="{{bg.id}}" {{'selected' if (battle.battle_group and battle.battle_group.id==bg.id) else ''}}>{{bg.date.strftime('%d.%m.%Y %H:%M:%S')}} - {{bg.title}}</option>
                       {% endfor %}
                   </select>
                   <div id="battle_group_create">
@@ -156,7 +150,7 @@
                   <div id="battle_group_final_div">
                    <div class="checkbox">
                     <label>
-                      <input type="checkbox" id="battle_group_final" name="battle_group_final"> Final landing battle (against province owner or the tournament defeat)
+                      <input type="checkbox" id="battle_group_final" name="battle_group_final" {% if battle_group_final %}checked{% endif %}> Final landing battle (against province owner or the tournament defeat)
                     </label>
                   </div>
                   </div>
@@ -183,21 +177,7 @@
                   </div>
               </div>
 
-              <div class="form-group">
-                <label for="replay" class="col-lg-2 control-label">Replay</label>
-                <div class="col-lg-10">
-                {% if filename %}
-                <p class="form-control-static">{{filename}}</p>
-                {% else %}
-                <input type="file" id="replay" name="replay">
-                {% endif %}
-                </div>
-              </div>
-
-              <input type="hidden" name="filename" value="{{filename}}">
-
-
-                <div class="col-lg-offset-2 col-lg-10"><button type="submit" class="btn btn-success">Click create this battle</button></div>
+              <div class="col-lg-offset-2 col-lg-10"><button type="submit" class="btn btn-success">Save changes</button></div>
 
             </form>
         </div>

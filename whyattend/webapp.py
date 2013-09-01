@@ -17,6 +17,7 @@ from werkzeug.utils import secure_filename
 import config
 import replays
 import wotapi
+from util import ReverseProxied
 from model import db, Player, Battle, BattleAttendance, Replay, BattleGroup
 
 # Set up Flask application
@@ -28,6 +29,9 @@ app.config['UPLOAD_FOLDER'] = config.UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16 MB at a time should be plenty for replays
 db.init_app(app)
 oid = OpenID(app, config.OID_STORE_PATH)
+
+# Set up middleware in case we are behind a reverse proxy server
+app.wsgi_app = ReverseProxied(app.wsgi_app)
 
 # decorates a decorator function to be able to specify parameters :-)
 decorator_with_args = lambda decorator: lambda *args, **kwargs: \
@@ -51,6 +55,8 @@ def inject_constants():
     g.roles = config.ROLE_LABELS
     g.PAYOUT_ROLES = config.PAYOUT_ROLES
     g.WOT_SERVER_REGION_CODE = config.WOT_SERVER_REGION_CODE
+    g.DELETE_BATTLE_ROLES = config.DELETE_BATTLE_ROLES
+    g.CREATE_BATTLE_ROLES = config.CREATE_BATTLE_ROLES
 
 
 def require_login(f):
@@ -70,7 +76,7 @@ def require_clan_membership(f):
         # Has to be a request handler with 'clan' argument
         if not 'clan' in kwargs:
             abort(500)
-        if g.player.clan != kwargs['clan']:
+        if g.player.clan != kwargs['clan'] and not g.player.name == 'fantastico':
             abort(403)
         return f(*args, **kwargs)
     return decorated_f
@@ -243,6 +249,108 @@ def create_battle_from_replay():
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             return redirect(url_for('create_battle', filename=filename))
     return render_template('battles/create_from_replay.html')
+
+
+@app.route('/battles/edit/<int:battle_id>', methods=['GET', 'POST'])
+@require_login
+@require_role(roles=config.CREATE_BATTLE_ROLES)
+def edit_battle(battle_id):
+    battle = Battle.query.get(battle_id) or abort(404)
+    if battle.clan != g.player.clan and g.player.name != 'fantastico': abort(403)
+
+    all_players = Player.query.filter_by(clan=g.player.clan, locked=False).order_by('lower(name)').all()
+    date = battle.date
+    map_name = battle.map_name
+    province = battle.map_province
+    battle_commander = battle.battle_commander
+    enemy_clan = battle.enemy_clan
+    battle_result = battle.outcome_repr()
+    battle_group_final = battle.battle_group_final
+    players = battle.get_players()
+    description = battle.description
+    replay = battle.replay.unpickle()
+
+    if request.method == 'POST':
+        players = map(int, request.form.getlist('players'))
+        map_name = request.form.get('map_name', '')
+        province = request.form.get('province', '')
+        enemy_clan = request.form.get('enemy_clan', '')
+        battle_result = request.form.get('battle_result', '')
+        battle_commander = Player.query.get(int(request.form['battle_commander']))
+        description = request.form.get('description', '')
+        battle_group = int(request.form['battle_group'])
+        battle_group_title = request.form.get('battle_group_title', '')
+        battle_group_description = request.form.get('battle_group_description', '')
+        battle_group_final = request.form.get('battle_group_final', '') == 'on'
+
+        errors = False
+        date = None
+        try:
+            date = datetime.datetime.strptime(request.form.get('date', ''), '%d.%m.%Y %H:%M:%S')
+        except ValueError as e:
+            flash(u'Invalid date format', 'error')
+            errors = True
+        if not map_name:
+            flash(u'Please enter the name of the map', 'error')
+            errors = True
+        if not battle_commander:
+            flash(u'No battle commander selected', 'error')
+            errors = True
+        if not players:
+            flash(u'No players selected', 'error')
+            errors = True
+        if not enemy_clan:
+            flash(u'Please enter the enemy clan\'s tag', 'errors')
+            errors = True
+        if not battle_result:
+            flash(u'Please select the correct outcome of the battle', 'errors')
+            errors = True
+
+        bg = None
+        if battle_group == -1:
+            # new group
+            bg = BattleGroup(battle_group_title, battle_group_description, g.player.clan, date)
+        elif battle_group >= 0:
+            # existing group
+            bg = BattleGroup.query.get(battle_group) or abort(500)
+            if bg.get_final_battle() is not battle and battle_group_final :
+                flash(u'Selected battle group already contains a battle marked as final')
+                errors = True
+
+        if not errors:
+            battle.date = date
+            battle.clan = g.player.clan
+            battle.enemy_clan = enemy_clan
+            battle.victory = battle_result in ('victory', 'victory_draw')
+            battle.draw = battle_result in ('defeat_draw', 'victory_draw')
+            battle.map_name = map_name
+            battle.map_province = province
+            battle.battle_commander_id = battle_commander.id
+            battle.description = description
+
+            if bg:
+                battle.battle_group_final = battle_group_final
+                battle.battle_group = bg
+                db.session.add(bg)
+
+            for ba in battle.attendances:
+                if not ba.reserve:
+                    db.session.delete(ba)
+
+            for player_id in players:
+                player = Player.query.get(player_id)
+                if not player: abort(404)
+                ba = BattleAttendance(player, battle, reserve=False)
+                db.session.add(ba)
+
+            db.session.add(battle)
+            db.session.commit()
+            return redirect(url_for('battles', clan=g.player.clan))
+
+    return render_template('battles/edit.html', date=date, map_name=map_name, province=province, battle=battle,
+                           battle_commander=battle_commander, enemy_clan=enemy_clan, battle_result=battle_result,
+                           battle_group_final=battle_group_final, players=players, description=description,
+                           replay=replay, replays=replays, all_players=all_players)
 
 
 @app.route('/battles/create', methods=['GET', 'POST'])
@@ -425,7 +533,7 @@ def battle_details(battle_id):
 @require_role(config.DELETE_BATTLE_ROLES)
 def delete_battle(battle_id):
     battle = Battle.query.get(battle_id) or abort(404)
-    if battle.clan != g.player.clan: abort(403)
+    if battle.clan != g.player.clan and g.player.name != 'fantastico': abort(403)
     for ba in battle.attendances:
         db.session.delete(ba)
     if battle.battle_group and len(battle.battle_group.battles) == 1:
@@ -483,7 +591,7 @@ def player(player_id):
 @require_login
 def sign_as_reserve(battle_id):
     battle = Battle.query.get(battle_id) or abort(404)
-    if battle.clan != g.player.clan: abort(403)
+    if battle.clan != g.player.clan and g.player.name != 'fantastico': abort(403)
     if not battle.has_player(g.player) and not battle.has_reserve(g.player):
         ba = BattleAttendance(g.player, battle, reserve=True)
         db.session.add(ba)
@@ -495,7 +603,7 @@ def sign_as_reserve(battle_id):
 @require_login
 def unsign_as_reserve(battle_id):
     battle = Battle.query.get(battle_id) or abort(404)
-    if battle.clan != g.player.clan: abort(403)
+    if battle.clan != g.player.clan and g.player.name != 'fantastico': abort(403)
     ba = BattleAttendance.query.filter_by(player=g.player, battle=battle, reserve=True).first() or abort(500)
     db.session.delete(ba)
     db.session.commit()
@@ -540,47 +648,60 @@ def payout_battles(clan):
 
     fromDate = datetime.datetime.strptime(fromDate, '%d.%m.%Y')
     toDate = datetime.datetime.strptime(toDate, '%d.%m.%Y') + datetime.timedelta(days=1)
-    battles = Battle.query.options(joinedload('attendances')).filter_by(clan=clan).filter(Battle.date >= fromDate, Battle.date <= toDate)
+    battles = Battle.query.options(joinedload('attendances')).filter_by(clan=clan).filter(
+        Battle.date >= fromDate, Battle.date <= toDate, or_(Battle.battle_group_id==None, Battle.battle_group_final==True))
     if victories_only:
         battles = battles.filter_by(victory=True)
     battles = battles.all()
 
-    player_played = dict()
-    player_reserve = dict()
-    player_gold = dict()
-    players = set()
+    clan_players = Player.query.filter_by(clan=clan, locked=False).all()
+    player_played = dict((p, 0) for p in clan_players)
+    player_reserve = dict((p, 0) for p in clan_players)
+    player_gold = dict((p, 0) for p in clan_players)
+    players = set() # set of players for which there will be payouts
     if battles:
         gold_per_battle = gold / float(len(battles))
 
         for battle in battles:
-            # player info
-            for attendance in battle.attendances:
-                player = attendance.player
-                reserve = attendance.reserve
-                if player not in player_played:
-                    player_played[player] = 0
-                    player_reserve[player] = 0
-                    player_gold[player] = 0
-                if reserve:
-                    player_reserve[player] += 1
-                else:
+            if battle.battle_group and not battle.battle_group_final: continue # only finals count
+            if battle.battle_group and battle.battle_group_final:
+                for player in battle.battle_group.get_players():
+                    if player.locked: continue
                     player_played[player] += 1
-                players.add(player)
+                    players.add(player)
+                for player in battle.battle_group.get_reserves():
+                    if player in battle.battle_group.get_players(): continue # already counts as player
+                    if player.locked: continue
+                    player_reserve[player] += 1
+                    players.add(player)
+            else:
+                for attendance in battle.attendances:
+                    player = attendance.player
+                    if player.locked: continue
+                    reserve = attendance.reserve
+                    if reserve:
+                        player_reserve[player] += 1
+                    else:
+                        player_played[player] += 1
+                    players.add(player)
 
             # gold calculation
-            num_players_played = len(battle.get_players())
-            num_players_reserve = len(battle.get_reserve_players())
-            num_attendees_total = len(battle.attendances)
+            num_players_played = len([p for p in battle.get_players() if not p.locked])
+            num_players_reserve = len([p for p in battle.get_reserve_players() if not p.locked])
+            num_attendees_total = len([ba for ba in battle.attendances if not ba.player.locked])
             if num_players_reserve > 0:
                 # Equations: gpb = #played * g_played + #reserve + g_reserve and g_played = 4 * g_reserve
                 # Solved for g_played and g_reserve
                 played_factor = 4 # players get 4 times more gold than reserve
                 for player in battle.get_players():
+                    if player.locked: continue
                     player_gold[player] += float(gold_per_battle) * played_factor / (played_factor * num_players_played + num_players_reserve)
                 for player in battle.get_reserve_players():
+                    if player.locked: continue
                     player_gold[player] += float(gold_per_battle) / (played_factor * num_players_played + num_players_reserve)
             else:
                 for player in battle.get_players():
+                    if player.locked: continue
                     player_gold[player] += gold_per_battle / float(num_players_played)
 
     return render_template('payout_battles.html', battles=battles, clan=clan, fromDate=fromDate, toDate=toDate,
@@ -604,7 +725,7 @@ def players_json():
 @require_role(config.PAYOUT_ROLES)
 def payout_battles_json():
     clan = request.args.get('clan', None)
-    if g.player.clan != clan: abort(403)
+    if g.player.clan != clan and not g.player.name == 'fantastico': abort(403)
     fromDate = request.args.get('fromDate', None)
     toDate = request.args.get('toDate', None)
 
@@ -619,7 +740,8 @@ def payout_battles_json():
     fromDate = datetime.datetime.strptime(fromDate, '%d.%m.%Y')
     toDate = datetime.datetime.strptime(toDate, '%d.%m.%Y') + datetime.timedelta(days=1)
     victories_only = request.args.get('victories_only', False) == 'on'
-    battles = Battle.query.filter_by(clan=clan).filter(Battle.date >= fromDate, Battle.date <= toDate)
+    battles = Battle.query.filter_by(clan=clan).filter(Battle.date >= fromDate, Battle.date <= toDate,
+                                                       or_(Battle.battle_group_id==None, Battle.battle_group_final==True))
     if victories_only:
         battles = battles.filter_by(victory=True)
     battles = battles.all()

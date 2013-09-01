@@ -53,6 +53,10 @@ span.recruiter {
     color: #379337;
 }
 
+span.player_locked {
+    color: darkred;
+}
+
 .victory {
     color: darkgreen;
 }

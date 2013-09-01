@@ -19,6 +19,12 @@ can be deployed in various ways.
 See the Flask documentation (http://flask.pocoo.org/docs/deploying/)
 for further information.
 
+Configuration
+-------------
+
+Adjust whyattend/config.py and put your clan's logo
+into whyattend/static/img/clanicons.
+
 Deployment Example
 ------------------
 

@@ -49,6 +49,6 @@ STORE_REPLAYS_IN_DB = True
 
 # Override settings with local config, if present
 try:
-    from whyattend.local_config import *
+    from local_config import *
 except ImportError:
     pass
