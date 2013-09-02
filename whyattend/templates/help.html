@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block title %}Help{% endblock %}
+{% block content %}
+    <h2>Help</h2>
+
+    <p>This web application is used to track clan war attendance.
+        Clan leaders can upload replays which are parsed for the list of players.
+        Clan members that didn't get to play can sign themselves up as reserve players.
+        This information can be used to track the activity of players and calculate the
+        share of gold for each player.
+    </p>
+    <p><strong>If you are in one of the clans listed in the players menu, you
+    can log in right away with your Wargaming.net Account.</strong> Wargaming does not share any information
+    other than your ingame name with this website, which is used to validate that you are a member
+    of one of the clans configured on this website.</p>
+
+    <p></p>
+
+    {% if g.player %}
+    <p>
+
+    </p>
+    {% endif %}
+
+    <h3>Technical Details</h3>
+    <p>For the technically interested :-) This web application is written in the Python web framework
+        <a href="http://flask.pocoo.org">Flask</a>. The database mapping is done with
+        <a href="http://sqlalchemy.org">SQLAlchemy</a>. Player authentication is done using Wargaming's
+        capabilities as OpenID provider. The <a href="https://github.com/thunder-spb/wot-api-description">web
+        service API</a> of World of Tanks is used to retrieve further
+        player information such as clan status.
+     </p>
+     <p>
+        The frontend is written in HTML5, <a href="http://jquery.com">jQuery</a>
+        and <a href="http://getbootstrap.com">Bootstrap</a>.
+    </p>
+    <p>
+        For further information you can
+        <a href="http://worldoftanks.eu/community/accounts/501615100-fantastico/">contact the developer</a>.
+    </p>
+    <p>
+        The plan is to eventually open-source the application to get more developers involved in implementing
+        cool features such as:
+        <ul>
+            <li>Track the tank locking status of the clan</li>
+            <li>More statistics about battles and players</li>
+            <li>Integration of more WoT API features and Global Map information</li>
+            <li>Holiday calendar</li>
+        </ul>
+    </p>
+
+{% endblock %}

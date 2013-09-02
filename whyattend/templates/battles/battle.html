@@ -10,6 +10,8 @@
         <dl class="col-lg-3">
             <dt>Battle added by</dt>
             <dd><span class="{{battle.creator.role}}">{{battle.creator.name}}</span></dd>
+            <dt>Outcome</dt>
+            <dd><span class="{{battle.outcome_str().lower()}}">{{battle.outcome_str()}}</span></dd>
             <dt>Map</dt>
             <dd>{{battle.map_name}}</dd>
             <dt>Province</dt>
@@ -28,7 +30,7 @@
             <dd>
                 <ul>
                 {% for player in battle.get_players() %}
-                    <li>{{player.name}}</li>
+                    <li><a href="{{url_for('player', player_id=player.id)}}">{{player.name}}</a></li>
                 {% endfor %}
                 </ul>
             </dd>

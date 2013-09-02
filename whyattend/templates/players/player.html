@@ -3,6 +3,9 @@
 {% block content %}
   <h2><img style="height: 32px; width: 32px;" src="{{url_for('static', filename='img/clanicons/' + player.clan + '.png')}}"> <span class="{{player.role}}">{{player.name}}</span></h2>
   <dl>
+      {% if player.locked %}
+      <dt><span style="color: darkred">Player no longer in clan. Below is the last known information while in clan.</span></dt>
+      {% endif %}
       <dt>Position</dt>
       <dd><span class="{{player.role}}">{{g.roles[player.role]}}</span></dd>
       <dt>World of Tanks Profile</dt>

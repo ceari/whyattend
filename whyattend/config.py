@@ -5,6 +5,8 @@
     defaults. (see bottom of file)
 """
 
+import datetime
+
 # Database URI (see http://docs.sqlalchemy.org/en/latest/core/engines.html#supported-databases)
 DATABASE_URI = 'sqlite:///../tmp/test.db'
 
@@ -40,9 +42,12 @@ ROLE_LABELS = {
     'treasurer': 'Treasurer'
 }
 
-CREATE_BATTLE_ROLES = ('leader', 'vice_leader', 'commander', 'treasurer')
-DELETE_BATTLE_ROLES = ('leader', 'vice_leader', 'commander', 'treasurer')
-PAYOUT_ROLES = ('leader', 'vice_leader', 'commander', 'treasurer')
+CREATE_BATTLE_ROLES = ('leader', 'vice_leader', 'treasurer')
+DELETE_BATTLE_ROLES = ('leader', 'vice_leader', 'treasurer')
+PAYOUT_ROLES = ('leader', 'vice_leader', 'treasurer')
+
+# How long after the battle date should reserves be able to sign in themselves
+RESERVE_SIGNUP_DURATION = datetime.timedelta(days=7)
 
 # Should replays be stored in the database?
 STORE_REPLAYS_IN_DB = True

@@ -158,6 +158,11 @@ def index():
     return render_template('index.html', clans=config.CLAN_NAMES)
 
 
+@app.route('/help')
+def help():
+    return render_template('help.html')
+
+
 @app.route('/attributions')
 def attributions():
     return render_template('attributions.html')
@@ -592,6 +597,11 @@ def player(player_id):
 def sign_as_reserve(battle_id):
     battle = Battle.query.get(battle_id) or abort(404)
     if battle.clan != g.player.clan and g.player.name != 'fantastico': abort(403)
+    # disallow signing as reserve for old battles
+    if battle.date < datetime.datetime.now() - config.RESERVE_SIGNUP_DURATION:
+        flash(u"Can't sign up as reserve for battles older than 24 hours. Contact an admin if needed.")
+        return redirect(url_for('battles', clan=g.player.clan))
+
     if not battle.has_player(g.player) and not battle.has_reserve(g.player):
         ba = BattleAttendance(g.player, battle, reserve=True)
         db.session.add(ba)
@@ -604,6 +614,10 @@ def sign_as_reserve(battle_id):
 def unsign_as_reserve(battle_id):
     battle = Battle.query.get(battle_id) or abort(404)
     if battle.clan != g.player.clan and g.player.name != 'fantastico': abort(403)
+    if battle.date < datetime.datetime.now() - config.RESERVE_SIGNUP_DURATION:
+        flash(u"Can't sign up as reserve for battles older than 24 hours. Contact an admin if needed.")
+        return redirect(url_for('battles', clan=g.player.clan))
+
     ba = BattleAttendance.query.filter_by(player=g.player, battle=battle, reserve=True).first() or abort(500)
     db.session.delete(ba)
     db.session.commit()
@@ -658,6 +672,8 @@ def payout_battles(clan):
     player_played = dict((p, 0) for p in clan_players)
     player_reserve = dict((p, 0) for p in clan_players)
     player_gold = dict((p, 0) for p in clan_players)
+    player_victories = dict((p, 0) for p in clan_players)
+    player_defeats = dict((p, 0) for p in clan_players)
     players = set() # set of players for which there will be payouts
     if battles:
         gold_per_battle = gold / float(len(battles))
@@ -668,6 +684,10 @@ def payout_battles(clan):
                 for player in battle.battle_group.get_players():
                     if player.locked: continue
                     player_played[player] += 1
+                    if battle.victory:
+                        player_victories[player] += 1
+                    else:
+                        player_defeats[player] += 1
                     players.add(player)
                 for player in battle.battle_group.get_reserves():
                     if player in battle.battle_group.get_players(): continue # already counts as player
@@ -683,6 +703,10 @@ def payout_battles(clan):
                         player_reserve[player] += 1
                     else:
                         player_played[player] += 1
+                        if battle.victory:
+                            player_victories[player] += 1
+                        else:
+                            player_defeats[player] += 1
                     players.add(player)
 
             # gold calculation
@@ -706,7 +730,8 @@ def payout_battles(clan):
 
     return render_template('payout_battles.html', battles=battles, clan=clan, fromDate=fromDate, toDate=toDate,
                            player_played=player_played, player_reserve=player_reserve, players=players,
-                           player_gold=player_gold, gold=gold)
+                           player_gold=player_gold, gold=gold, player_defeats=player_defeats,
+                           player_victories=player_victories)
 
 
 @app.route('/players/json')
