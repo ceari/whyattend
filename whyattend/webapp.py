@@ -669,69 +669,61 @@ def payout_battles(clan):
     battles = battles.all()
 
     clan_players = Player.query.filter_by(clan=clan, locked=False).all()
+    player_fced_win = dict((p, 0) for p in clan_players)
+    player_fced_defeat = dict((p, 0) for p in clan_players)
     player_played = dict((p, 0) for p in clan_players)
     player_reserve = dict((p, 0) for p in clan_players)
     player_gold = dict((p, 0) for p in clan_players)
     player_victories = dict((p, 0) for p in clan_players)
     player_defeats = dict((p, 0) for p in clan_players)
-    players = set() # set of players for which there will be payouts
-    if battles:
-        gold_per_battle = gold / float(len(battles))
+    for battle in battles:
+        if battle.battle_group and not battle.battle_group_final: continue # only finals count
 
-        for battle in battles:
-            if battle.battle_group and not battle.battle_group_final: continue # only finals count
-            if battle.battle_group and battle.battle_group_final:
-                for player in battle.battle_group.get_players():
-                    if player.locked: continue
-                    player_played[player] += 1
-                    if battle.victory:
-                        player_victories[player] += 1
-                    else:
-                        player_defeats[player] += 1
-                    players.add(player)
-                for player in battle.battle_group.get_reserves():
-                    if player in battle.battle_group.get_players(): continue # already counts as player
-                    if player.locked: continue
-                    player_reserve[player] += 1
-                    players.add(player)
-            else:
-                for attendance in battle.attendances:
-                    player = attendance.player
-                    if player.locked: continue
-                    reserve = attendance.reserve
-                    if reserve:
-                        player_reserve[player] += 1
-                    else:
-                        player_played[player] += 1
-                        if battle.victory:
-                            player_victories[player] += 1
-                        else:
-                            player_defeats[player] += 1
-                    players.add(player)
+        if battle.battle_group and battle.battle_group_final:
+            battle_players = battle.battle_group.get_players()
+            battle_reserves = battle.battle_group.get_reserves()
+        else:
+            battle_players = battle.get_players()
+            battle_reserves = battle.get_reserve_players()
 
-            # gold calculation
-            num_players_played = len([p for p in battle.get_players() if not p.locked])
-            num_players_reserve = len([p for p in battle.get_reserve_players() if not p.locked])
-            num_attendees_total = len([ba for ba in battle.attendances if not ba.player.locked])
-            if num_players_reserve > 0:
-                # Equations: gpb = #played * g_played + #reserve + g_reserve and g_played = 4 * g_reserve
-                # Solved for g_played and g_reserve
-                played_factor = 4 # players get 4 times more gold than reserve
-                for player in battle.get_players():
-                    if player.locked: continue
-                    player_gold[player] += float(gold_per_battle) * played_factor / (played_factor * num_players_played + num_players_reserve)
-                for player in battle.get_reserve_players():
-                    if player.locked: continue
-                    player_gold[player] += float(gold_per_battle) / (played_factor * num_players_played + num_players_reserve)
+        battle_commander = battle.battle_commander
+        if not battle_commander.locked:
+            if battle.victory:
+                player_fced_win[battle_commander] += 1
             else:
-                for player in battle.get_players():
-                    if player.locked: continue
-                    player_gold[player] += gold_per_battle / float(num_players_played)
+                player_fced_defeat[battle_commander] += 1
+
+        for p in battle_players:
+            if p.locked or p == battle_commander: continue
+            player_played[p] += 1
+            if battle.victory:
+                player_victories[p] += 1
+            else:
+                player_defeats[p] += 1
+
+        for p in battle_reserves:
+            if p.locked: continue
+            player_reserve[p] += 1
+
+    players = set()
+    for p in clan_players:
+        if player_played[p] or player_reserve[p] or player_fced_win[p] or player_fced_defeat[p]:
+            players.add(p)
+
+    player_points = dict()
+    for p in players:
+        player_points[p] = player_fced_win[p] * 6 + player_fced_defeat[p] * 1 + player_victories[p] * 3 + \
+                            player_defeats[p] * 1 + player_reserve[p] * 1
+    total_points = sum(player_points[p] for p in players)
+    player_gold = dict()
+    for p in players:
+        player_gold[p] = int(round(player_points[p] / float(total_points) * gold))
 
     return render_template('payout_battles.html', battles=battles, clan=clan, fromDate=fromDate, toDate=toDate,
                            player_played=player_played, player_reserve=player_reserve, players=players,
-                           player_gold=player_gold, gold=gold, player_defeats=player_defeats,
-                           player_victories=player_victories)
+                           player_gold=player_gold, gold=gold, player_defeats=player_defeats, player_fced_win=player_fced_win,
+                           player_fced_defeat=player_fced_defeat, player_victories=player_victories,
+                           player_points=player_points)
 
 
 @app.route('/players/json')

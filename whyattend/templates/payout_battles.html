@@ -1,5 +1,23 @@
 {% extends "layout.html" %}
 {% block title %}Payout battles{% endblock %}
+{% block head %}
+    {{super()}}
+    <script src="{{url_for('static', filename='js/jquery.dataTables.min.js')}}" type="text/javascript"></script>
+    <script src="{{url_for('static', filename='js/dataTables.bootstrap.js')}}" type="text/javascript"></script>
+    <link href="{{url_for('static', filename='css/dataTables.bootstrap.css')}}" rel="stylesheet" media="screen">
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            $('#players').dataTable({
+                "bPaginate": false,
+            });
+
+            $('#players_filter label input').addClass('form-control');
+            $('#players_length label select').addClass('form-control');
+        });
+    </script>
+{% endblock %}
 {% block content %}
     <form>
         <input type="hidden" name="fromDate" value="{{fromDate}}">
@@ -14,18 +32,28 @@
         of one week at a time). He could of course also only pay battle per battle. etc.
     </p>
     <p>Current implementation:
-        Gold is split evenly across battles.
-        For each battle, every player gets 4 times as much gold as every reserve.
-        If there were no players in reserve, the gold is divided evenly amongst the players, obviously.
+       A player gains points for battles as follows:
+        <ul>
+            <li>6 for commanding a victory</li>
+            <li>1 for commanding a loss</li>
+            <li>3 for playing in a victory</li>
+            <li>1 for playing in a loss</li>
+            <li>1 for being a reserve</li>
+        </ul>
+        The points are summed up. The player receives a share of the gold proportional to his points divided by the total number of
+        points distributed.
     </p>
-    <table class="table">
+    <table id="players" class="table">
         <thead>
             <tr>
                 <th>Player</th>
+                <th># battles commanded won</th>
+                <th># battles commanded lost</th>
                 <th># battles played</th>
                 <th># battles won</th>
                 <th># battles lost</th>
                 <th># battles reserve</th>
+                <th>Points</th>
                 <th>Gold to pay</th>
             </tr>
         </thead>
@@ -33,10 +61,13 @@
             {% for player in players|sort(attribute="name") %}
             <tr>
                 <td>{{player.name}}</td>
+                <td>{{player_fced_win[player]}}</td>
+                <td>{{player_fced_defeat[player]}}</td>
                 <td>{{player_played[player]}}</td>
                 <td>{{player_victories[player]}}</td>
                 <td>{{player_defeats[player]}}</td>
                 <td>{{player_reserve[player]}}</td>
+                <td>{{player_points[player]}}</td>
                 <td>{{player_gold[player]}}</td>
             </tr>
             {% endfor %}
