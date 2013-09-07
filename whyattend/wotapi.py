@@ -10,7 +10,8 @@ from config import API_URL, API_TOKEN, WOT_SERVER_REGION_CODE
 
 def get_player(id):
     try:
-        r = requests.get(API_URL + 'uc/accounts/'+id+'/api/1.8/', params={'source_token': API_TOKEN})
+        r = requests.get(API_URL + 'uc/accounts/'+id+'/api/1.8/', params={'source_token': API_TOKEN},
+                         timeout=10)
         json = r.json()
         if json['status'] == 'ok' and json['status_code'] == 'NO_ERROR':
             return json
@@ -20,7 +21,8 @@ def get_player(id):
 
 def get_clan(id):
     try:
-        r = requests.get(API_URL + 'community/clans/' + id + '/api/1.1/', params={'source_token': API_TOKEN})
+        r = requests.get(API_URL + 'community/clans/' + id + '/api/1.1/', params={'source_token': API_TOKEN},
+                         timeout=10)
         json = r.json()
         if json['status'] == 'ok' and json['status_code'] == 'NO_ERROR':
             return json
@@ -45,7 +47,8 @@ def get_scheduled_battles(clan_id):
                          '/community/clans/' + str(clan_id) + '/battles/list/',
                          params={'id': 'js-battles-table'},
                          headers={'X-Requested-With': 'XMLHttpRequest',
-                                  'Accept': 'application/json, text/javascript, text/html, */*'})
+                                  'Accept': 'application/json, text/javascript, text/html, */*'},
+                         timeout=10)
         if r.ok and r.json()['result'] == 'success':
             return r.json()
         else:
