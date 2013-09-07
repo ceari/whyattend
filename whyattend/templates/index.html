@@ -12,14 +12,14 @@
             <h4>Latest Battles of {{g.player.clan}}</h4>
             <ul>
             {% for battle in latest_battles %}
-            <li><span class="{{battle.outcome_repr()}}">{{battle.outcome_str()}}</span> against {{battle.enemy_clan}} on {{battle.map_name}}, <a href="{{url_for('battle_details', battle_id=battle.id)}}">{{battle.date|age}}</a>
+            <li><span class="{{battle.outcome_repr()}}">{{battle.outcome_str()}}</span> against {{battle.enemy_clan}} on {{battle.map_name}}, <a href="{{url_for('battle_details', battle_id=battle.id)}}">{{battle.date|ago_human(precision=1)}}</a>
             {% endfor %}
             </ul>
             {% endif %}
         </div>
         <div class="col-lg-6">
-            {% if scheduled_battles %}
-                <h4>Scheduled Battles</h4>
+            <h4>Scheduled Battles</h4>
+            {% if scheduled_battles and scheduled_battles.request_data['items'] %}
                 <ul style="list-style: none">
                 {% for item in scheduled_battles.request_data['items'] %}
                 <li>
@@ -30,6 +30,8 @@
                 </li>
                 {% endfor %}
                 </ul>
+            {% else %}
+                No battles scheduled yet. Check the Global Map for chip placement.
             {% endif %}
         </div>
         </div>

@@ -19,7 +19,6 @@ from ago import human
 import config
 import replays
 import wotapi
-import filters
 from .util import ReverseProxied
 from .model import db, Player, Battle, BattleAttendance, Replay, BattleGroup
 
@@ -34,11 +33,10 @@ db.init_app(app)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 oid = OpenID(app, config.OID_STORE_PATH)
 
-app.jinja_env.filters['age'] = filters.age
 app.jinja_env.filters['ago_human'] = human
 
-# Set up middleware in case we are behind a reverse proxy server
-app.wsgi_app = ReverseProxied(app.wsgi_app)
+# Uncomment to set up middleware in case we are behind a reverse proxy server
+# app.wsgi_app = ReverseProxied(app.wsgi_app)
 
 # decorates a decorator function to be able to specify parameters :-)
 decorator_with_args = lambda decorator: lambda *args, **kwargs: \
