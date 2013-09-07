@@ -589,8 +589,39 @@ def players(clan):
                     reserve[player] += 1
                     present[player] += 1
 
+    oldest_date = datetime.datetime.now() - datetime.timedelta(days=30)
+    # 30 days stats
+    possible30 = dict((p, 0) for p in players)
+    reserve30 = dict((p, 0) for p in players)
+    played30 = dict((p, 0) for p in players)
+    present30 = dict((p, 0) for p in players)
+    clan_battles = Battle.query.options(joinedload_all('attendances.player')) \
+                        .filter_by(clan=clan).filter(Battle.date > oldest_date).order_by('date asc').all()
+    for player in players:
+        for battle in clan_battles:
+            if battle.date < player.member_since: continue
+            if battle.battle_group and not battle.battle_group_final: continue # only finals will count
+            possible30[player] += 1
+
+            if battle.battle_group:
+                if player in battle.battle_group.get_players():
+                    played30[player] += 1
+                    present30[player] += 1
+                elif player in battle.battle_group.get_reserves():
+                    reserve30[player] += 1
+                    present30[player] += 1
+            else:
+                if battle.has_player(player):
+                    played30[player] += 1
+                    present30[player] += 1
+                elif battle.has_reserve(player):
+                    reserve30[player] += 1
+                    present30[player] += 1
+
+
     return render_template('players/players.html', clan=clan, players=players,
-                           played=played, present=present, possible=possible, reserve=reserve)
+                           played=played, present=present, possible=possible, reserve=reserve,
+                           played30=played30, present30=present30, possible30=possible30)
 
 
 @app.route('/players/<int:player_id>')
