@@ -14,6 +14,7 @@ from flask.ext.cache import Cache
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename
+from ago import human
 
 import config
 import replays
@@ -34,6 +35,7 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 oid = OpenID(app, config.OID_STORE_PATH)
 
 app.jinja_env.filters['age'] = filters.age
+app.jinja_env.filters['ago_human'] = human
 
 # Set up middleware in case we are behind a reverse proxy server
 app.wsgi_app = ReverseProxied(app.wsgi_app)

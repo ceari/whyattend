@@ -24,9 +24,9 @@
                 {% for item in scheduled_battles.request_data['items'] %}
                 <li>
                     <img style="margin-right: 5px; width: 16px; height:16px;" src="{{url_for('static', filename='img/swords.png')}}">
-                    {% for p in item.provinces %}{{p.name}} {% if loop.index < item.provinces|length %} - {%endif%}{% endfor %}
-                    on {{datetime.datetime.fromtimestamp(item.time).strftime('%d.%m.%Y at %H:%M')}}
-                    on {% for map in item.arenas %}{{map}} {% if loop.index < item.provinces|length %} or {%endif%}{% endfor %}
+                    {% for p in item.provinces %}{{p.name}}{% if loop.index < item.provinces|length %} - {%endif%}{% endfor %} -
+                    {{datetime.datetime.fromtimestamp(item.time)|ago_human(precision=1)}}
+                    - on {% for map in item.arenas %}{{map}} {% if loop.index < item.provinces|length %} or {%endif%}{% endfor %}
                 </li>
                 {% endfor %}
                 </ul>
