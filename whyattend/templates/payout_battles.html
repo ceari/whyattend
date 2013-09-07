@@ -16,6 +16,26 @@
             $('#players_filter label input').addClass('form-control');
             $('#players_length label select').addClass('form-control');
         });
+
+        var fnShowHide = function( iCol )
+        {
+            /* Get the DataTables object again - this is not a recreation, just a get of the object */
+            var oTable = $('#players').dataTable();
+
+            var bVis = oTable.fnSettings().aoColumns[iCol].bVisible;
+            oTable.fnSetColumnVis( iCol, bVis ? false : true );
+        };
+
+        var toggleDetails = function() {
+            fnShowHide(1);
+            fnShowHide(2);
+            fnShowHide(3);
+            fnShowHide(4);
+            fnShowHide(5);
+            fnShowHide(6);
+            fnShowHide(7);
+            fnShowHide(8);
+        };
     </script>
 {% endblock %}
 {% block content %}
@@ -35,22 +55,25 @@
        A player gains points for battles as follows:
         <ul>
             <li>6 for commanding a victory</li>
-            <li>1 for commanding a loss</li>
+            <li>4 for commanding a loss/draw</li>
             <li>3 for playing in a victory</li>
-            <li>1 for playing in a loss</li>
+            <li>2 for playing in a loss/draw</li>
             <li>1 for being a reserve</li>
         </ul>
         The points are summed up. The player receives a share of the gold proportional to his points divided by the total number of
         points distributed.
     </p>
+    <a class="btn btn-primary" onclick="toggleDetails();" href="javascript:void(0);">Toggle Details</a>
     <table id="players" class="table">
         <thead>
             <tr>
                 <th>Player</th>
                 <th># battles commanded won</th>
+                <th># battles commanded drawn</th>
                 <th># battles commanded lost</th>
                 <th># battles played</th>
                 <th># battles won</th>
+                <th># battles drawn</th>
                 <th># battles lost</th>
                 <th># battles reserve</th>
                 <th>Points</th>
@@ -62,9 +85,11 @@
             <tr>
                 <td>{{player.name}}</td>
                 <td>{{player_fced_win[player]}}</td>
+                <td>{{player_fced_draws[player]}}</td>
                 <td>{{player_fced_defeat[player]}}</td>
                 <td>{{player_played[player]}}</td>
                 <td>{{player_victories[player]}}</td>
+                <td>{{player_draws[player]}}</td>
                 <td>{{player_defeats[player]}}</td>
                 <td>{{player_reserve[player]}}</td>
                 <td>{{player_points[player]}}</td>

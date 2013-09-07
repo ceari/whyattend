@@ -120,26 +120,24 @@ class Battle(db.Model):
         self.map_name = map_name
         self.map_province = map_province
         self.paid = paid
+        if victory and draw:
+            raise Exception("Battle can not be victory and draw at the same time")
 
     def outcome_str(self):
         if self.victory and not self.draw:
             return 'Victory'
-        elif self.victory and self.draw:
-            return 'Victory (Draw)'
-        elif not self.victory and self.draw:
-            return 'Defeat (Draw)'
-        else:
+        elif not self.victory and not self.draw:
             return 'Defeat'
+        else:
+            return 'Draw'
 
     def outcome_repr(self):
         if self.victory and not self.draw:
             return 'victory'
-        elif self.victory and self.draw:
-            return 'victory_draw'
-        elif not self.victory and self.draw:
-            return 'defeat_draw'
-        else:
+        elif not self.victory and not self.draw:
             return 'defeat'
+        else:
+            return 'draw'
 
     def has_player(self, player):
         for ba in self.attendances:

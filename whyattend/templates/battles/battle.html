@@ -29,7 +29,7 @@
             <dt>Players ({{battle.get_players()|length}})</dt>
             <dd>
                 <ul>
-                {% for player in battle.get_players() %}
+                {% for player in battle.get_players()|sort(attribute='name') %}
                     <li><a href="{{url_for('player', player_id=player.id)}}">{{player.name}}</a></li>
                 {% endfor %}
                 </ul>
@@ -39,7 +39,7 @@
             <dt>Reserve Players ({{battle.get_reserve_players()|length}})</dt>
             <dd>
                 <ul>
-                {% for player in battle.get_reserve_players() %}
+                {% for player in battle.get_reserve_players()|sort(attribute='name') %}
                     <li>{{player.name}}</li>
                 {% endfor %}
                 </ul>

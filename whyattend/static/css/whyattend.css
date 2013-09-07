@@ -62,9 +62,9 @@ span.player_locked {
 }
 
 .defeat {
-    color: darkred;
+    color: red;
 }
 
 .draw {
-    color: darkorange;
+    color: firebrick;
 }

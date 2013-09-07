@@ -326,8 +326,8 @@ def edit_battle(battle_id):
             battle.date = date
             battle.clan = g.player.clan
             battle.enemy_clan = enemy_clan
-            battle.victory = battle_result in ('victory', 'victory_draw')
-            battle.draw = battle_result in ('defeat_draw', 'victory_draw')
+            battle.victory = battle_result == 'victory'
+            battle.draw = battle_result == 'draw'
             battle.map_name = map_name
             battle.map_province = province
             battle.battle_commander_id = battle_commander.id
@@ -475,9 +475,9 @@ def create_battle():
                 errors = True
 
         if not errors:
-            battle = Battle(date, g.player.clan, enemy_clan, victory=(battle_result in ('victory', 'victory_draw')),
+            battle = Battle(date, g.player.clan, enemy_clan, victory=(battle_result == 'victory'),
                             map_name=map_name, map_province=province,
-                            draw=(battle_result in ('defeat_draw', 'victory_draw')), creator=g.player,
+                            draw=(battle_result == 'draw'), creator=g.player,
                             battle_commander=battle_commander, description=description)
 
             if bg:
@@ -671,11 +671,13 @@ def payout_battles(clan):
     clan_players = Player.query.filter_by(clan=clan, locked=False).all()
     player_fced_win = dict((p, 0) for p in clan_players)
     player_fced_defeat = dict((p, 0) for p in clan_players)
+    player_fced_draws = dict((p, 0) for p in clan_players)
     player_played = dict((p, 0) for p in clan_players)
     player_reserve = dict((p, 0) for p in clan_players)
     player_gold = dict((p, 0) for p in clan_players)
     player_victories = dict((p, 0) for p in clan_players)
     player_defeats = dict((p, 0) for p in clan_players)
+    player_draws = dict((p, 0) for p in clan_players)
     for battle in battles:
         if battle.battle_group and not battle.battle_group_final: continue # only finals count
 
@@ -690,6 +692,8 @@ def payout_battles(clan):
         if not battle_commander.locked:
             if battle.victory:
                 player_fced_win[battle_commander] += 1
+            elif battle.draw:
+                player_fced_draws[battle_commander] += 1
             else:
                 player_fced_defeat[battle_commander] += 1
 
@@ -698,6 +702,8 @@ def payout_battles(clan):
             player_played[p] += 1
             if battle.victory:
                 player_victories[p] += 1
+            elif battle.draw:
+                player_draws[p] += 1
             else:
                 player_defeats[p] += 1
 
@@ -712,8 +718,8 @@ def payout_battles(clan):
 
     player_points = dict()
     for p in players:
-        player_points[p] = player_fced_win[p] * 6 + player_fced_defeat[p] * 1 + player_victories[p] * 3 + \
-                            player_defeats[p] * 1 + player_reserve[p] * 1
+        player_points[p] = player_fced_win[p] * 6 + player_fced_defeat[p] * 4 + player_fced_draws[p] * 2 + \
+                           player_victories[p] * 3 + player_defeats[p] * 2 + player_draws[p] * 2 + player_reserve[p] * 1
     total_points = sum(player_points[p] for p in players)
     player_gold = dict()
     for p in players:
@@ -723,7 +729,7 @@ def payout_battles(clan):
                            player_played=player_played, player_reserve=player_reserve, players=players,
                            player_gold=player_gold, gold=gold, player_defeats=player_defeats, player_fced_win=player_fced_win,
                            player_fced_defeat=player_fced_defeat, player_victories=player_victories,
-                           player_points=player_points)
+                           player_fced_draws=player_fced_draws, player_draws=player_draws, player_points=player_points)
 
 
 @app.route('/players/json')
