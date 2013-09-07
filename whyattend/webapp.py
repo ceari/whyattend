@@ -10,6 +10,7 @@ import pickle
 from functools import wraps
 from flask import Flask, g, session, render_template, flash, redirect, request, url_for, abort, make_response, jsonify
 from flask.ext.openid import OpenID
+from flask.ext.cache import Cache
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename
@@ -29,6 +30,7 @@ app.config['SECRET_KEY'] = config.SECRET_KEY
 app.config['UPLOAD_FOLDER'] = config.UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16 MB at a time should be plenty for replays
 db.init_app(app)
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 oid = OpenID(app, config.OID_STORE_PATH)
 
 app.jinja_env.filters['age'] = filters.age
@@ -55,6 +57,7 @@ def lookup_current_user():
 @app.before_request
 def inject_constants():
     g.clans = config.CLAN_NAMES
+    g.clan_ids = config.CLAN_IDS
     g.roles = config.ROLE_LABELS
     g.PAYOUT_ROLES = config.PAYOUT_ROLES
     g.WOT_SERVER_REGION_CODE = config.WOT_SERVER_REGION_CODE
@@ -160,10 +163,19 @@ def sync_players(clan_id):
 def index():
     if g.player:
         latest_battles = Battle.query.filter_by(clan=g.player.clan).order_by('date desc').limit(3)
+
+        # Cache battle status for 60 seconds to avoid spamming WG's server
+        @cache.memoize(timeout=60)
+        def cached_scheduled_battles(clan_id):
+            return wotapi.get_scheduled_battles(clan_id)
+
+        scheduled_battles = cached_scheduled_battles(config.CLAN_IDS[g.player.clan])
     else:
         latest_battles = None
+        scheduled_battles = None
 
-    return render_template('index.html', clans=config.CLAN_NAMES, latest_battles=latest_battles)
+    return render_template('index.html', clans=config.CLAN_NAMES, latest_battles=latest_battles,
+                           scheduled_battles=scheduled_battles, datetime=datetime)
 
 
 @app.route('/help')

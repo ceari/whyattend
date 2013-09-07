@@ -6,13 +6,32 @@
         Welcome to the Clan War tracker of {{'/'.join(g.clans)}}.{% if not g.player %} Please log in to get started.{% endif %}
     </p>
     {% if g.player %}
-        {% if latest_battles %}
-        <h4>Latest Battles of {{g.player.clan}}</h4>
-        <ul>
-        {% for battle in latest_battles %}
-        <li><span class="{{battle.outcome_repr()}}">{{battle.outcome_str()}}</span> against {{battle.enemy_clan}} on {{battle.map_name}}, <a href="{{url_for('battle_details', battle_id=battle.id)}}">{{battle.date|age}}</a>
-        {% endfor %}
-        </ul>
-        {% endif %}
+        <div class="row">
+        <div class="col-lg-6">
+            {% if latest_battles %}
+            <h4>Latest Battles of {{g.player.clan}}</h4>
+            <ul>
+            {% for battle in latest_battles %}
+            <li><span class="{{battle.outcome_repr()}}">{{battle.outcome_str()}}</span> against {{battle.enemy_clan}} on {{battle.map_name}}, <a href="{{url_for('battle_details', battle_id=battle.id)}}">{{battle.date|age}}</a>
+            {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        <div class="col-lg-6">
+            {% if scheduled_battles %}
+                <h4>Scheduled Battles</h4>
+                <ul style="list-style: none">
+                {% for item in scheduled_battles.request_data['items'] %}
+                <li>
+                    <img style="margin-right: 5px; width: 16px; height:16px;" src="{{url_for('static', filename='img/swords.png')}}">
+                    {% for p in item.provinces %}{{p.name}} {% if loop.index < item.provinces|length %} - {%endif%}{% endfor %}
+                    on {{datetime.datetime.fromtimestamp(item.time).strftime('%d.%m.%Y at %H:%M')}}
+                    on {% for map in item.arenas %}{{map}} {% if loop.index < item.provinces|length %} or {%endif%}{% endfor %}
+                </li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        </div>
     {% endif %}
 {% endblock %}

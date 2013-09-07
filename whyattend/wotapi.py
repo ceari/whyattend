@@ -5,7 +5,7 @@
 import requests
 import datetime
 
-from config import API_URL, API_TOKEN
+from config import API_URL, API_TOKEN, WOT_SERVER_REGION_CODE
 
 
 def get_player(id):
@@ -38,3 +38,18 @@ def get_player_clan_role(player):
 
 def get_member_since_date(player):
     return datetime.datetime.fromtimestamp(float(player['data']['clan']['member']['since']))
+
+def get_scheduled_battles(clan_id):
+    try:
+        r = requests.get('http://worldoftanks.' + WOT_SERVER_REGION_CODE.lower() +
+                         '/community/clans/' + str(clan_id) + '/battles/list/',
+                         params={'id': 'js-battles-table'},
+                         headers={'X-Requested-With': 'XMLHttpRequest',
+                                  'Accept': 'application/json, text/javascript, text/html, */*'})
+        if r.ok and r.json()['result'] == 'success':
+            return r.json()
+        else:
+            return None
+    except Exception as e:
+        print e
+        return None

@@ -17,6 +17,10 @@ OID_STORE_PATH = 'tmp/oid'
 SECRET_KEY = ''
 
 CLAN_NAMES = ('CLAN', 'STRONK')
+CLAN_IDS = {
+    'CLAN': '23456789',
+    'STRONK': '34567890'
+}
 
 # Temporary folder for uploaded replays
 UPLOAD_FOLDER = 'tmp/uploads'

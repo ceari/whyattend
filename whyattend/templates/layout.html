@@ -84,8 +84,10 @@
         {% endif %}
 
         <ul class="nav navbar-nav navbar-right">
+          {% if g.player %}
+          <li><a href="http://worldoftanks.{{g.WOT_SERVER_REGION_CODE}}/community/clans/{{g.clan_ids[g.player.clan]}}-{{g.player.clan}}/battles/">Battle Schedule</a></li>
+          {% endif %}
           <li><a href="http://worldoftanks.{{g.WOT_SERVER_REGION_CODE}}/clanwars/maps/">Global Map</a></li>
-          <li><a href="{{url_for('help')}}"><i style="color: #0088cc;" class="icon-question-sign"></i></a></li>
           {% if g.player %}
           <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">{% if g.player %} <strong>{{g.player.name}} ({{g.roles[g.player.role] or 'Member'}})</strong></strong> <img style="width:16px; height:16px;" src="{{url_for('static', filename='img/clanicons/' + g.player.clan + '.png')}}"> {% endif %} <b class="caret"></b></a>
@@ -114,6 +116,7 @@
         <div id="footer">
             <hr>
             <small>Developed by <a href="http://worldoftanks.eu/community/accounts/501615100-fantastico/"><img title="WHY" style="height:16px; width:16px;" src="{{url_for('static', filename='img/clanicons/WHY.png')}}"/> fantastico</a></small>
+            --- <small><a href="{{url_for('help')}}"><i style="color: #0088cc;" class="icon-question-sign"></i> Help</a></small>
             <div style="float:right">
             <small><a href="{{url_for('attributions')}}">Attributions</a></small>
             </div>
