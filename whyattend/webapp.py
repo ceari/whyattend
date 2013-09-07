@@ -17,8 +17,9 @@ from werkzeug.utils import secure_filename
 import config
 import replays
 import wotapi
-from util import ReverseProxied
-from model import db, Player, Battle, BattleAttendance, Replay, BattleGroup
+import filters
+from .util import ReverseProxied
+from .model import db, Player, Battle, BattleAttendance, Replay, BattleGroup
 
 # Set up Flask application
 app = Flask(__name__)
@@ -29,6 +30,8 @@ app.config['UPLOAD_FOLDER'] = config.UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16 MB at a time should be plenty for replays
 db.init_app(app)
 oid = OpenID(app, config.OID_STORE_PATH)
+
+app.jinja_env.filters['age'] = filters.age
 
 # Set up middleware in case we are behind a reverse proxy server
 app.wsgi_app = ReverseProxied(app.wsgi_app)
@@ -155,7 +158,12 @@ def sync_players(clan_id):
 
 @app.route("/")
 def index():
-    return render_template('index.html', clans=config.CLAN_NAMES)
+    if g.player:
+        latest_battles = Battle.query.filter_by(clan=g.player.clan).order_by('date desc').limit(3)
+    else:
+        latest_battles = None
+
+    return render_template('index.html', clans=config.CLAN_NAMES, latest_battles=latest_battles)
 
 
 @app.route('/help')
@@ -530,7 +538,7 @@ def battle_group(group_id):
 @require_login
 def battle_details(battle_id):
     battle = Battle.query.get(battle_id) or abort(404)
-    return render_template('battles/battle.html', battle=battle)
+    return render_template('battles/battle.html', battle=battle, replays=replays)
 
 
 @app.route('/battles/<int:battle_id>/delete')

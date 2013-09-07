@@ -25,7 +25,7 @@
             <dd>{{battle.description}}</dd>
             {% endif %}
         </dl>
-        <dl class="col-lg-3">
+        <dl class="col-lg-2">
             <dt>Players ({{battle.get_players()|length}})</dt>
             <dd>
                 <ul>
@@ -35,7 +35,7 @@
                 </ul>
             </dd>
         </dl>
-        <dl class="col-lg-3">
+        <dl class="col-lg-2">
             <dt>Reserve Players ({{battle.get_reserve_players()|length}})</dt>
             <dd>
                 <ul>
@@ -45,6 +45,13 @@
                 </ul>
             </dd>
         </dl>
+        {% if battle.replay.unpickle() %}
+        <dl class="col-lg-5">
+            <strong>Replay Details</strong>
+            {% set replay = battle.replay.unpickle() %}
+            {% include "replay_details.html" %}
+        </dl>
+        {% endif %}
     </div>
     <dl>
         <dt>Replay</dt>

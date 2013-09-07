@@ -2,8 +2,17 @@
 {% block title %}Welcome{% endblock %}
 {% block content %}
     <h2>Clan Wars of {{', '.join(g.clans)}}</h2>
-
     <p>
-        Welcome to the Clan War tracker of {{'/'.join(g.clans)}}. Please log in to get started.
+        Welcome to the Clan War tracker of {{'/'.join(g.clans)}}.{% if not g.player %} Please log in to get started.{% endif %}
     </p>
+    {% if g.player %}
+        {% if latest_battles %}
+        <h4>Latest Battles of {{g.player.clan}}</h4>
+        <ul>
+        {% for battle in latest_battles %}
+        <li><span class="{{battle.outcome_repr()}}">{{battle.outcome_str()}}</span> against {{battle.enemy_clan}} on {{battle.map_name}}, <a href="{{url_for('battle_details', battle_id=battle.id)}}">{{battle.date|age}}</a>
+        {% endfor %}
+        </ul>
+        {% endif %}
+    {% endif %}
 {% endblock %}

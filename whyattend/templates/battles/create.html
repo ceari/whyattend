@@ -200,43 +200,8 @@
         </div>
         <div class="col-lg-4">
             {% if replay %}
-            <h4>Replay information</h4>
-            <dl>
-              <dd><img title="{{g.player.clan}}" alt="{{g.player.cla}}" src="{{url_for('static', filename='img/clanicons/' + g.player.clan + '.png')}}"></dd>
-              <dt>Recorded by</dt>
-              <dd>{{replay.first.playerName}}</dd>
-              <dt>Time</dt>
-              <dd>{{replay.first.dateTime}}</dd>
-              <dt>Map</dt>
-              <dd>{{replay.first.mapDisplayName}}</dd>
-            </dl>
-              {% if replay.second %}
-              <small>
-              <div class="row">
-                  <div class="col-lg-6">
-                      <strong>Team 1</strong>
-
-                          <ul style="padding-left: 5px;">
-                              {% for player in replays.players_list(replay, 1)|sort %}
-                                <li>[{{player.clanAbbrev}}] {{player.name}}</li>
-                              {% endfor %}
-                          </ul>
-                  </div>
-
-                  <div class="col-lg-6">
-                      <strong>Team 2</strong>
-                          <ul style="padding-left: 5px;">
-                              {% for player in replays.players_list(replay, 2)|sort %}
-                                <li>[{{player.clanAbbrev}}] {{player.name}}</li>
-                              {% endfor %}
-                          </ul>
-                  </div>
-
-              </div>
-              </small>
-              {% else %}
-               <strong>Replay incomplete. Can't determine enemy team.</strong>
-              {% endif %}
+                <h4>Replay information</h4>
+                {% include 'replay_details.html' %}
             {% endif %}
         </div>
        </div>
