@@ -73,7 +73,7 @@
             {% else %}
             <p class="alert alert-warning"><strong>Note</strong> that the preferred way of adding battles is by <a href="{{url_for('create_battle_from_replay')}}">uploading a replay</a>.</p>
             {% endif %}
-            <form class="form-horizontal" action="" method="POST" role="form" enctype="multipart/form-data">
+            <form class="form-horizontal" action="{{url_for('create_battle')}}" method="POST" role="form" enctype="multipart/form-data">
 
               <div class="form-group">
                 <label for="date" class="col-lg-2 control-label">Date &amp; Time</label>

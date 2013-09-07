@@ -2,17 +2,11 @@
 {% block title %}Add battle{% endblock %}
 {% block head %}
     {{ super() }}
-
-
-
 {% endblock %}
 {% block content %}
     <h2>Add battle</h2>
     <p>Upload a <strong>clan war replay</strong> or <a href="{{url_for('create_battle')}}">enter the data manually</a></p>
-
-
-
-           <form action="" method="POST" role="form" enctype="multipart/form-data">
+      <form action="{{url_for('create_battle_from_replay')}}" method="POST" role="form" enctype="multipart/form-data">
       <div class="form-group">
         <input type="file" id="replay" name="replay">
       </div>

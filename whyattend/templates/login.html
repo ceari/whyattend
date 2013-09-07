@@ -2,7 +2,7 @@
 {% block title %}Sign in{% endblock %}
 {% block content %}
   <h2>Sign in</h2>
-  <form action="" method=post>
+  <form action="{{url_for('login')}}" method=post>
     {% if error %}<p class=error><strong>Error:</strong> {{ error }}</p>{% endif %}
       <input class="btn btn-primary" type=submit value="Login with Wargaming.net OpenID">
       </input>
