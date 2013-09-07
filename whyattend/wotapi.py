@@ -10,7 +10,7 @@ from config import API_URL, API_TOKEN, WOT_SERVER_REGION_CODE
 
 def get_player(id):
     try:
-        r = requests.get(API_URL + 'uc/accounts/'+id+'/api/1.8/', params={'source_token': API_TOKEN},
+        r = requests.get(API_URL + 'uc/accounts/' + id + '/api/1.8/', params={'source_token': API_TOKEN},
                          timeout=10)
         json = r.json()
         if json['status'] == 'ok' and json['status_code'] == 'NO_ERROR':
@@ -40,6 +40,7 @@ def get_player_clan_role(player):
 
 def get_member_since_date(player):
     return datetime.datetime.fromtimestamp(float(player['data']['clan']['member']['since']))
+
 
 def get_scheduled_battles(clan_id):
     try:

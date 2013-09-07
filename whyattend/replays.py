@@ -15,10 +15,10 @@ def parse_replay(replay_blob):
     :return:
     """
     first_chunk_length = struct.unpack('I', replay_blob[8:12])[0]
-    first_chunk = replay_blob[12:12+first_chunk_length]
-    second_chunk_length = struct.unpack('I', replay_blob[12+first_chunk_length:12+first_chunk_length+4])[0]
-    second_chunk_start = 12+first_chunk_length+4
-    second_chunk = replay_blob[second_chunk_start:second_chunk_start+second_chunk_length]
+    first_chunk = replay_blob[12:12 + first_chunk_length]
+    second_chunk_length = struct.unpack('I', replay_blob[12 + first_chunk_length:12 + first_chunk_length + 4])[0]
+    second_chunk_start = 12 + first_chunk_length + 4
+    second_chunk = replay_blob[second_chunk_start:second_chunk_start + second_chunk_length]
 
     try:
         first_chunk = json.loads(first_chunk.decode('utf-8'))
@@ -34,9 +34,11 @@ def parse_replay(replay_blob):
 
     # after the second JSON chunk there is a Python serialized dictionary (pickle)
     try:
-        pickle_start = second_chunk_start+second_chunk_length+4
-        pickle_length = struct.unpack('I', replay_blob[second_chunk_start+second_chunk_length:second_chunk_start+second_chunk_length+4])[0]
-        the_pickle = pickle.loads(replay_blob[pickle_start:pickle_start+pickle_length])
+        pickle_start = second_chunk_start + second_chunk_length + 4
+        pickle_length = struct.unpack('I', replay_blob[
+                                           second_chunk_start + second_chunk_length:second_chunk_start + second_chunk_length + 4])[
+            0]
+        the_pickle = pickle.loads(replay_blob[pickle_start:pickle_start + pickle_length])
     except Exception as e:
         the_pickle = None
 

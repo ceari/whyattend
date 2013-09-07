@@ -158,7 +158,7 @@ class Battle(db.Model):
         return [ba.player for ba in self.attendances if ba.reserve]
 
     def __str__(self):
-        return "%s vs. %s on %s" %(self.clan, self.enemy_clan, self.map_name)
+        return "%s vs. %s on %s" % (self.clan, self.enemy_clan, self.map_name)
 
 
 class BattleGroup(db.Model):
