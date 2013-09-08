@@ -3,7 +3,7 @@
 {% block content %}
     <h2>Clan Wars of {{', '.join(g.clans)}}</h2>
     <p>
-        Welcome to our clan wars tracker.{% if not g.player %} Please log in to get access.{% endif %}
+        Welcome to our clan wars tracker.{% if not g.player %} Please <a href="{{url_for('login')}}">log in</a> to get access.{% endif %}
     </p>
     {% if g.player %}
         <div class="row">

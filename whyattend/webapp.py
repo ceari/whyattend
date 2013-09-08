@@ -6,6 +6,7 @@ import datetime
 import os
 import json
 import pickle
+import logging
 
 from functools import wraps
 from flask import Flask, g, session, render_template, flash, redirect, request, url_for, abort, make_response, jsonify
@@ -38,10 +39,32 @@ app.jinja_env.filters['ago_human'] = human
 # Uncomment to set up middleware in case we are behind a reverse proxy server
 # app.wsgi_app = ReverseProxied(app.wsgi_app)
 
+# Set up error logging
+if not app.debug and config.ERROR_LOG_FILE:
+    from logging.handlers import RotatingFileHandler
+
+    file_handler = RotatingFileHandler(config.ERROR_LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=5)
+    file_handler.setLevel(logging.WARNING)
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s '
+        '[in %(pathname)s:%(lineno)d]'))
+    app.logger.addHandler(file_handler)
+
+# Set up application logging
+logger = logging.getLogger(__name__)
+if config.LOG_FILE:
+    from logging.handlers import RotatingFileHandler
+
+    file_handler = RotatingFileHandler(config.LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=5)
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s '))
+    logger.addHandler(file_handler)
+
+
 # decorates a decorator function to be able to specify parameters :-)
 decorator_with_args = lambda decorator: lambda *args, **kwargs: \
     lambda func: decorator(func, *args, **kwargs)
-
 
 @app.before_request
 def lookup_current_user():
@@ -111,6 +134,7 @@ def require_role(f, roles):
 def create_db():
     if app.config['DEBUG']:
         db.create_all()
+        logger.info("Database created.")
     return redirect(url_for('index'))
 
 
@@ -123,18 +147,17 @@ def sync_players(clan_id):
     """
     if config.API_KEY == request.args['API_KEY']:
         import time
+        logger.info("Clan member synchronization triggered for " + clan_id)
 
         time.sleep(0.1) # Rate limiting
         clan_info = wotapi.get_clan(str(clan_id))
         processed = set()
         for player in clan_info['data']['members']:
-            print "Checking player ", player['account_name']
             player_data = wotapi.get_player(str(player['account_id']))
             if not player_data: continue # API Error?
             p = Player.query.filter_by(wot_id=str(player['account_id'])).first()
             if p:
                 # Player exists, update information
-                print "Player " + p.name + " exists. Updating information"
                 processed.add(p.id)
                 p.locked = False
                 p.clan = clan_info['data']['abbreviation']
@@ -148,17 +171,16 @@ def sync_players(clan_id):
                            wotapi.get_member_since_date(player_data), player['account_name'],
                            clan_info['data']['abbreviation'],
                            player['role'])
-                print "Adding new player " + p.name
             db.session.add(p)
 
         # All players of the clan in the DB, which are no longer in the clan
         for player in Player.query.filter_by(clan=clan_info['data']['abbreviation']):
             if player.id in processed: continue
             player.locked = True
-            print "Locking " + player.name + " because he is no longer in the clan."
             db.session.add(player)
 
         db.session.commit()
+        logger.info("Clan member synchronization successful")
 
     else:
         abort(403)
@@ -175,6 +197,7 @@ def index():
         # Cache battle status for 60 seconds to avoid spamming WG's server
         @cache.memoize(timeout=60)
         def cached_scheduled_battles(clan_id):
+            logger.info("Querying Wargaming server for battle schedule of clan " + clan_id + " " + g.player.clan)
             return wotapi.get_scheduled_battles(clan_id)
 
         scheduled_battles = cached_scheduled_battles(config.CLAN_IDS[g.player.clan])
@@ -256,6 +279,7 @@ def create_profile():
 
         db.session.add(Player(wot_id, session['openid'], member_since, session['nickname'], clan, role))
         db.session.commit()
+        logger.info("New player profile registered [" + session['nickname'] + ", " + clan + ", " + role + "]")
         flash(u'Welcome!', 'success')
         return redirect(oid.get_next_url())
     return render_template('create_profile.html', next_url=oid.get_next_url())
@@ -378,6 +402,7 @@ def edit_battle(battle_id):
 
             db.session.add(battle)
             db.session.commit()
+            logger.info(g.player.name + " updated the battle " + str(battle.id))
             return redirect(url_for('battles', clan=g.player.clan))
 
     return render_template('battles/edit.html', date=date, map_name=map_name, province=province, battle=battle,
@@ -529,6 +554,7 @@ def create_battle():
 
             db.session.add(battle)
             db.session.commit()
+            logger.info(g.player.name + " added the battle " + str(battle.id))
             return redirect(url_for('battles', clan=g.player.clan))
 
     return render_template('battles/create.html', CLAN_NAMES=config.CLAN_NAMES, all_players=all_players,
@@ -578,7 +604,9 @@ def delete_battle(battle_id):
         # last battle in battle group, delete the group as well
         db.session.delete(battle.battle_group)
     db.session.delete(battle)
+    logger.info(g.player.name + " deleted the battle " + str(battle.id) + " " + battle)
     db.session.commit()
+
     return redirect(url_for('battles', clan=g.player.clan))
 
 
@@ -669,6 +697,7 @@ def sign_as_reserve(battle_id):
     if not battle.has_player(g.player) and not battle.has_reserve(g.player):
         ba = BattleAttendance(g.player, battle, reserve=True)
         db.session.add(ba)
+        logger.info(g.player.name + " signed himself as reserve for " + battle)
         db.session.commit()
     return redirect(url_for('battles', clan=g.player.clan))
 
@@ -684,6 +713,7 @@ def unsign_as_reserve(battle_id):
 
     ba = BattleAttendance.query.filter_by(player=g.player, battle=battle, reserve=True).first() or abort(500)
     db.session.delete(ba)
+    logger.info(g.player.name + " removed himself as reserve for " + battle)
     db.session.commit()
     return redirect(url_for('battles', clan=g.player.clan))
 

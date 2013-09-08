@@ -56,6 +56,10 @@ RESERVE_SIGNUP_DURATION = datetime.timedelta(days=7)
 # Should replays be stored in the database?
 STORE_REPLAYS_IN_DB = True
 
+# Logfile
+ERROR_LOG_FILE = '/tmp/error.log'
+LOG_FILE = '/tmp/whyattend.log'
+
 # Override settings with local config, if present
 try:
     from local_config import *
