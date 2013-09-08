@@ -7,6 +7,7 @@ import os
 import json
 import pickle
 import logging
+import hashlib
 
 from functools import wraps
 from flask import Flask, g, session, render_template, flash, redirect, request, url_for, abort, make_response, jsonify
@@ -61,6 +62,23 @@ if config.LOG_FILE:
     file_handler.setFormatter(logging.Formatter(
         '%(asctime)s %(levelname)s: %(message)s '))
     logger.addHandler(file_handler)
+
+# CSRF protection
+@app.before_request
+def csrf_protect():
+    if request.method == "POST":
+        token = session.pop('_csrf_token', None)
+        if not token or token != request.form.get('_csrf_token'):
+            flash('Invalid CSRF token. Please try again or contact an administrator for help.')
+            return redirect(url_for('index'))
+
+
+def generate_csrf_token():
+    if '_csrf_token' not in session:
+        session['_csrf_token'] = hashlib.sha1(os.urandom(64)).hexdigest()
+    return session['_csrf_token']
+
+app.jinja_env.globals['csrf_token'] = generate_csrf_token
 
 
 # decorates a decorator function to be able to specify parameters :-)
@@ -148,7 +166,7 @@ def sync_players(clan_id):
     """
     if config.API_KEY == request.args['API_KEY']:
         import time
-        logger.info("Clan member synchronization triggered for " + clan_id)
+        logger.info("Clan member synchronization triggered for " + str(clan_id))
 
         time.sleep(0.1) # Rate limiting
         clan_info = wotapi.get_clan(str(clan_id))
@@ -198,7 +216,7 @@ def index():
         # Cache battle status for 60 seconds to avoid spamming WG's server
         @cache.memoize(timeout=60)
         def cached_scheduled_battles(clan_id):
-            logger.info("Querying Wargaming server for battle schedule of clan " + clan_id + " " + g.player.clan)
+            logger.info("Querying Wargaming server for battle schedule of clan " + str(clan_id) + " " + g.player.clan)
             return wotapi.get_scheduled_battles(clan_id)
 
         scheduled_battles = cached_scheduled_battles(config.CLAN_IDS[g.player.clan])

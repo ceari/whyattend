@@ -6,6 +6,7 @@
     {% if error %}<p class=error><strong>Error:</strong> {{ error }}</p>{% endif %}
       <input class="btn btn-primary" type=submit value="Login with Wargaming.net OpenID">
       </input>
+      <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
       <input type=hidden name=next value="{{ next }}">
   </form>
 

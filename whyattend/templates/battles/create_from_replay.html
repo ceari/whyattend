@@ -10,6 +10,7 @@
       <div class="form-group">
         <input type="file" id="replay" name="replay">
       </div>
+      <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
       <button type="submit" class="btn btn-success">Click to add this replay</button>
     </form>
 

@@ -8,6 +8,7 @@
   <form action="{{url_for('create_profile')}}" method=post>
       <input type=submit value="Create account">
       <input type=hidden name=next value="{{ next }}">
+      <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
   </form>
   <p>
     If you don't want to proceed, you can <a href="{{ url_for('logout')

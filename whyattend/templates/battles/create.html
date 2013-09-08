@@ -191,10 +191,11 @@
                 </div>
               </div>
 
+              <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
               <input type="hidden" name="filename" value="{{filename}}">
 
 
-                <div class="col-lg-offset-2 col-lg-10"><button type="submit" class="btn btn-success">Click create this battle</button></div>
+                <div class="col-lg-offset-2 col-lg-10"><button type="submit" class="btn btn-success">Create this battle</button></div>
 
             </form>
         </div>

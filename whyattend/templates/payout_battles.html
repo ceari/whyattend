@@ -45,6 +45,7 @@
         <input type="hidden" name="gold" value="{{gold}}">
         {% if victories_only %}
         <input type="hidden" name="victories_only" value="on">
+        <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
         {% endif %}
     </form>
     <h3>Summary of {{gold}} gold to pay out for {{battles|length}} battle{{'s' if battles|length != 1 else ''}}</h3>
