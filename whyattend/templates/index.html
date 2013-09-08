@@ -3,29 +3,38 @@
 {% block content %}
     <h2>Clan Wars of {{', '.join(g.clans)}}</h2>
     <p>
-        Welcome to the Clan War tracker of {{'/'.join(g.clans)}}.{% if not g.player %} Please log in to get started.{% endif %}
+        Welcome to our clan wars tracker.{% if not g.player %} Please log in to get access.{% endif %}
     </p>
     {% if g.player %}
         <div class="row">
         <div class="col-lg-6">
+          <div class="panel panel-default">
+          <div style="min-height: 170px;" class="panel-body">
+            <h4 class="text-center">Latest Battles of {{g.player.clan}}</h4>
             {% if latest_battles %}
-            <h4>Latest Battles of {{g.player.clan}}</h4>
             <ul>
             {% for battle in latest_battles %}
             <li><span class="{{battle.outcome_repr()}}">{{battle.outcome_str()}}</span> against {{battle.enemy_clan}} on {{battle.map_name}}, <a href="{{url_for('battle_details', battle_id=battle.id)}}">{{battle.date|ago_human(precision=1)}}</a>
             {% endfor %}
             </ul>
+            {% else %}
+                No battles yet.
             {% endif %}
+
+          </div>
+          </div>
         </div>
         <div class="col-lg-6">
-            <h4>Scheduled Battles</h4>
+          <div class="panel panel-default">
+          <div style="min-height: 170px;"  class="panel-body">
+          <h4 class="text-center">Scheduled Battles</h4>
             {% if scheduled_battles and scheduled_battles.request_data['items'] %}
                 <ul style="list-style: none">
                 {% for item in scheduled_battles.request_data['items'] %}
                 <li>
                     <img style="margin-right: 5px; width: 16px; height:16px;" src="{{url_for('static', filename='img/swords.png')}}">
                     {% for p in item.provinces %}<a href="http://worldoftanks.{{g.WOT_SERVER_REGION_CODE}}/clanwars/maps/?province={{p.id}}">{{p.name}}</a>{% if loop.index < item.provinces|length %} - {%endif%}{% endfor %} -
-                    {{datetime.datetime.fromtimestamp(item.time)|ago_human(precision=1)}}
+                    {% if item.time %}{datetime.datetime.fromtimestamp(item.time)|ago_human(precision=1)}}{%else%}today{%endif%}
                     - on {% for map in item.arenas %}{{map}} {% if loop.index < item.provinces|length %} or {%endif%}{% endfor %}
                 </li>
                 {% endfor %}
@@ -33,6 +42,8 @@
             {% else %}
                 No battles scheduled yet. Check the Global Map for chip placement.
             {% endif %}
+          </div>
+          </div>
         </div>
         </div>
     {% endif %}

@@ -220,7 +220,7 @@ def create_or_login(resp):
     session['nickname'] = resp.nickname
     player = Player.query.filter_by(openid=resp.identity_url, locked=False).first()
     if player is not None:
-        flash(u'Successfully signed in', 'success')
+        flash(u'Signed in successfully', 'success')
         g.player = player
         return redirect(oid.get_next_url())
     return redirect(url_for('create_profile', next=oid.get_next_url(),

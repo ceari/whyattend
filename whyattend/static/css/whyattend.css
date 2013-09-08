@@ -20,6 +20,14 @@ ul.flashes li {
     margin: 5px;
 }
 
+.panel {
+    margin-top: 2em;
+}
+
+.panel-body > h4 {
+    margin-bottom: 1.5em;
+}
+
 #footer {
     margin-bottom: 5px;
 }
