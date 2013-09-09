@@ -46,6 +46,9 @@ ROLE_LABELS = {
     'treasurer': 'Treasurer'
 }
 
+# List of player names that can do everything
+ADMINS = ('fantastico', )
+
 CREATE_BATTLE_ROLES = ('leader', 'vice_leader', 'treasurer')
 DELETE_BATTLE_ROLES = ('leader', 'vice_leader', 'treasurer')
 PAYOUT_ROLES = ('leader', 'vice_leader', 'treasurer')

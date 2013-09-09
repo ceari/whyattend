@@ -96,17 +96,3 @@ def guess_enemy_clan(replay_json):
     """
     friendly_team = replay_json['first']['vehicles'].values()[0]['team']
     return players_list(replay_json, 1 if friendly_team == 2 else 2)[0]['clanAbbrev']
-
-
-if __name__ == '__main__':
-    # Testing
-    data = parse_replay(open("replay.wotreplay", 'rb').read())
-    print data['pickle']
-
-    #print is_cw(data)
-    #print guess_clan(data)
-    #print guess_enemy_clan(data)
-    #print data['second']
-    #print player_won(data)
-    #print player_team(data)
-    #print player_team(data)

@@ -55,7 +55,7 @@
           <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><img style="margin-right: 5px; width: 16px; height:16px;" src="{{url_for('static', filename='img/swords.png')}}">Battles <b class="caret"></b></a>
             <ul class="dropdown-menu">
-                {% if g.player.role in g.CREATE_BATTLE_ROLES or g.player.name == "fantastico" %}
+                {% if g.player.role in g.CREATE_BATTLE_ROLES or g.player.name in g.ADMINS %}
                 <li><a href="{{url_for('create_battle_from_replay')}}">Add battle</a></li>
                 <li class="divider"></li>
                 {% endif %}
@@ -77,7 +77,7 @@
           </li>
         </ul>
 
-        {% if g.player and g.player.role in g.PAYOUT_ROLES or g.player.name == "fantastico" %}
+        {% if g.player and g.player.role in g.PAYOUT_ROLES or g.player.name in g.ADMINS %}
         <ul class="nav navbar-nav ">
           <li><a href="{{url_for('payout', clan=g.player.clan)}}"><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/gold_coin_stack.png')}}"> Payout</a></li>
         </ul>

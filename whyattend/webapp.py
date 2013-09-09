@@ -106,6 +106,7 @@ def inject_constants():
     g.WOT_SERVER_REGION_CODE = config.WOT_SERVER_REGION_CODE
     g.DELETE_BATTLE_ROLES = config.DELETE_BATTLE_ROLES
     g.CREATE_BATTLE_ROLES = config.CREATE_BATTLE_ROLES
+    g.ADMINS = config.ADMINS
 
 
 def require_login(f):
@@ -127,7 +128,7 @@ def require_clan_membership(f):
         # Has to be a request handler with 'clan' argument
         if not 'clan' in kwargs:
             abort(500)
-        if g.player.clan != kwargs['clan'] and not g.player.name == 'fantastico':
+        if g.player.clan != kwargs['clan'] and g.player.name not in config.ADMINS:
             abort(403)
         return f(*args, **kwargs)
 
@@ -140,7 +141,7 @@ def require_role(f, roles):
     def decorated_f(*args, **kwargs):
         if g.player is None:
             return redirect(url_for('login', next=request.url))
-        if g.player.role not in roles and g.player.name != 'fantastico':
+        if g.player.role not in roles and g.player.name not in config.ADMINS:
             abort(403)
 
         return f(*args, **kwargs)
@@ -194,7 +195,7 @@ def sync_players(clan_id):
 
         # All players of the clan in the DB, which are no longer in the clan
         for player in Player.query.filter_by(clan=clan_info['data']['abbreviation']):
-            if player.id in processed: continue
+            if player.id in processed or player.id is None: continue
             player.locked = True
             db.session.add(player)
 
@@ -332,7 +333,7 @@ def create_battle_from_replay():
 @require_role(roles=config.CREATE_BATTLE_ROLES)
 def edit_battle(battle_id):
     battle = Battle.query.get(battle_id) or abort(404)
-    if battle.clan != g.player.clan and g.player.name != 'fantastico': abort(403)
+    if battle.clan != g.player.clan and g.player.name not in config.ADMINS: abort(403)
 
     all_players = Player.query.filter_by(clan=g.player.clan, locked=False).order_by('lower(name)').all()
     date = battle.date
@@ -616,14 +617,14 @@ def battle_details(battle_id):
 @require_role(config.DELETE_BATTLE_ROLES)
 def delete_battle(battle_id):
     battle = Battle.query.get(battle_id) or abort(404)
-    if battle.clan != g.player.clan and g.player.name != 'fantastico': abort(403)
+    if battle.clan != g.player.clan and g.player.name not in config.ADMINS: abort(403)
     for ba in battle.attendances:
         db.session.delete(ba)
     if battle.battle_group and len(battle.battle_group.battles) == 1:
         # last battle in battle group, delete the group as well
         db.session.delete(battle.battle_group)
     db.session.delete(battle)
-    logger.info(g.player.name + " deleted the battle " + str(battle.id) + " " + battle)
+    logger.info(g.player.name + " deleted the battle " + str(battle.id) + " " + str(battle))
     db.session.commit()
 
     return redirect(url_for('battles', clan=g.player.clan))
@@ -707,7 +708,7 @@ def player(player_id):
 @require_login
 def sign_as_reserve(battle_id):
     battle = Battle.query.get(battle_id) or abort(404)
-    if battle.clan != g.player.clan and g.player.name != 'fantastico': abort(403)
+    if battle.clan != g.player.clan and g.player.name not in config.ADMINS: abort(403)
     # disallow signing as reserve for old battles
     if battle.date < datetime.datetime.now() - config.RESERVE_SIGNUP_DURATION:
         flash(u"Can't sign up as reserve for battles older than 24 hours. Contact an admin if needed.")
@@ -716,7 +717,7 @@ def sign_as_reserve(battle_id):
     if not battle.has_player(g.player) and not battle.has_reserve(g.player):
         ba = BattleAttendance(g.player, battle, reserve=True)
         db.session.add(ba)
-        logger.info(g.player.name + " signed himself as reserve for " + battle)
+        logger.info(g.player.name + " signed himself as reserve for " + str(battle))
         db.session.commit()
     return redirect(url_for('battles', clan=g.player.clan))
 
@@ -725,14 +726,14 @@ def sign_as_reserve(battle_id):
 @require_login
 def unsign_as_reserve(battle_id):
     battle = Battle.query.get(battle_id) or abort(404)
-    if battle.clan != g.player.clan and g.player.name != 'fantastico': abort(403)
+    if battle.clan != g.player.clan and g.player.name not in config.ADMINS: abort(403)
     if battle.date < datetime.datetime.now() - config.RESERVE_SIGNUP_DURATION:
         flash(u"Can't sign up as reserve for battles older than 24 hours. Contact an admin if needed.")
         return redirect(url_for('battles', clan=g.player.clan))
 
     ba = BattleAttendance.query.filter_by(player=g.player, battle=battle, reserve=True).first() or abort(500)
     db.session.delete(ba)
-    logger.info(g.player.name + " removed himself as reserve for " + battle)
+    logger.info(g.player.name + " removed himself as reserve for " + str(battle))
     db.session.commit()
     return redirect(url_for('battles', clan=g.player.clan))
 
@@ -864,7 +865,7 @@ def players_json():
 @require_role(config.PAYOUT_ROLES)
 def payout_battles_json():
     clan = request.args.get('clan', None)
-    if g.player.clan != clan and not g.player.name == 'fantastico': abort(403)
+    if g.player.clan != clan and not g.player.name in config.ADMINS: abort(403)
     fromDate = request.args.get('fromDate', None)
     toDate = request.args.get('toDate', None)
 
