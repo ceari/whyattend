@@ -174,7 +174,9 @@ def sync_players(clan_id):
         processed = set()
         for player in clan_info['data']['members']:
             player_data = wotapi.get_player(str(player['account_id']))
-            if not player_data: continue # API Error?
+            if not player_data:
+                logger.info("WOTAPI Error: Could not retrieve player information of " + str(player['account_id']))
+                continue # API Error?
             p = Player.query.filter_by(wot_id=str(player['account_id'])).first()
             if p:
                 # Player exists, update information
@@ -191,11 +193,13 @@ def sync_players(clan_id):
                            wotapi.get_member_since_date(player_data), player['account_name'],
                            clan_info['data']['abbreviation'],
                            player['role'])
+                logger.info('Adding player ' + player.name)
             db.session.add(p)
 
         # All players of the clan in the DB, which are no longer in the clan
         for player in Player.query.filter_by(clan=clan_info['data']['abbreviation']):
             if player.id in processed or player.id is None: continue
+            logger.info("Locking player " + player.name)
             player.locked = True
             db.session.add(player)
 
