@@ -30,7 +30,7 @@
   </head>
   <body>
     <div class="container" id="container">
-      <div class="header" class="text-center"><img style="width: 1138px" src="{{url_for('static', filename='img/header.jpg')}}"/></div>
+      <div class="header text-center"><img style="width: 1138px" src="{{url_for('static', filename='img/header.jpg')}}"/></div>
       <!-- Navigation -->
       <nav class="navbar navbar-inverse" role="navigation">
       <div class="navbar-header">
@@ -68,13 +68,17 @@
 
         <ul class="nav navbar-nav ">
           <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i style="margin-right:5px; color: white" class="icon-group"></i>Players <b class="caret"></b></a>
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i style="margin-right:5px; color: #ccc" class="icon-group"></i>Players <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 {% for clan in g.clans %}
                 <li><a href="{{url_for('players', clan=clan)}}"><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> {{clan}}</a></li>
                 {% endfor %}
             </ul>
           </li>
+        </ul>
+
+        <ul class="nav navbar-nav ">
+          <li><a href="{{url_for('clan_statistics', clan=g.player.clan)}}"><i style="margin-right:5px; color: #ccc" class="icon-bar-chart"></i> Statistics</a></li>
         </ul>
 
         {% if g.player and g.player.role in g.PAYOUT_ROLES or g.player.name in g.ADMINS %}

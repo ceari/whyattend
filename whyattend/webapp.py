@@ -760,7 +760,7 @@ def download_replay(battle_id):
 @require_role(config.PAYOUT_ROLES)
 @require_clan_membership
 def payout(clan):
-    return render_template('payout.html', clan=clan)
+    return render_template('payout/payout.html', clan=clan)
 
 
 @app.route('/payout/<clan>/battles', methods=['GET', 'POST'])
@@ -845,7 +845,7 @@ def payout_battles(clan):
     for p in players:
         player_gold[p] = int(round(player_points[p] / float(total_points) * gold))
 
-    return render_template('payout_battles.html', battles=battles, clan=clan, fromDate=fromDate, toDate=toDate,
+    return render_template('payout/payout_battles.html', battles=battles, clan=clan, fromDate=fromDate, toDate=toDate,
                            player_played=player_played, player_reserve=player_reserve, players=players,
                            player_gold=player_gold, gold=gold, player_defeats=player_defeats,
                            player_fced_win=player_fced_win,
@@ -904,3 +904,33 @@ def payout_battles_json():
         ]
     })
 
+
+@app.route('/statistics/<clan>')
+@require_login
+@require_clan_membership
+def clan_statistics(clan):
+    battles_query = Battle.query.filter_by(clan=clan)
+
+    battles = battles_query.all()
+    battles_won = battles_query.filter_by(victory=True).count()
+
+    battles_one_week_query = battles_query.filter(Battle.date>=datetime.datetime.now()-datetime.timedelta(days=7))
+    battles_one_week = battles_one_week_query.all()
+    battles_one_week_won = battles_one_week_query.filter_by(victory=True).count()
+
+    battles_thirty_days_query = battles_query.filter(Battle.date>=datetime.datetime.now()-datetime.timedelta(days=30))
+    battles_thirty_days = battles_thirty_days_query.all()
+    battles_thirty_days_won = battles_thirty_days_query.filter_by(victory=True).count()
+
+    # Battles played by map
+    battles_by_map = dict()
+    for battle in battles:
+        if battle.map_name not in battles_by_map:
+            battles_by_map[battle.map_name] = 0
+        battles_by_map[battle.map_name] += 1
+    map_battles = list(battles_by_map.iteritems())
+
+    return render_template('clan_stats.html', battles=battles, total_battles=len(battles),
+                           battles_one_week=battles_one_week, battles_one_week_won=battles_one_week_won,
+                           map_battles=map_battles, battles_won=battles_won,
+                           battles_thirty_days=battles_thirty_days, battles_thirty_days_won=battles_thirty_days_won)

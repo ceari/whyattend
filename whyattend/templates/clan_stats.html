@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+{% block title %}Clan Statistics{% endblock %}
+{% block head %}
+    {{super()}}
+    <script src="{{url_for('static', filename='js/raphael-min.js')}}" type="text/javascript"></script>
+    <script src="{{url_for('static', filename='js/g.raphael-min.js')}}" type="text/javascript"></script>
+    <script src="{{url_for('static', filename='js/g.pie-min.js')}}" type="text/javascript"></script>
+    <script src="{{url_for('static', filename='js/g.bar-min.js')}}" type="text/javascript"></script>
+    <script>
+        $(document).ready(function() {
+            var r = Raphael(document.getElementById('maps'), 300, 300);
+            // Creates pie chart at with center at 320, 200,
+            // radius 100 and data: [55, 20, 13, 32, 5, 1, 2]
+            var pie = r.piechart(150, 150, 130, [{% for mb in map_battles %} {{ mb.1 }}, {%endfor%}], {
+                minPercent: 3,
+                maxSlices: 10,
+                legend: [{% for mb in map_battles %} "{{ mb.0 }} ({{ (mb.1 / total_battles * 100.0)|int }} %)", {%endfor%}],
+                strokewidth: 0
+            });
+
+            pie.each(function() {
+                r.label(this.x, this.y, this.label[1].attrs.text).attr([{
+                    fill : "transparent"
+                }, {
+                    fill : "black"
+                }]).attr({font: "11px 'Open Sans'"});
+            });
+
+
+        })
+    </script>
+{% endblock %}
+{% block content %}
+    <h2>Clan Statistics</h2>
+    <div class="row">
+        <div class="col-lg-3">
+            <h4>Total</h4>
+            <ul>
+                <li>played: {{ battles|length }}</li>
+                <li>won: {{ battles_won }} ({{ (battles_won / total_battles * 100.0)|int }}%)</li>
+            </ul>
+            <h4>Last 7 Days</h4>
+            <ul>
+                <li>played: {{ battles_one_week|length }}</li>
+                <li>won: {{ battles_one_week_won }} ({{ (battles_one_week_won / (battles_one_week|length) * 100.0)|int }}%)</li>
+            </ul>
+            <h4>Last 30 Days</h4>
+            <ul>
+                <li>played: {{ battles_thirty_days|length }}</li>
+                <li>won: {{ battles_thirty_days_won }} ({{ (battles_thirty_days_won / (battles_thirty_days|length) * 100.0)|int }}%)</li>
+            </ul>
+        </div>
+        <div class="col-lg-4 text-center">
+            <h4>Maps</h4>
+            <div id="maps"></div>
+        </div>
+    </div>
+{% endblock %}
