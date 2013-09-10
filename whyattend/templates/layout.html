@@ -77,9 +77,11 @@
           </li>
         </ul>
 
+        {% if g.player %}
         <ul class="nav navbar-nav ">
           <li><a href="{{url_for('clan_statistics', clan=g.player.clan)}}"><i style="margin-right:5px; color: #ccc" class="icon-bar-chart"></i> Statistics</a></li>
         </ul>
+        {% endif %}
 
         {% if g.player and g.player.role in g.PAYOUT_ROLES or g.player.name in g.ADMINS %}
         <ul class="nav navbar-nav ">
