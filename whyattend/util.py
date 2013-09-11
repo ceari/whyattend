@@ -1,3 +1,8 @@
+"""
+    Utility classes
+"""
+
+
 class ReverseProxied(object):
     '''Wrap the application in this middleware and configure the
     front-end server to add these headers, to let you quietly bind

@@ -1,5 +1,5 @@
 """
-    Web application based on Flask.
+    The Web Application.
 """
 
 import datetime
@@ -107,6 +107,7 @@ def inject_constants():
     g.DELETE_BATTLE_ROLES = config.DELETE_BATTLE_ROLES
     g.CREATE_BATTLE_ROLES = config.CREATE_BATTLE_ROLES
     g.ADMINS = config.ADMINS
+    g.ADMIN_ROLES = config.ADMIN_ROLES
 
 
 def require_login(f):
@@ -231,6 +232,13 @@ def index():
 
     return render_template('index.html', clans=config.CLAN_NAMES, latest_battles=latest_battles,
                            scheduled_battles=scheduled_battles, datetime=datetime)
+
+
+@app.route('/admin')
+@require_login
+@require_role(config.ADMIN_ROLES)
+def admin():
+    return render_template('admin.html', API_KEY=config.API_KEY)
 
 
 @app.route('/help')

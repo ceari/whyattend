@@ -104,6 +104,9 @@
           {% else %}
             <li><a href="{{url_for('login')}}">Log in</a></li>
           {% endif %}
+           {% if g.player and g.player.role in g.ADMIN_ROLES or g.player.name in g.ADMINS %}
+              <li><a href="{{url_for('admin')}}"><i style="margin-right:5px; color: #ccc" class="icon-cog"></i></a></li>
+            {% endif %}
         </ul>
       </div><!-- /.navbar-collapse -->
     </nav>
