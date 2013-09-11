@@ -345,6 +345,7 @@ def edit_battle(battle_id):
     province = battle.map_province
     battle_commander = battle.battle_commander
     enemy_clan = battle.enemy_clan
+    battle_groups = BattleGroup.query.filter_by(clan=g.player.clan).order_by('date').all()
     battle_result = battle.outcome_repr()
     battle_group_final = battle.battle_group_final
     players = battle.get_players()
@@ -394,7 +395,8 @@ def edit_battle(battle_id):
         elif battle_group >= 0:
             # existing group
             bg = BattleGroup.query.get(battle_group) or abort(500)
-            if bg.get_final_battle() is not battle and battle_group_final:
+            print bg, bg.get_final_battle(), battle_group_final, battle
+            if bg.get_final_battle() is not None and bg.get_final_battle() is not battle and battle_group_final:
                 flash(u'Selected battle group already contains a battle marked as final')
                 errors = True
 
@@ -430,6 +432,7 @@ def edit_battle(battle_id):
             return redirect(url_for('battles', clan=g.player.clan))
 
     return render_template('battles/edit.html', date=date, map_name=map_name, province=province, battle=battle,
+                           battle_groups=battle_groups,
                            battle_commander=battle_commander, enemy_clan=enemy_clan, battle_result=battle_result,
                            battle_group_final=battle_group_final, players=players, description=description,
                            replay=replay, replays=replays, all_players=all_players)
