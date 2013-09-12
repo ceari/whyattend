@@ -1,5 +1,8 @@
 """
-    The Web Application.
+    The Web Application
+    ~~~~~~~~~~~~~~~~~~~
+
+    Implementation of all request handlers and core functionality.
 """
 
 import datetime
@@ -18,10 +21,7 @@ from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename
 from ago import human
 
-import config
-import replays
-import wotapi
-from .util import ReverseProxied
+from . import config, replays, wotapi
 from .model import db, Player, Battle, BattleAttendance, Replay, BattleGroup
 
 # Set up Flask application
@@ -38,6 +38,7 @@ oid = OpenID(app, config.OID_STORE_PATH)
 app.jinja_env.filters['ago_human'] = human
 
 # Uncomment to set up middleware in case we are behind a reverse proxy server
+# from .util import ReverseProxied
 # app.wsgi_app = ReverseProxied(app.wsgi_app)
 
 # Set up error logging
@@ -88,7 +89,7 @@ decorator_with_args = lambda decorator: lambda *args, **kwargs: \
 @app.before_request
 def lookup_current_user():
     g.player = None
-    if app.config['DEBUG'] and request.url.endswith('createdb'): return
+    if request.url.endswith('createdb'): return
     if 'openid' in session:
         # Checking if player exists for every request might be overkill
         g.player = Player.query.filter_by(openid=session.get('openid')).first()
@@ -99,6 +100,11 @@ def lookup_current_user():
 
 @app.before_request
 def inject_constants():
+    """
+        Inject some commonly used constants into the global object 'g' so they don't
+        have to pass them around everywhere.
+    :return:
+    """
     g.clans = config.CLAN_NAMES
     g.clan_ids = config.CLAN_IDS
     g.roles = config.ROLE_LABELS
@@ -121,12 +127,19 @@ def require_login(f):
 
 
 def require_clan_membership(f):
+    """
+        Request handler decorator that only allows access to an URL
+        parametrized with the clan name if the logged in user is a member
+        of the clan.
+    :param f:
+    :return:
+    """
     @wraps(f)
     def decorated_f(*args, **kwargs):
         if g.player is None:
             return redirect(url_for('login', next=request.url))
         
-        # Has to be a request handler with 'clan' argument
+        # Has to be a request handler with 'clan' as argument (e.g. /battles/<clan>/)
         if not 'clan' in kwargs:
             abort(500)
         if g.player.clan != kwargs['clan'] and g.player.name not in config.ADMINS:
@@ -138,6 +151,13 @@ def require_clan_membership(f):
 
 @decorator_with_args
 def require_role(f, roles):
+    """
+        Request handler decorator that requires the logged in user to have a certain
+        role, i.e. clan commander, treasurer, ...
+    :param f:
+    :param roles: iterable of strings with the allowed roles
+    :return:
+    """
     @wraps(f)
     def decorated_f(*args, **kwargs):
         if g.player is None:
@@ -153,7 +173,7 @@ def require_role(f, roles):
 
 @app.route('/createdb')
 def create_db():
-    if app.config['DEBUG']:
+    if config.API_KEY == request.args['API_KEY']:
         db.create_all()
         logger.info("Database created.")
     return redirect(url_for('index'))
@@ -162,7 +182,7 @@ def create_db():
 @app.route('/sync-players/<int:clan_id>')
 def sync_players(clan_id):
     """
-    Synchronize players in database with Wargaming clan data
+        Synchronize players in the database with Wargaming servers.
     :param clan_id:
     :return:
     """
@@ -212,10 +232,14 @@ def sync_players(clan_id):
 
     return redirect(url_for('index'))
 
-############## Request handlers Public request handlers
+############## Public request handlers
 
 @app.route("/")
 def index():
+    """
+        Front page with latest battles played and scheduled battles.
+    :return:
+    """
     if g.player:
         latest_battles = Battle.query.filter_by(clan=g.player.clan).order_by('date desc').limit(3)
 
@@ -238,22 +262,38 @@ def index():
 @require_login
 @require_role(config.ADMIN_ROLES)
 def admin():
+    """
+        Administration page.
+    :return:
+    """
     return render_template('admin.html', API_KEY=config.API_KEY)
 
 
 @app.route('/help')
 def help():
+    """
+        Help page.
+    :return:
+    """
     return render_template('help.html')
 
 
 @app.route('/attributions')
 def attributions():
+    """
+        Page with attributions and licencing information.
+    :return:
+    """
     return render_template('attributions.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
 @oid.loginhandler
 def login():
+    """
+        Login page.
+    :return:
+    """
     if g.player is not None:
         return redirect(oid.get_next_url())
     if request.method == 'POST':
@@ -266,7 +306,8 @@ def login():
 
 @oid.after_login
 def create_or_login(resp):
-    """This is called when login with OpenID succeeded and it's not
+    """
+        This is called when login with OpenID succeeded and it's not
         necessary to figure out if this is the users's first login or not.
         This function has to redirect otherwise the user will be presented
         with a terrible URL which we certainly don't want.
@@ -284,8 +325,9 @@ def create_or_login(resp):
 
 @app.route('/create-profile', methods=['GET', 'POST'])
 def create_profile():
-    """If this is the user's first login, the create_or_login function
-    will redirect here so that the user can set up his profile.
+    """
+        If this is the user's first login, the create_or_login function
+        will redirect here so that the user can set up his profile.
     """
     if g.player is not None or 'openid' not in session or 'nickname' not in session:
         return redirect(url_for('index'))
@@ -320,6 +362,10 @@ def create_profile():
 @app.route('/logout')
 @require_login
 def logout():
+    """
+        Log out the current user.
+    :return:
+    """
     session.pop('openid', None)
     session.pop('nickname', None)
     g.player = None
@@ -331,6 +377,10 @@ def logout():
 @require_login
 @require_role(roles=config.CREATE_BATTLE_ROLES)
 def create_battle_from_replay():
+    """
+        Upload replay form to create battles.
+    :return:
+    """
     if request.method == 'POST':
         file = request.files['replay']
         if file and file.filename.endswith('.wotreplay'):
@@ -344,6 +394,11 @@ def create_battle_from_replay():
 @require_login
 @require_role(roles=config.CREATE_BATTLE_ROLES)
 def edit_battle(battle_id):
+    """
+        Edit battle form.
+    :param battle_id:
+    :return:
+    """
     battle = Battle.query.get(battle_id) or abort(404)
     if battle.clan != g.player.clan and g.player.name not in config.ADMINS: abort(403)
 
@@ -450,6 +505,10 @@ def edit_battle(battle_id):
 @require_login
 @require_role(roles=config.CREATE_BATTLE_ROLES)
 def create_battle():
+    """
+        Create battle form.
+    :return:
+    """
     all_players = Player.query.filter_by(clan=g.player.clan, locked=False).order_by('lower(name)').all()
 
     # Prefill form with data from replay
@@ -604,6 +663,11 @@ def create_battle():
 @app.route('/battles/list/<clan>')
 @require_login
 def battles(clan):
+    """
+        Table of all battles of a clan.
+    :param clan:
+    :return:
+    """
     if not clan in config.CLAN_NAMES:
         abort(404)
     battles = Battle.query.options(joinedload_all('battle_group.battles')).options(
@@ -614,6 +678,11 @@ def battles(clan):
 @app.route('/battles/group/<int:group_id>')
 @require_login
 def battle_group(group_id):
+    """
+        Battle group details page with table of the individual battles.
+    :param group_id:
+    :return:
+    """
     battle_group = BattleGroup.query.options(joinedload_all('battles.attendances.player')).get(group_id) or abort(404)
 
     return render_template('battles/battle_group.html', battle_group=battle_group, battles=battle_group.battles,
@@ -623,6 +692,11 @@ def battle_group(group_id):
 @app.route('/battles/<int:battle_id>')
 @require_login
 def battle_details(battle_id):
+    """
+        Battle details page.
+    :param battle_id:
+    :return:
+    """
     battle = Battle.query.get(battle_id) or abort(404)
     return render_template('battles/battle.html', battle=battle, replays=replays)
 
@@ -631,6 +705,11 @@ def battle_details(battle_id):
 @require_login
 @require_role(config.DELETE_BATTLE_ROLES)
 def delete_battle(battle_id):
+    """
+        Delete battle from the database.
+    :param battle_id:
+    :return:
+    """
     battle = Battle.query.get(battle_id) or abort(404)
     if battle.clan != g.player.clan and g.player.name not in config.ADMINS: abort(403)
     for ba in battle.attendances:
@@ -648,6 +727,11 @@ def delete_battle(battle_id):
 @app.route('/players/<clan>')
 @require_login
 def players(clan):
+    """
+        List of players with participation of a clan.
+    :param clan:
+    :return:
+    """
     if not clan in config.CLAN_NAMES:
         abort(404)
     players = Player.query.options(joinedload_all('battles.battle')).filter_by(clan=clan, locked=False).all()
@@ -714,6 +798,11 @@ def players(clan):
 
 @app.route('/players/<int:player_id>')
 def player(player_id):
+    """
+        Player details page.
+    :param player_id:
+    :return:
+    """
     player = Player.query.get(player_id) or abort(404)
 
     return render_template('players/player.html', player=player)
@@ -722,6 +811,11 @@ def player(player_id):
 @app.route('/battles/<int:battle_id>/sign-reserve')
 @require_login
 def sign_as_reserve(battle_id):
+    """
+        Sign currently logged in player as reserve of a battle.
+    :param battle_id:
+    :return:
+    """
     battle = Battle.query.get(battle_id) or abort(404)
     if battle.clan != g.player.clan and g.player.name not in config.ADMINS: abort(403)
     # disallow signing as reserve for old battles
@@ -740,6 +834,11 @@ def sign_as_reserve(battle_id):
 @app.route('/battles/<int:battle_id>/unsign-reserve')
 @require_login
 def unsign_as_reserve(battle_id):
+    """
+        Remove currently logged in player as reserve from a battle.
+    :param battle_id:
+    :return:
+    """
     battle = Battle.query.get(battle_id) or abort(404)
     if battle.clan != g.player.clan and g.player.name not in config.ADMINS: abort(403)
     if battle.date < datetime.datetime.now() - config.RESERVE_SIGNUP_DURATION:
@@ -756,6 +855,11 @@ def unsign_as_reserve(battle_id):
 @app.route('/battles/<int:battle_id>/download-replay/')
 @require_login
 def download_replay(battle_id):
+    """
+        Replay download handler. Returns the requested replay blob as binary download.
+    :param battle_id:
+    :return:
+    """
     battle = Battle.query.get(battle_id) or abort(404)
     if not battle.replay_id: abort(404)
     response = make_response(battle.replay.replay_blob)
@@ -771,6 +875,11 @@ def download_replay(battle_id):
 @require_role(config.PAYOUT_ROLES)
 @require_clan_membership
 def payout(clan):
+    """
+        Payout date range and battle selection page.
+    :param clan:
+    :return:
+    """
     return render_template('payout/payout.html', clan=clan)
 
 
@@ -779,6 +888,11 @@ def payout(clan):
 @require_role(config.PAYOUT_ROLES)
 @require_clan_membership
 def payout_battles(clan):
+    """
+        Main payout calculation page.
+    :param clan:
+    :return:
+    """
     if request.method == 'POST':
         fromDate = request.form['fromDate']
         toDate = request.form['toDate']
@@ -879,6 +993,11 @@ def players_json():
 @require_login
 @require_role(config.PAYOUT_ROLES)
 def payout_battles_json():
+    """
+        Ajax request handler for battles on the payout page.
+        Returns selected battles serialized as JSON.
+    :return:
+    """
     clan = request.args.get('clan', None)
     if g.player.clan != clan and not g.player.name in config.ADMINS: abort(403)
     fromDate = request.args.get('fromDate', None)
@@ -920,6 +1039,11 @@ def payout_battles_json():
 @require_login
 @require_clan_membership
 def clan_statistics(clan):
+    """
+        Display clan statistics such as number of battles played recently.
+    :param clan:
+    :return:
+    """
     battles_query = Battle.query.filter_by(clan=clan)
 
     battles = battles_query.all()

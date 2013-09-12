@@ -1,4 +1,7 @@
 """
+    Replay Parsing
+    ~~~~~~~~~~~~~~
+
     World of Tanks replay parsing and information extraction
 """
 

@@ -1,5 +1,6 @@
 """
     Database mapping
+    ~~~~~~~~~~~~~~~~
 """
 
 import pickle
@@ -213,7 +214,9 @@ class BattleGroup(db.Model):
 class Replay(db.Model):
     __tablename__ = 'replay'
     id = db.Column(db.Integer, primary_key=True)
+    # The data returned by replays.parse_replay as Python pickle
     replay_pickle = db.Column(db.Binary)
+    # The replay file
     replay_blob = db.Column(db.Binary)
 
     def __init__(self, replay_blob, replay_pickle):

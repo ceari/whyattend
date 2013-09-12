@@ -1,4 +1,7 @@
-""" Configuration settings.
+"""
+    Application Configuration
+    ~~~~~~~~~~~~~~~~~~~~~~~~~
+
     This file should be used as a template and overview
     of all available options. Put your local deployment
     settings into local_config.py, which overrides these
