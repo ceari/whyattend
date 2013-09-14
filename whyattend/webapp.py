@@ -214,7 +214,7 @@ def sync_players(clan_id):
                            wotapi.get_member_since_date(player_data), player['account_name'],
                            clan_info['data']['abbreviation'],
                            player['role'])
-                logger.info('Adding player ' + player.name)
+                logger.info('Adding player ' + player['account_name'])
             db.session.add(p)
 
         # All players of the clan in the DB, which are no longer in the clan
