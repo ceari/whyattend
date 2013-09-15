@@ -317,6 +317,7 @@ def create_or_login(resp):
     player = Player.query.filter_by(openid=resp.identity_url, locked=False).first()
     if player is not None:
         flash(u'Signed in successfully', 'success')
+        session.permanent = True
         g.player = player
         return redirect(oid.get_next_url())
     return redirect(url_for('create_profile', next=oid.get_next_url(),
