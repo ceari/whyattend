@@ -6,9 +6,9 @@
 import pickle
 
 from flask.ext.sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import deferred
 
 db = SQLAlchemy()
-
 
 class Player(db.Model):
     __tablename__ = 'player'
@@ -217,7 +217,8 @@ class Replay(db.Model):
     # The data returned by replays.parse_replay as Python pickle
     replay_pickle = db.Column(db.Binary)
     # The replay file
-    replay_blob = db.Column(db.Binary)
+    replay_blob = deferred(db.Column(db.Binary))
+
 
     def __init__(self, replay_blob, replay_pickle):
         self.replay_pickle = replay_pickle

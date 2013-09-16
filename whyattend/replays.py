@@ -99,3 +99,23 @@ def guess_enemy_clan(replay_json):
     """
     friendly_team = replay_json['first']['vehicles'].values()[0]['team']
     return players_list(replay_json, 1 if friendly_team == 2 else 2)[0]['clanAbbrev']
+
+
+def player_performance(replay_pickle):
+    perf = dict()
+    for v in replay_pickle['vehicles'].itervalues():
+        perf[str(v['accountDBID'])] = {
+            'damageDealt': v['damageDealt'],
+            'potentialDamageReceived': v['potentialDamageReceived'],
+            'xp': v['xp'],
+            'kills': v['kills'],
+            'shots': v['shots'],
+            'hits': v['hits'],
+            'pierced': v['pierced'],
+            'capturePoints': v['capturePoints'],
+            'droppedCapturePoints': v['droppedCapturePoints'],
+            'spotted': v['spotted'],
+            'survived': v['deathReason'] == -1,     # no death reason = survived?
+            'damageAssistedRadio': v['damageAssistedRadio'],
+        }
+    return perf

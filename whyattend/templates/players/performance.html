@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+{% block title %}Players of {{ clan }}{% endblock %}
+{% block head %}
+    {{super()}}
+    <script src="{{url_for('static', filename='js/jquery.dataTables.min.js')}}" type="text/javascript"></script>
+    <script src="{{url_for('static', filename='js/dataTables.bootstrap.js')}}" type="text/javascript"></script>
+    <link href="{{url_for('static', filename='css/dataTables.bootstrap.css')}}" rel="stylesheet" media="screen">
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            $('#players').dataTable({
+                "oLanguage": {
+                    "sLengthMenu": "Display _MENU_ players per page",
+                    "sZeroRecords": "No players yet.",
+                    "sInfo": "Showing _START_ to _END_ of _TOTAL_ players",
+                    "sInfoEmpty": "Showing 0 to 0 of 0 players",
+                    "sInfoFiltered": "(filtered from _MAX_ total player)"
+                },
+                "aoColumns": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    { "sType": "percent"},
+                    null,
+                    null,
+                    null,
+                    null
+                ]
+            });
+
+            $('#players_filter label input').addClass('form-control');
+            $('#players_length label select').addClass('form-control');
+        });
+    </script>
+{% endblock %}
+{% block content %}
+  <h2>Performance of {{ clan }} <img style="height: 32px; width: 32px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> Players</h2>
+  <p>
+      <i class="icon-info icon-2x"></i> Only showing players with at least one battle played.
+  </p>
+  <hr>
+  <table id="players" class="table table-striped">
+      <thead>
+        <tr>
+            <th>Name</th>
+            <th>Played</th>
+            <th>Avg. Damage</th>
+            <th>Avg. Kills</th>
+            <th>Avg. Spot Dmg.</th>
+            <th>Survival rate.</th>
+            <th>Avg. Spotted</th>
+            <th>Avg. Pot. Dmg.</th>
+            <th>Avg. decap</th>
+            <th>WN7</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for player in clan_players %}
+        {% if battle_count[player] > 0 %}
+        <tr>
+
+            <td><a title="{{player.name}}" href="{{url_for('player', player_id=player.id)}}">{{player.name}}</a></td>
+            <td>{{battle_count[player]}}</td>
+            <td>{{avg_dmg[player]|int}}</td>
+            <td>{{avg_kills[player]|round(2)}}</td>
+            <td>{{avg_spot_damage[player]|int}}</td>
+            <td>{{ (survival_rate[player] * 100.0)|round(1) }} %</td>
+            <td>{{avg_spotted[player]|round(2)}}</td>
+            <td>{{ avg_pot_damage[player]|int }}</td>
+            <td>{{ avg_decap[player]|round(2) }}</td>
+            <td>{{ wn7[player]|int }}</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+  </table>
+
+{% endblock %}
