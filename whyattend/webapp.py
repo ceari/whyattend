@@ -197,10 +197,11 @@ def sync_players(clan_id):
         processed = set()
         for player in clan_info['data']['members']:
             player_data = wotapi.get_player(str(player['account_id']))
+            p = Player.query.filter_by(wot_id=str(player['account_id'])).first()
             if not player_data:
+                if p: processed.add(p.id) # skip this guy later when locking players
                 logger.info("WOTAPI Error: Could not retrieve player information of " + str(player['account_id']))
                 continue # API Error?
-            p = Player.query.filter_by(wot_id=str(player['account_id'])).first()
             if p:
                 # Player exists, update information
                 processed.add(p.id)
