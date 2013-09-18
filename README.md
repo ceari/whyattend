@@ -37,9 +37,9 @@ can trigger the synchronization.
 
 This can be automated by a cron script, e.g:
 
-    > #!/bin/bash
-    > # Synchronize WHY members
-    > curl "http://myserver.com/sync-players/500014725?API_KEY=supersecret"
+    #!/bin/bash
+    # Synchronize WHY members
+    curl "http://myserver.com/sync-players/500014725?API_KEY=supersecret"
 
 
 Deployment Example
@@ -54,15 +54,15 @@ and use the provided `wsgi_app.wsgi` file as example.
 
 The apache2 virtual host configuration could look like this:
 
-    > WSGIDaemonProcess clanwars processes=1 threads=5
-    > WSGIProcessGroup clanwars
-    > WSGIScriptAlias /clanwars /var/www/clanwars/wsgi_app.wsgi
-    >
-    > Alias /clanwars/static/ /var/www/clanwars/whyattend/static/
-    > <Directory /var/www/clanwars/whyattend/static>
-    >     Order allow,deny
-    >     Allow from all
-    > </Directory>
+    WSGIDaemonProcess clanwars processes=1 threads=5
+    WSGIProcessGroup clanwars
+    WSGIScriptAlias /clanwars /var/www/clanwars/wsgi_app.wsgi
+
+    Alias /clanwars/static/ /var/www/clanwars/whyattend/static/
+    <Directory /var/www/clanwars/whyattend/static>
+        Order allow,deny
+        Allow from all
+    </Directory>
 
 Example 2:
 
