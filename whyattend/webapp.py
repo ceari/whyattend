@@ -116,6 +116,7 @@ def inject_constants():
     g.ADMINS = config.ADMINS
     g.ADMIN_ROLES = config.ADMIN_ROLES
     g.PLAYER_PERFORMANCE_ROLES = config.PLAYER_PERFORMANCE_ROLES
+    g.RESERVE_SIGNUP_ALLOWED = config.RESERVE_SIGNUP_ALLOWED
 
 
 def require_login(f):
@@ -822,6 +823,7 @@ def sign_as_reserve(battle_id):
     """
     battle = Battle.query.get(battle_id) or abort(404)
     if battle.clan != g.player.clan and g.player.name not in config.ADMINS: abort(403)
+    if not config.RESERVE_SIGNUP_ALLOWED: abort(403)
     # disallow signing as reserve for old battles
     if battle.date < datetime.datetime.now() - config.RESERVE_SIGNUP_DURATION:
         flash(u"Can't sign up as reserve for battles older than 24 hours. Contact an admin if needed.")
@@ -845,6 +847,7 @@ def unsign_as_reserve(battle_id):
     """
     battle = Battle.query.get(battle_id) or abort(404)
     if battle.clan != g.player.clan and g.player.name not in config.ADMINS: abort(403)
+    if not config.RESERVE_SIGNUP_ALLOWED: abort(403)
     if battle.date < datetime.datetime.now() - config.RESERVE_SIGNUP_DURATION:
         flash(u"Can't sign up as reserve for battles older than 24 hours. Contact an admin if needed.")
         return redirect(url_for('battles', clan=g.player.clan))
@@ -991,6 +994,39 @@ def players_json():
     return jsonify(
         {"players": [player.to_dict() for player in players]}
     )
+
+
+@app.route('/reserve-players/json/<clan>/<int:battle_id>')
+@require_login
+def reserve_players_json(clan, battle_id):
+    battle = Battle.query.get(battle_id) or abort(404)
+    battle_player_ids = [p.id for p in (battle.get_players() + battle.get_reserve_players())]
+    players = Player.query.filter_by(clan=clan, locked=False).filter(Player.id.notin_(battle_player_ids)).order_by('name asc')
+    q = request.args.get('q', None)
+    if q:
+        players = players.filter(Player.name.ilike('%' + q + '%'))
+    players = players.all()
+
+    return jsonify(
+        {"players": [player.to_dict() for player in players]}
+    )
+
+
+@app.route('/battle-players-update/<int:battle_id>', methods=['PUT'])
+@require_login
+@require_role(config.CREATE_BATTLE_ROLES)
+def battle_reserves_update(battle_id):
+    battle = Battle.query.get(battle_id) or abort(404)
+    reserves = request.json
+    for ba in battle.attendances:
+        if ba.reserve:
+            db.session.delete(ba)
+    for reserve in reserves:
+        player = Player.query.get(reserve['id'])
+        ba = BattleAttendance(player, battle, reserve=True)
+        db.session.add(ba)
+    db.session.commit()
+    return jsonify({"status": "ok"})
 
 
 @app.route('/payout/battles')

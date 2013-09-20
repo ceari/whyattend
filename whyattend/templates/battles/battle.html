@@ -2,7 +2,54 @@
 {% block title %}Battles of {{ clan }}{% endblock %}
 {% block head %}
     {{super()}}
+    <link href="{{url_for('static', filename='css/token-input.css')}}" rel="stylesheet" media="screen">
+    <script src="{{url_for('static', filename='js/jquery.tokeninput.js')}}" type="text/javascript"></script>
+    <script type="text/javascript">
+    $(document).ready(function () {
+        var postChanges = function() {
+            var data = $("#reserves").tokenInput("get");
+            $.ajax({
+                type : "PUT",
+                url : "{{ url_for('battle_reserves_update', battle_id=battle.id) }}",
+                data: JSON.stringify(data, null, '\t'),
+                contentType: 'application/json;charset=UTF-8'
+            });
+        }
 
+        $("#reserves").tokenInput("{{ url_for('reserve_players_json', clan=g.player.clan, battle_id=battle.id) }}", {
+            searchDelay: 0,
+            jsonContainer: 'players',
+            prePopulate: [
+                {% for player in battle.get_reserve_players() %}
+                    {id: {{player.id}}, name: "{{ player.name }}"},
+                {% endfor %}
+            ],
+            searchingText: '',
+            hintText: 'Type a player name',
+            noResultsText: 'No players with this name (or player already in this battle)',
+            onAdd: postChanges,
+            onDelete: postChanges,
+            preventDuplicates: true
+        });
+    });
+    </script>
+
+    <style type="text/css">
+        ul.token-input-list {
+            background: transparent;
+            border: none;
+        }
+        #token-input-reserves {
+            width: 100%;
+            border-radius: 3px;
+        }
+        li.token-input-token > p {
+            width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            float: left;
+        }
+    </style>
 {% endblock %}
 {% block content %}
     <h2>Battle details <img style="width:32px; height:32px;" src="{{url_for('static', filename='img/clanicons/' + battle.clan + '.png')}}"/> {{battle.clan}}  vs. {{battle.enemy_clan}}</h2>
@@ -36,7 +83,10 @@
             </dd>
         </dl>
         <dl class="col-lg-2">
-            <dt>Reserve Players ({{battle.get_reserve_players()|length}})</dt>
+            <dt>Reserve Players</dt>
+            {% if g.player.role in g.CREATE_BATTLE_ROLES or g.player.name in g.ADMINS %}
+                <input class="form-control" type="text" id="reserves" name="reserves"/>
+            {% else %}
             <dd>
                 <ul>
                 {% for player in battle.get_reserve_players()|sort(attribute='name') %}
@@ -44,6 +94,7 @@
                 {% endfor %}
                 </ul>
             </dd>
+            {% endif %}
         </dl>
         {% if battle.replay.unpickle() %}
         <dl class="col-lg-5">

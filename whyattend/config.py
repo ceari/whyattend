@@ -60,6 +60,8 @@ PLAYER_PERFORMANCE_ROLES = ('leader', 'vice_leader')
 
 # How long after the battle date should reserves be able to sign in themselves
 RESERVE_SIGNUP_DURATION = datetime.timedelta(days=7)
+# Allow/disallow signup by players. If disallowed, only members with a position in CREATE_BATTLE_ROLES can do it
+RESERVE_SIGNUP_ALLOWED = False
 
 # Should replays be stored in the database?
 STORE_REPLAYS_IN_DB = True
