@@ -746,17 +746,24 @@ def players(clan):
     present = defaultdict(int)
     clan_battles = Battle.query.options(joinedload_all('attendances.player')).filter_by(clan=clan).order_by(
         'date asc').all()
+    battle_groups = BattleGroup.query.options(joinedload_all('battles.attendances.player')).filter_by(clan=clan).all()
+    players_by_battle_group_id = dict()
+    reserves_by_battle_group_id = dict()
+    for bg in battle_groups:
+        players_by_battle_group_id[bg.id] = bg.get_players()
+        reserves_by_battle_group_id[bg.id] = bg.get_reserves()
+
     for player in players:
         for battle in clan_battles:
             if battle.date < player.member_since: continue
             if battle.battle_group_id and not battle.battle_group_final: continue # only finals will count
             possible[player] += 1
 
-            if battle.battle_group:
-                if player in battle.battle_group.get_players():
+            if battle.battle_group_id:
+                if player in players_by_battle_group_id[battle.battle_group_id]:
                     played[player] += 1
                     present[player] += 1
-                elif player in battle.battle_group.get_reserves():
+                elif player in reserves_by_battle_group_id[battle.battle_group_id]:
                     reserve[player] += 1
                     present[player] += 1
             else:
@@ -767,8 +774,8 @@ def players(clan):
                     reserve[player] += 1
                     present[player] += 1
 
-    oldest_date = datetime.datetime.now() - datetime.timedelta(days=30)
     # 30 days stats
+    oldest_date = datetime.datetime.now() - datetime.timedelta(days=30)
     possible30 = defaultdict(int)
     reserve30 = defaultdict(int)
     played30 = defaultdict(int)
@@ -782,10 +789,10 @@ def players(clan):
             possible30[player] += 1
 
             if battle.battle_group:
-                if player in battle.battle_group.get_players():
+                if player in players_by_battle_group_id[battle.battle_group_id]:
                     played30[player] += 1
                     present30[player] += 1
-                elif player in battle.battle_group.get_reserves():
+                elif player in reserves_by_battle_group_id[battle.battle_group_id]:
                     reserve30[player] += 1
                     present30[player] += 1
             else:
