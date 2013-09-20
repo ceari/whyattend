@@ -1018,14 +1018,22 @@ def reserve_players_json(clan, battle_id):
 def battle_reserves_update(battle_id):
     battle = Battle.query.get(battle_id) or abort(404)
     reserves = request.json
+    reserve_before = set()
     for ba in battle.attendances:
         if ba.reserve:
+            reserve_before.add(ba.player)
             db.session.delete(ba)
+    reserve_now = set()
     for reserve in reserves:
         player = Player.query.get(reserve['id'])
+        reserve_now.add(player)
         ba = BattleAttendance(player, battle, reserve=True)
         db.session.add(ba)
     db.session.commit()
+    logger.info(g.player.name + " updated the reserves for " + str(battle) + " - added: " + \
+                ", ".join([p.name for p in (reserve_now - reserve_before)]) + " - deleted: " + \
+                ", ".join([p.name for p in (reserve_before - reserve_now)])
+    )
     return jsonify({"status": "ok"})
 
 
