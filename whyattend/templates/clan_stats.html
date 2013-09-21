@@ -2,10 +2,10 @@
 {% block title %}Clan Statistics{% endblock %}
 {% block head %}
     {{super()}}
-    <script src="{{url_for('static', filename='js/raphael-min.js')}}" type="text/javascript"></script>
-    <script src="{{url_for('static', filename='js/g.raphael-min.js')}}" type="text/javascript"></script>
-    <script src="{{url_for('static', filename='js/g.pie-min.js')}}" type="text/javascript"></script>
-    <script src="{{url_for('static', filename='js/g.bar-min.js')}}" type="text/javascript"></script>
+    <script src="{{url_for('static', filename='js/vendor/raphael-min.js')}}" type="text/javascript"></script>
+    <script src="{{url_for('static', filename='js/vendor/g.raphael-min.js')}}" type="text/javascript"></script>
+    <script src="{{url_for('static', filename='js/vendor/g.pie-min.js')}}" type="text/javascript"></script>
+    <script src="{{url_for('static', filename='js/vendor/g.bar-min.js')}}" type="text/javascript"></script>
     <script>
         $(document).ready(function() {
             var r = Raphael(document.getElementById('maps'), 300, 300);
