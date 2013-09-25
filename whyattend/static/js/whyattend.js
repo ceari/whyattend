@@ -8,7 +8,7 @@ $(document).ready(function () {
                     var frDatea2 = frDatea[0].split('\.');
                     var x = (frDatea2[2] + frDatea2[1] + frDatea2[0] + frTimea[0] + frTimea[1]) * 1;
                 } else {
-                    var x = 10000000000000; // = l'an 1000 ...
+                    var x = -10000000000000; // = l'an 1000 ...
                 }
 
                 return x;
@@ -31,7 +31,7 @@ $(document).ready(function () {
                     var frDatea2 = frDatea[0].split('\.');
                     var x = (frDatea2[2] + frDatea2[1] + frDatea2[0] + frTimea[0] + frTimea[1]) * 1;
                 } else {
-                    var x = 10000000000000; // = l'an 1000 ...
+                    var x = -10000000000000; // = l'an 1000 ...
                 }
 
                 return x;

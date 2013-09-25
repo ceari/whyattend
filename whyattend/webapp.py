@@ -753,6 +753,14 @@ def players(clan):
         players_by_battle_group_id[bg.id] = bg.get_players()
         reserves_by_battle_group_id[bg.id] = bg.get_reserves()
 
+    last_battle_by_player = dict()
+    for p in players:
+        last_battle = None
+        for ba in p.battles:
+            if ba.battle.clan == p.clan and (last_battle is None or ba.battle.date > last_battle.date):
+                last_battle = ba.battle
+        last_battle_by_player[p] = last_battle
+
     for player in players:
         for battle in clan_battles:
             if battle.date < player.member_since: continue
@@ -805,7 +813,8 @@ def players(clan):
 
     return render_template('players/players.html', clan=clan, players=players,
                            played=played, present=present, possible=possible, reserve=reserve,
-                           played30=played30, present30=present30, possible30=possible30)
+                           played30=played30, present30=present30, possible30=possible30,
+                           last_battle_by_player=last_battle_by_player)
 
 
 @app.route('/players/<int:player_id>')

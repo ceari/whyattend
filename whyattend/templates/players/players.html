@@ -27,6 +27,7 @@
                     { "sType": "percent"},
                     { "sType": "percent"},
                     { "sType": "percent"},
+                    { "sType": "date-euro-anchor"},
                     null
                 ]
             });
@@ -53,16 +54,16 @@
             <th>Played</th>
             <th>Reserve</th>
             <th><abbr title="Only taking battles into account since player joined the clan">#possible</abbr></th>
-            <th><abbr title="#played / #possible">Battle Presence</abbr></th>
+            <th><abbr title="#played / #possible">Played</abbr></th>
             <th><abbr title="#present / #possible">Presence</abbr></th>
             <th><abbr title="#present / #possible over battles of the last 30 days">30 Days Presence</abbr></th>
+            <th>Last battle</th>
             <th><abbr title="Gold paid out so far"><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/gold_coin_stack.png')}}"></abbr></th>
         </tr>
       </thead>
       <tbody>
         {% for player in players %}
         <tr>
-
             <td><a title="{{player.name}}" href="{{url_for('player', player_id=player.id)}}">{{player.name}}</a></td>
             <td><span class="{{player.role}}">{{g.roles[player.role]}}</span></td>
             <td>{{player.member_since.strftime('%d.%m.%Y %H:%M')}}</td>
@@ -72,6 +73,10 @@
             <td>{{'%i' % (played[player] / possible[player] * 100.0 if possible[player] else 0)}} %</td>
             <td>{{'%i' % (present[player] / possible[player] * 100.0 if possible[player] else 0)}} %</td>
             <td>{{'%i' % (present30[player] / possible30[player] * 100.0 if possible30[player] else 0)}} %</td>
+            <td>{% if last_battle_by_player[player] %}
+                <a href="{{ url_for('battle_details', battle_id=last_battle_by_player[player].id) }}">{{ last_battle_by_player[player].date.strftime('%d.%m.%Y %H:%M') }}</a>
+                {% endif %}
+            </td>
             <td>{{player.gold_earned}}</td>
         </tr>
         {% endfor %}
