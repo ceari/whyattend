@@ -31,6 +31,26 @@
             onDelete: postChanges,
             preventDuplicates: true
         });
+
+        $("a.confirm-sign").on("click", function (e) {
+            var link = this;
+
+            e.preventDefault();
+
+            $("<div style=\"font-size: normal\">Sign in as reserve?<br>" +
+            "<br><i style=\"color: yellow; margin-right: 20px\" class=\"icon-warning-sign icon-2x\"></i><strong style=\"color: red\">Make sure you count as reserve. Abuse of the system by signing yourself " +
+            "as reserve if you weren't will have consequences.</strong></div>").dialog({
+                width: 600,
+                buttons: {
+                    "Sign as reserve": function () {
+                        window.location = link.href;
+                    },
+                    "Cancel": function () {
+                        $(this).dialog("close");
+                    }
+                }
+            });
+        });
     });
     </script>
 
@@ -94,6 +114,15 @@
                 {% endfor %}
                 </ul>
             </dd>
+            {% endif %}
+            {% if g.player.clan == battle.clan and g.RESERVE_SIGNUP_ALLOWED %}
+                <p style="margin-top: 10px">
+                {% if not battle.has_player(g.player) and not battle.has_reserve(g.player) %}
+                    <a href="{{url_for('sign_as_reserve', battle_id=battle.id)}}?back_to_battle" class="confirm-sign btn btn-primary btn-sm">Sign as reserve</a>
+                {% elif battle.has_reserve(g.player) %}
+                    <a href="{{url_for('unsign_as_reserve', battle_id=battle.id)}}?back_to_battle" class="btn btn-danger btn-sm">Remove from reserve</a>
+                {% endif %}
+                </p>
             {% endif %}
         </dl>
         {% if battle.replay.unpickle() %}

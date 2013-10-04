@@ -840,9 +840,12 @@ def sign_as_reserve(battle_id):
     battle = Battle.query.get(battle_id) or abort(404)
     if battle.clan != g.player.clan and g.player.name not in config.ADMINS: abort(403)
     if not config.RESERVE_SIGNUP_ALLOWED: abort(403)
+    back_to_battle = request.args.has_key('back_to_battle')
     # disallow signing as reserve for old battles
     if battle.date < datetime.datetime.now() - config.RESERVE_SIGNUP_DURATION:
         flash(u"Can't sign up as reserve for battles older than 24 hours. Contact an admin if needed.")
+        if back_to_battle:
+            return redirect(url_for('battle_details', battle_id=battle.id))
         return redirect(url_for('battles', clan=g.player.clan))
 
     if not battle.has_player(g.player) and not battle.has_reserve(g.player):
@@ -850,6 +853,10 @@ def sign_as_reserve(battle_id):
         db.session.add(ba)
         logger.info(g.player.name + " signed himself as reserve for " + str(battle))
         db.session.commit()
+
+    if back_to_battle:
+        return redirect(url_for('battle_details', battle_id=battle.id))
+
     return redirect(url_for('battles', clan=g.player.clan))
 
 
@@ -864,14 +871,21 @@ def unsign_as_reserve(battle_id):
     battle = Battle.query.get(battle_id) or abort(404)
     if battle.clan != g.player.clan and g.player.name not in config.ADMINS: abort(403)
     if not config.RESERVE_SIGNUP_ALLOWED: abort(403)
+    back_to_battle = request.args.has_key('back_to_battle')
     if battle.date < datetime.datetime.now() - config.RESERVE_SIGNUP_DURATION:
         flash(u"Can't sign up as reserve for battles older than 24 hours. Contact an admin if needed.")
+        if back_to_battle:
+            return redirect(url_for('battle_details', battle_id=battle.id))
         return redirect(url_for('battles', clan=g.player.clan))
 
     ba = BattleAttendance.query.filter_by(player=g.player, battle=battle, reserve=True).first() or abort(500)
     db.session.delete(ba)
     logger.info(g.player.name + " removed himself as reserve for " + str(battle))
     db.session.commit()
+
+    if back_to_battle:
+        return redirect(url_for('battle_details', battle_id=battle.id))
+
     return redirect(url_for('battles', clan=g.player.clan))
 
 
