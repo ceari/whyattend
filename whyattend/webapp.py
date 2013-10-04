@@ -350,6 +350,10 @@ def create_profile():
             return render_template('create_profile.html', next_url=oid.get_next_url())
 
         clan = wotapi.get_clantag(player_data)
+        if clan not in config.CLAN_NAMES:
+            flash(u'You have to be in one of the clans to login', 'error')
+            return render_template('create_profile.html', next_url=oid.get_next_url())
+
         role = wotapi.get_player_clan_role(player_data)
         member_since = wotapi.get_member_since_date(player_data)
         if not role:
