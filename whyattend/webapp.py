@@ -1004,8 +1004,8 @@ def payout_battles(clan):
 
     player_points = dict()
     for p in players:
-        player_points[p] = player_fced_win[p] * 6 + player_fced_defeat[p] * 4 + player_fced_draws[p] * 2 + \
-                           player_victories[p] * 3 + player_defeats[p] * 2 + player_draws[p] * 2 + player_reserve[p] * 1
+        player_points[p] = player_fced_win[p] * 2.5 + player_fced_defeat[p] * 2 + player_fced_draws[p] * 2 + \
+                           player_victories[p] * 2.5 + player_defeats[p] * 2 + player_draws[p] * 2 + player_reserve[p] * 1
     total_points = sum(player_points[p] for p in players)
     player_gold = dict()
     for p in players:
