@@ -21,7 +21,13 @@
         </dl>
     </div>
     <div class="col-lg-6">
-
+        <h5>Participation in {{ oldest_date.strftime('%B %Y') }}</h5>
+        <dl>
+          <dt>Possible: {{ possible }}</dt>
+          <dt>Played: {{ played }}</dt>
+          <dt>Reserve: {{ reserve }}</dt>
+          <dt>Won: {{ wins }}</dt>
+        </dl>
     </div>
   </div>
   {% if g.player.role in g.PAYOUT_ROLES or g.player.name in g.ADMINS %}
