@@ -830,7 +830,41 @@ def player(player_id):
     """
     player = Player.query.get(player_id) or abort(404)
 
-    return render_template('players/player.html', player=player)
+
+    # current month stats
+    today = datetime.datetime.now()
+    oldest_date = datetime.datetime(today.year, today.month, 1)
+    possible = 0
+    reserve = 0
+    played = 0
+    present = 0
+    wins = 0
+    clan_battles = Battle.query.options(joinedload_all('attendances.player')) \
+        .filter_by(clan=player.clan).filter(Battle.date > oldest_date).order_by('date asc').all()
+    for battle in clan_battles:
+        if battle.date < player.member_since: continue
+        if battle.battle_group_id and not battle.battle_group_final: continue # only finals will count
+        possible += 1
+
+        if battle.victory:
+            wins += 1
+
+        if battle.battle_group:
+            if player in battle.battle_group.get_players():
+                played += 1
+                present += 1
+            elif player in battle.battle_group.get_reserves():
+                reserve += 1
+                present += 1
+        else:
+            if battle.has_player(player):
+                played += 1
+                present += 1
+            elif battle.has_reserve(player):
+                reserve += 1
+                present += 1
+    return render_template('players/player.html', player=player, possible=possible, present=present, played=played,
+                           reserve=reserve, oldest_date=oldest_date, wins=wins)
 
 
 @app.route('/battles/<int:battle_id>/sign-reserve')
