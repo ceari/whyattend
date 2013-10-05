@@ -846,11 +846,10 @@ def player(player_id):
         if battle.battle_group_id and not battle.battle_group_final: continue # only finals will count
         possible += 1
 
-        if battle.victory:
-            wins += 1
-
         if battle.battle_group:
             if player in battle.battle_group.get_players():
+                if battle.victory:
+                    wins += 1
                 played += 1
                 present += 1
             elif player in battle.battle_group.get_reserves():
@@ -858,6 +857,8 @@ def player(player_id):
                 present += 1
         else:
             if battle.has_player(player):
+                if battle.victory:
+                    wins += 1
                 played += 1
                 present += 1
             elif battle.has_reserve(player):
