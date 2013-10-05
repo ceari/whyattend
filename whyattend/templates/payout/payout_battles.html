@@ -27,7 +27,6 @@
         };
 
         var toggleDetails = function() {
-            fnShowHide(1);
             fnShowHide(2);
             fnShowHide(3);
             fnShowHide(4);
@@ -35,6 +34,7 @@
             fnShowHide(6);
             fnShowHide(7);
             fnShowHide(8);
+            fnShowHide(9);
         };
     </script>
 {% endblock %}
@@ -60,6 +60,7 @@
             <li>2.5 for playing in a victory</li>
             <li>2 for playing in a loss/draw</li>
             <li>1 for being a reserve</li>
+            <li>Leadership members (special payout enabled) receive 2% of the gold ({{ num_leaders }} members with special payout flag, {{ gold_leaders|round }} gold each)</li>
         </ul>
         The points are summed up. The player receives a share of the gold proportional to his points divided by the total number of
         points distributed.
@@ -69,6 +70,7 @@
         <thead>
             <tr>
                 <th>Player</th>
+                <th>Special payout</th>
                 <th># battles commanded won</th>
                 <th># battles commanded drawn</th>
                 <th># battles commanded lost</th>
@@ -85,7 +87,8 @@
         <tbody>
             {% for player in players|sort(attribute="name") %}
             <tr>
-                <td>{{player.name}}</td>
+                <td>{{ player.name }}</td>
+                <td>{% if player.special_payout %}<i class="icon-ok"></i>{% endif %}</td>
                 <td>{{player_fced_win[player]}}</td>
                 <td>{{player_fced_draws[player]}}</td>
                 <td>{{player_fced_defeat[player]}}</td>

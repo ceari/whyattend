@@ -1007,13 +1007,15 @@ def payout_battles(clan):
 
     players = set()
     for p in clan_players:
-        if player_played[p] or player_reserve[p] or player_fced_win[p] or player_fced_defeat[p]:
+        if player_played[p] or player_reserve[p] or player_fced_win[p] or player_fced_defeat[p] or p.special_payout:
             players.add(p)
 
     player_points = dict()
     for p in players:
-        player_points[p] = player_fced_win[p] * 2.5 + player_fced_defeat[p] * 2 + player_fced_draws[p] * 2 + \
-                           player_victories[p] * 2.5 + player_defeats[p] * 2 + player_draws[p] * 2 + player_reserve[p] * 1
+        player_points[p] = 0
+        if player_played[p] or player_reserve[p] or player_fced_win[p] or player_fced_defeat[p]:
+            player_points[p] = player_fced_win[p] * 2.5 + player_fced_defeat[p] * 2 + player_fced_draws[p] * 2 + \
+                               player_victories[p] * 2.5 + player_defeats[p] * 2 + player_draws[p] * 2 + player_reserve[p] * 1
     total_points = sum(player_points[p] for p in players)
 
     num_leaders = 0
@@ -1035,7 +1037,8 @@ def payout_battles(clan):
                            player_gold=player_gold, gold=gold, player_defeats=player_defeats,
                            player_fced_win=player_fced_win,
                            player_fced_defeat=player_fced_defeat, player_victories=player_victories,
-                           player_fced_draws=player_fced_draws, player_draws=player_draws, player_points=player_points)
+                           player_fced_draws=player_fced_draws, player_draws=player_draws, player_points=player_points,
+                           num_leaders=num_leaders, gold_leaders=gold_leaders)
 
 
 @app.route('/players/json')
