@@ -24,6 +24,8 @@ class Player(db.Model):
     locked = db.Column(db.Boolean)
 
     gold_earned = db.Column(db.Integer)
+    special_payout = db.Column(db.Boolean) # leadership status for payout calculation
+    note = db.Column(db.String(512)) # notes/comments for leadership for each player
 
     def __init__(self, wot_id, openid, member_since, name, clan, role, locked=False):
         self.wot_id = wot_id

@@ -2,19 +2,43 @@
 {% block title %}[{{player.clan}}] {{ player.name  }}{% endblock %}
 {% block content %}
   <h2><img style="height: 32px; width: 32px;" src="{{url_for('static', filename='img/clanicons/' + player.clan + '.png')}}"> <span class="{{player.role}}">{{player.name}}</span></h2>
-  <dl>
-      {% if player.locked %}
-      <dt><span style="color: darkred">Player no longer in clan. Below is the last known information while in clan.</span></dt>
-      {% endif %}
-      <dt>Position</dt>
-      <dd><span class="{{player.role}}">{{g.roles[player.role]}}</span></dd>
-      <dt>World of Tanks Profile</dt>
-      <dd><a href="{{player.openid}}">Link</a></dd>
-      <dt>WoTLabs Signature (might be outdated):</dt>
-      <dd><img src="http://wotlabs.net/sig_cust/EEEEEE/060606/{{g.WOT_SERVER_REGION_CODE}}/{{player.name}}/signature.png"/></dd>
-      <dt>Other tools</dt>
-      <dd><a href="https://duckandcover.ru/wotka?search=acc&nickname={{player.name}}&server={{g.WOT_SERVER_REGION_CODE.upper()}}">Clan history (duckandcover.ru/wotka)</a></dd>
-      <dd><a href="http://www.feldzug.net/{{g.WOT_SERVER_REGION_CODE}}-stats/{{player.name}}">feldzug.net</a></dd>
-      <dd><a href="http://www.noobmeter.com/player/{{g.WOT_SERVER_REGION_CODE}}/{{player.name}}/{{player.wot_id}}/">Noobmeter</a></dd>
-  </dl>
+  <div class="row">
+    <div class="col-lg-6">
+        <dl>
+          {% if player.locked %}
+          <dt><span style="color: darkred">Player no longer in clan. Below is the last known information while in clan.</span></dt>
+          {% endif %}
+          <dt>Position</dt>
+          <dd><span class="{{player.role}}">{{g.roles[player.role]}}</span></dd>
+          <dt>World of Tanks Profile</dt>
+          <dd><a href="{{player.openid}}">Link</a></dd>
+          <dt>WoTLabs Signature (might be outdated):</dt>
+          <dd><img src="http://wotlabs.net/sig_cust/EEEEEE/060606/{{g.WOT_SERVER_REGION_CODE}}/{{player.name}}/signature.png"/></dd>
+          <dt>Other tools</dt>
+          <dd><a href="https://duckandcover.ru/wotka?search=acc&nickname={{player.name}}&server={{g.WOT_SERVER_REGION_CODE.upper()}}">Clan history (duckandcover.ru/wotka)</a></dd>
+          <dd><a href="http://www.feldzug.net/{{g.WOT_SERVER_REGION_CODE}}-stats/{{player.name}}">feldzug.net</a></dd>
+          <dd><a href="http://www.noobmeter.com/player/{{g.WOT_SERVER_REGION_CODE}}/{{player.name}}/{{player.wot_id}}/">Noobmeter</a></dd>
+        </dl>
+    </div>
+    <div class="col-lg-6">
+
+    </div>
+  </div>
+  {% if g.player.role in g.PAYOUT_ROLES or g.player.name in g.ADMINS %}
+  <p>
+    <h3>Administration</h3>
+    <form action="{{url_for('player', player_id=player.id)}}" method="POST">
+        <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
+        <div class="form-group">
+            <textarea rows=4 placeholder="Note/Comment" class="form-control" id="note" name="note">{{player.note or ""}}</textarea>
+        </div>
+        <div class="form-group">
+            <input type="checkbox" id="special_payout" name="special_payout" {% if player.special_payout %}checked="checked"{% endif %}> Special payout
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-success">Save</button>
+        </div>
+    </form>
+  </p>
+  {% endif %}
 {% endblock %}

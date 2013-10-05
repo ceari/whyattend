@@ -821,7 +821,7 @@ def players(clan):
                            last_battle_by_player=last_battle_by_player)
 
 
-@app.route('/players/<int:player_id>')
+@app.route('/players/<int:player_id>', methods=['GET', 'POST'])
 def player(player_id):
     """
         Player details page.
@@ -829,6 +829,14 @@ def player(player_id):
     :return:
     """
     player = Player.query.get(player_id) or abort(404)
+
+    if request.method == 'POST':
+        if not (g.player.role in config.PAYOUT_ROLES or g.player.name in config.ADMINS):
+            abort(403)
+        player.special_payout = request.form.get('special_payout', '') == 'on'
+        player.note = request.form.get('note', '')
+        db.session.add(player)
+        db.session.commit()
 
     return render_template('players/player.html', player=player)
 
@@ -1007,9 +1015,20 @@ def payout_battles(clan):
         player_points[p] = player_fced_win[p] * 2.5 + player_fced_defeat[p] * 2 + player_fced_draws[p] * 2 + \
                            player_victories[p] * 2.5 + player_defeats[p] * 2 + player_draws[p] * 2 + player_reserve[p] * 1
     total_points = sum(player_points[p] for p in players)
+
+    num_leaders = 0
+    for p in players:
+        if p.special_payout:
+            num_leaders += 1
+
+    gold_all = gold * (1.0 - num_leaders * 0.02)
+    gold_leaders = gold - gold_all
+
     player_gold = dict()
     for p in players:
-        player_gold[p] = int(round(player_points[p] / float(total_points) * gold))
+        player_gold[p] = int(round(player_points[p] / float(total_points) * gold_all))
+        if p.special_payout:
+            player_gold[p] += int((1.0 / num_leaders) * gold_leaders)
 
     return render_template('payout/payout_battles.html', battles=battles, clan=clan, fromDate=fromDate, toDate=toDate,
                            player_played=player_played, player_reserve=player_reserve, players=players,

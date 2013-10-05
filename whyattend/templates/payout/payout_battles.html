@@ -78,6 +78,7 @@
                 <th># battles lost</th>
                 <th># battles reserve</th>
                 <th>Points</th>
+                <th>Note</th>
                 <th>Gold to pay</th>
             </tr>
         </thead>
@@ -94,6 +95,7 @@
                 <td>{{player_defeats[player]}}</td>
                 <td>{{player_reserve[player]}}</td>
                 <td>{{player_points[player]}}</td>
+                <td>{{player.note or ''}}</td>
                 <td>{{player_gold[player]}}</td>
             </tr>
             {% endfor %}
