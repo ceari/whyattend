@@ -14,7 +14,7 @@
             var pie = r.piechart(150, 150, 130, [{% for mb in map_battles %} {{ mb.1 }}, {%endfor%}], {
                 minPercent: 3,
                 maxSlices: 10,
-                legend: [{% for mb in map_battles %} "{{ mb.0 }} ({{ (mb.1 / total_battles * 100.0)|int }} %)", {%endfor%}],
+                legend: [{% for mb in map_battles %} "{{ mb.0 }} ({{ ((mb.1 / total_battles * 100.0) if total_battles > 0 else 0)|int }} %)", {%endfor%}],
                 strokewidth: 0
             });
 
@@ -37,17 +37,17 @@
             <h4>Total</h4>
             <ul>
                 <li>played: {{ battles|length }}</li>
-                <li>won: {{ battles_won }} ({{ (battles_won / total_battles * 100.0)|int }}%)</li>
+                <li>won: {{ battles_won }} ({{ ((battles_won / total_battles * 100.0) if total_battles > 0 else 0)|int }}%)</li>
             </ul>
             <h4>Last 7 Days</h4>
             <ul>
                 <li>played: {{ battles_one_week|length }}</li>
-                <li>won: {{ battles_one_week_won }} ({{ (battles_one_week_won / (battles_one_week|length) * 100.0)|int }}%)</li>
+                <li>won: {{ battles_one_week_won }} ({{ ((battles_one_week_won / (battles_one_week|length) * 100.0) if battles_one_week else 0)|int }}%)</li>
             </ul>
             <h4>Last 30 Days</h4>
             <ul>
                 <li>played: {{ battles_thirty_days|length }}</li>
-                <li>won: {{ battles_thirty_days_won }} ({{ (battles_thirty_days_won / (battles_thirty_days|length) * 100.0)|int }}%)</li>
+                <li>won: {{ battles_thirty_days_won }} ({{ ((battles_thirty_days_won / (battles_thirty_days|length) * 100.0)) if battles_thirty_days else 0|int }}%)</li>
             </ul>
         </div>
         <div class="col-lg-4 text-center">
