@@ -20,14 +20,11 @@ def get_player(id):
 
 
 def get_clan(id):
-    try:
-        r = requests.get(API_URL + 'community/clans/' + id + '/api/1.1/', params={'source_token': API_TOKEN},
-                         timeout=10)
-        json = r.json()
-        if json['status'] == 'ok' and json['status_code'] == 'NO_ERROR':
-            return json
-    except:
-        return None
+    r = requests.get('http://api.worldoftanks.eu/2.0/clan/info/?application_id=d0a293dc77667c9328783d489c8cef73&clan_id=' + id,
+                     timeout=10)
+    json = r.json()
+    if json['status'] == 'ok':
+        return json
 
 
 def get_clantag(player):

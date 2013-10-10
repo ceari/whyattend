@@ -90,7 +90,7 @@ decorator_with_args = lambda decorator: lambda *args, **kwargs: \
 @app.before_request
 def lookup_current_user():
     g.player = None
-    if request.url.endswith('createdb'): return
+    if 'createdb' in request.url: return
     if 'openid' in session:
         # Checking if player exists for every request might be overkill
         g.player = Player.query.filter_by(openid=session.get('openid')).first()
@@ -196,7 +196,8 @@ def sync_players(clan_id):
         time.sleep(0.1) # Rate limiting
         clan_info = wotapi.get_clan(str(clan_id))
         processed = set()
-        for player in clan_info['data']['members']:
+        for player_id in clan_info['data'][str(clan_id)]['members']:
+            player = clan_info['data'][str(clan_id)]['members'][player_id]
             player_data = wotapi.get_player(str(player['account_id']))
             p = Player.query.filter_by(wot_id=str(player['account_id'])).first()
             if not player_data:
@@ -207,7 +208,7 @@ def sync_players(clan_id):
                 # Player exists, update information
                 processed.add(p.id)
                 p.locked = False
-                p.clan = clan_info['data']['abbreviation']
+                p.clan = clan_info['data'][str(clan_id)]['abbreviation']
                 p.role = player['role'] # role might have changed
                 p.member_since = wotapi.get_member_since_date(player_data) # might have rejoined
             else:
@@ -216,13 +217,13 @@ def sync_players(clan_id):
                            'https://eu.wargaming.net/id/' + str(player['account_id']) + '-' + player[
                                'account_name'] + '/',
                            wotapi.get_member_since_date(player_data), player['account_name'],
-                           clan_info['data']['abbreviation'],
+                           clan_info['data'][str(clan_id)]['abbreviation'],
                            player['role'])
                 logger.info('Adding player ' + player['account_name'])
             db.session.add(p)
 
         # All players of the clan in the DB, which are no longer in the clan
-        for player in Player.query.filter_by(clan=clan_info['data']['abbreviation']):
+        for player in Player.query.filter_by(clan=clan_info['data'][str(clan_id)]['abbreviation']):
             if player.id in processed or player.id is None: continue
             logger.info("Locking player " + player.name)
             player.locked = True
