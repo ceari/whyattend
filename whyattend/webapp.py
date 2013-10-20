@@ -22,7 +22,7 @@ from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename
 from ago import human
 
-from . import config, replays, wotapi
+from . import config, replays, wotapi, util
 from .model import db, Player, Battle, BattleAttendance, Replay, BattleGroup
 
 # Set up Flask application
@@ -36,7 +36,7 @@ db.init_app(app)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 oid = OpenID(app, config.OID_STORE_PATH)
 
-app.jinja_env.filters['ago_human'] = human
+app.jinja_env.filters['pretty_date'] = util.pretty_date
 
 # Uncomment to set up middleware in case we are behind a reverse proxy server
 # from .util import ReverseProxied

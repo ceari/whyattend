@@ -40,3 +40,37 @@ class ReverseProxied(object):
         if scheme:
             environ['wsgi.url_scheme'] = scheme
         return self.app(environ, start_response)
+
+
+def pretty_date(d):
+    """
+    Format the time delta between d and now human-friendly. E.g. 'in 2 hours', '20 seconds ago'
+    :param d:
+    :return:
+    """
+    from math import fabs
+    from datetime import datetime
+    now = datetime.now()
+    diff = now - d
+    sec = int(fabs(diff.total_seconds()))
+    v = sec
+
+    if sec < 60:
+        unit = 'second' + ('s' if v != 1 else '')
+        v = sec
+    elif sec < 60*60:
+        unit = 'minute' + ('s' if v != 1 else '')
+        v = sec / 60
+    elif sec < 60*60*24:
+        v = sec / 60 / 60
+        unit = 'hour' + ('s' if v != 1 else '')
+    else:
+        unit = 'day' + ('s' if v != 1 else '')
+        v = sec / 60 / 60 / 24
+
+    if diff.total_seconds() < 0:
+        return 'in %i %s' % (v, unit) # future
+    else:
+        return '%i %s ago' % (v, unit) # past
+
+
