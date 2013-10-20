@@ -52,23 +52,24 @@ def pretty_date(d):
     from datetime import datetime
     now = datetime.now()
     diff = now - d
-    sec = int(fabs(diff.total_seconds()))
+    total_seconds = diff.seconds + diff.days * 24*60*60
+    sec = int(fabs(total_seconds))
     v = sec
 
     if sec < 60:
-        unit = 'second' + ('s' if v != 1 else '')
         v = sec
+        unit = 'second' + ('s' if v != 1 else '')
     elif sec < 60*60:
-        unit = 'minute' + ('s' if v != 1 else '')
         v = sec / 60
+        unit = 'minute' + ('s' if v != 1 else '')
     elif sec < 60*60*24:
         v = sec / 60 / 60
         unit = 'hour' + ('s' if v != 1 else '')
     else:
-        unit = 'day' + ('s' if v != 1 else '')
         v = sec / 60 / 60 / 24
+        unit = 'day' + ('s' if v != 1 else '')
 
-    if diff.total_seconds() < 0:
+    if total_seconds < 0:
         return 'in %i %s' % (v, unit) # future
     else:
         return '%i %s ago' % (v, unit) # past
