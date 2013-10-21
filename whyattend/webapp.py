@@ -195,25 +195,29 @@ def sync_players(clan_id):
         processed = set()
         for player_id in clan_info['data'][str(clan_id)]['members']:
             player = clan_info['data'][str(clan_id)]['members'][player_id]
-            #player_data = wotapi.get_player(str(player['account_id']))
+            player_data = wotapi.get_player(str(player['account_id']))
             p = Player.query.filter_by(wot_id=str(player['account_id'])).first()
-            #if not player_data:
-                #if p: processed.add(p.id) # skip this guy later when locking players
-                #logger.info("WOTAPI Error: Could not retrieve player information of " + str(player['account_id']))
-                #continue # API Error?
+            if not player_data:
+                if p: processed.add(p.id) # skip this guy later when locking players
+                logger.info("WOTAPI Error: Could not retrieve player information of " + str(player['account_id']))
+                continue # API Error?
+
+            since = datetime.datetime.fromtimestamp(
+                float(player_data['data'][str(player['account_id'])]['clan']['since'])) # might have rejoined
+
             if p:
                 # Player exists, update information
                 processed.add(p.id)
                 p.locked = False
                 p.clan = clan_info['data'][str(clan_id)]['abbreviation']
                 p.role = player['role'] # role might have changed
-                #p.member_since = wotapi.get_member_since_date(player_data) # might have rejoined TODO: WG API broken
+                p.member_since = since
             else:
                 # New player
                 p = Player(str(player['account_id']),
                            'https://eu.wargaming.net/id/' + str(player['account_id']) + '-' + player[
                                'account_name'] + '/',
-                           datetime.datetime.now(), # TODO: WG API broken wotapi.get_member_since_date(player_data),
+                           since,
                            player['account_name'],
                            clan_info['data'][str(clan_id)]['abbreviation'],
                            player['role'])
@@ -348,13 +352,16 @@ def create_profile():
                   'error')
             return render_template('create_profile.html', next_url=oid.get_next_url())
 
-        clan = wotapi.get_clantag(player_data)
-        if clan not in config.CLAN_NAMES:
+        clan_ids_to_name = dict((v,k) for k, v in map.iteritems())
+        clan_id = player_data['data'][str(wot_id)]['clan']['clan_id']
+        clan = clan_ids_to_name[str(clan_id)]
+        if clan_id not in config.CLAN_IDS.values():
             flash(u'You have to be in one of the clans to login', 'error')
             return render_template('create_profile.html', next_url=oid.get_next_url())
 
-        role = wotapi.get_player_clan_role(player_data)
-        member_since = wotapi.get_member_since_date(player_data)
+        role = player_data['data'][str(wot_id)]['clan']['role']
+        member_since = datetime.datetime.fromtimestamp(
+                float(player_data['data'][str(player['account_id'])]['clan']['since']))
         if not role:
             flash(u'Error: Could not retrieve player role from wargaming server', 'error')
             return render_template('create_profile.html', next_url=oid.get_next_url())
