@@ -22,7 +22,7 @@ from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename
 from ago import human
 
-from . import config, replays, wotapi
+from . import config, replays, wotapi, util
 from .model import db, Player, Battle, BattleAttendance, Replay, BattleGroup
 
 # Set up Flask application
@@ -36,7 +36,7 @@ db.init_app(app)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 oid = OpenID(app, config.OID_STORE_PATH)
 
-app.jinja_env.filters['ago_human'] = human
+app.jinja_env.filters['pretty_date'] = util.pretty_date
 
 # Uncomment to set up middleware in case we are behind a reverse proxy server
 # from .util import ReverseProxied
@@ -193,30 +193,30 @@ def sync_players(clan_id):
         import time
         logger.info("Clan member synchronization triggered for " + str(clan_id))
 
-        time.sleep(0.1) # Rate limiting
         clan_info = wotapi.get_clan(str(clan_id))
         processed = set()
         for player_id in clan_info['data'][str(clan_id)]['members']:
             player = clan_info['data'][str(clan_id)]['members'][player_id]
-            player_data = wotapi.get_player(str(player['account_id']))
+            #player_data = wotapi.get_player(str(player['account_id']))
             p = Player.query.filter_by(wot_id=str(player['account_id'])).first()
-            if not player_data:
-                if p: processed.add(p.id) # skip this guy later when locking players
-                logger.info("WOTAPI Error: Could not retrieve player information of " + str(player['account_id']))
-                continue # API Error?
+            #if not player_data:
+                #if p: processed.add(p.id) # skip this guy later when locking players
+                #logger.info("WOTAPI Error: Could not retrieve player information of " + str(player['account_id']))
+                #continue # API Error?
             if p:
                 # Player exists, update information
                 processed.add(p.id)
                 p.locked = False
                 p.clan = clan_info['data'][str(clan_id)]['abbreviation']
                 p.role = player['role'] # role might have changed
-                p.member_since = wotapi.get_member_since_date(player_data) # might have rejoined
+                #p.member_since = wotapi.get_member_since_date(player_data) # might have rejoined TODO: WG API broken
             else:
                 # New player
                 p = Player(str(player['account_id']),
                            'https://eu.wargaming.net/id/' + str(player['account_id']) + '-' + player[
                                'account_name'] + '/',
-                           wotapi.get_member_since_date(player_data), player['account_name'],
+                           datetime.datetime.now(), # TODO: WG API broken wotapi.get_member_since_date(player_data),
+                           player['account_name'],
                            clan_info['data'][str(clan_id)]['abbreviation'],
                            player['role'])
                 logger.info('Adding player ' + player['account_name'])

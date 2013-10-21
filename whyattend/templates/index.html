@@ -14,7 +14,7 @@
             {% if latest_battles %}
             <ul>
             {% for battle in latest_battles %}
-            <li><span class="{{battle.outcome_repr()}}">{{battle.outcome_str()}}</span> against {{battle.enemy_clan}} on {{battle.map_name}}, <a href="{{url_for('battle_details', battle_id=battle.id)}}">{{battle.date|ago_human(precision=1)}}</a>
+            <li><span class="{{battle.outcome_repr()}}">{{battle.outcome_str()}}</span> against {{battle.enemy_clan}} on {{battle.map_name}}, <a href="{{url_for('battle_details', battle_id=battle.id)}}">{{battle.date|pretty_date}}</a>
             {% endfor %}
             </ul>
             {% else %}
@@ -34,7 +34,7 @@
                 <li>
                     <img style="margin-right: 5px; width: 16px; height:16px;" src="{{url_for('static', filename='img/swords.png')}}">
                     {% for p in item.provinces %}<a href="http://worldoftanks.{{g.WOT_SERVER_REGION_CODE}}/clanwars/maps/?province={{p.id}}">{{p.name}}</a>{% if loop.index < item.provinces|length %} - {%endif%}{% endfor %} -
-                    {% if item.time %}{{datetime.datetime.fromtimestamp(item.time)|ago_human(precision=1, future_tense='in {0} ' + (' or later' if not item.started else ''))}} {%else%}today{%endif%}
+                    {% if item.time %}{{datetime.datetime.fromtimestamp(item.time)|pretty_date + (' or later' if not item.started else '')}} {%else%}today{%endif%}
                     - on {% for map in item.arenas %}{{map}} {% if loop.index < item.provinces|length %} or {%endif%}{% endfor %}
                 </li>
                 {% endfor %}
