@@ -7,7 +7,6 @@
 
 import datetime
 import os
-import json
 import pickle
 import logging
 import hashlib
@@ -20,7 +19,6 @@ from flask.ext.cache import Cache
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename
-from ago import human
 
 from . import config, replays, wotapi, util
 from .model import db, Player, Battle, BattleAttendance, Replay, BattleGroup
