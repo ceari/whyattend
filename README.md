@@ -11,6 +11,8 @@ Dependencies
 * Various Python libraries (See requirements.txt)
   These can be installed via "pip install -r requirements.txt"
 
+Python 2.6 probably works too.
+
 Deployment
 ----------
 
@@ -44,6 +46,20 @@ This can be automated by a cron script, e.g:
     # Synchronize WHY members
     curl "http://myserver.com/sync-players/500014725?API_KEY=<configured API KEY>"
 
+Development
+-----------
+
+For developing the builtin development HTTP server is sufficient. To install the required dependencies
+simply run the following commands (assuming a bash shell and `virtualenv` using Python 2.7)
+
+    cd topleveldir
+    virtualenv devenv
+    source devenv/bin/activate
+    pip install -r requirements.txt
+    python server.py
+
+which will start a web server listening on port 5000. The development server will automatically
+restart when it detects changes to the code.
 
 Deployment Example
 ------------------
