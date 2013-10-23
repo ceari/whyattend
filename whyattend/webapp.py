@@ -188,12 +188,13 @@ def sync_players(clan_id):
     :return:
     """
     if config.API_KEY == request.args['API_KEY']:
-        import time
         logger.info("Clan member synchronization triggered for " + str(clan_id))
 
         clan_info = wotapi.get_clan(str(clan_id))
         processed = set()
         for player_id in clan_info['data'][str(clan_id)]['members']:
+            import time
+            time.sleep(0.3)
             player = clan_info['data'][str(clan_id)]['members'][player_id]
             player_data = wotapi.get_player(str(player['account_id']))
             p = Player.query.filter_by(wot_id=str(player['account_id'])).first()
