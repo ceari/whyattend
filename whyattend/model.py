@@ -5,25 +5,41 @@
 
 import pickle
 
-from flask.ext.sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import deferred
+from . import config
 
-db = SQLAlchemy()
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey, Text, Binary
+from sqlalchemy.orm import scoped_session, sessionmaker, deferred, relationship
+from sqlalchemy.ext.declarative import declarative_base
 
-class Player(db.Model):
+engine = create_engine(config.DATABASE_URI, convert_unicode=True)
+db_session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
+
+Base = declarative_base()
+Base.query = db_session.query_property()
+
+
+def init_db():
+    """
+    Creates the database schema.
+    :return:
+    """
+    Base.metadata.create_all(bind=engine)
+
+
+class Player(Base):
     __tablename__ = 'player'
-    id = db.Column(db.Integer, primary_key=True)
-    openid = db.Column(db.String(100), unique=True)
-    wot_id = db.Column(db.String(100), unique=True)
+    id = Column(Integer, primary_key=True)
+    openid = Column(String(100), unique=True)
+    wot_id = Column(String(100), unique=True)
 
-    member_since = db.Column(db.DateTime)
+    member_since = Column(DateTime)
 
-    name = db.Column(db.String(100), unique=True)
-    clan = db.Column(db.String(10))
-    role = db.Column(db.String(50))  # one of {leader, vice_leader, commander, recruiter, private (=soldier), recruit}
-    locked = db.Column(db.Boolean)
+    name = Column(String(100), unique=True)
+    clan = Column(String(10))
+    role = Column(String(50))  # one of {leader, vice_leader, commander, recruiter, private (=soldier), recruit}
+    locked = Column(Boolean)
 
-    gold_earned = db.Column(db.Integer)
+    gold_earned = Column(Integer)
 
     def __init__(self, wot_id, openid, member_since, name, clan, role, locked=False):
         self.wot_id = wot_id
@@ -64,13 +80,13 @@ class Player(db.Model):
         }
 
 
-class BattleAttendance(db.Model):
+class BattleAttendance(Base):
     __tablename__ = 'player_battle'
-    player_id = db.Column(db.Integer, db.ForeignKey('player.id'), primary_key=True)
-    battle_id = db.Column(db.Integer, db.ForeignKey('battle.id'), primary_key=True)
-    player = db.relationship("Player", backref="battles")
-    battle = db.relationship("Battle", backref="attendances")
-    reserve = db.Column(db.Boolean)
+    player_id = Column(Integer, ForeignKey('player.id'), primary_key=True)
+    battle_id = Column(Integer, ForeignKey('battle.id'), primary_key=True)
+    player = relationship("Player", backref="battles")
+    battle = relationship("Battle", backref="attendances")
+    reserve = Column(Boolean)
 
     def __init__(self, player, battle, reserve=False):
         self.player = player
@@ -78,35 +94,35 @@ class BattleAttendance(db.Model):
         self.reserve = reserve
 
 
-class Battle(db.Model):
+class Battle(Base):
     __tablename__ = 'battle'
-    id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.DateTime)
-    clan = db.Column(db.String(10))
-    enemy_clan = db.Column(db.String(10))
-    victory = db.Column(db.Boolean)
-    draw = db.Column(db.Boolean)
-    paid = db.Column(db.Boolean)
-    description = db.Column(db.Text)
+    id = Column(Integer, primary_key=True)
+    date = Column(DateTime)
+    clan = Column(String(10))
+    enemy_clan = Column(String(10))
+    victory = Column(Boolean)
+    draw = Column(Boolean)
+    paid = Column(Boolean)
+    description = Column(Text)
 
     # WoT map name
-    map_name = db.Column(db.String(80))
+    map_name = Column(String(80))
     # Which province the battle was for (or provinces, if encounter)
-    map_province = db.Column(db.String(80))
+    map_province = Column(String(80))
 
-    battle_commander_id = db.Column(db.Integer, db.ForeignKey('player.id'))
-    battle_commander = db.relationship("Player", backref="battles_commanded", foreign_keys=[battle_commander_id])
+    battle_commander_id = Column(Integer, ForeignKey('player.id'))
+    battle_commander = relationship("Player", backref="battles_commanded", foreign_keys=[battle_commander_id])
 
-    creator_id = db.Column(db.Integer, db.ForeignKey('player.id', ondelete='set null'), nullable=True)
-    creator = db.relationship("Player", backref="battles_created", foreign_keys=[creator_id])
+    creator_id = Column(Integer, ForeignKey('player.id', ondelete='set null'), nullable=True)
+    creator = relationship("Player", backref="battles_created", foreign_keys=[creator_id])
 
-    replay_id = db.Column(db.Integer, db.ForeignKey('replay.id'))
-    replay = db.relationship("Replay", backref="battle", uselist=False)
+    replay_id = Column(Integer, ForeignKey('replay.id'))
+    replay = relationship("Replay", backref="battle", uselist=False)
 
-    battle_group_id = db.Column(db.Integer, db.ForeignKey('battlegroup.id'))
-    battle_group = db.relationship("BattleGroup", backref="battles")
+    battle_group_id = Column(Integer, ForeignKey('battlegroup.id'))
+    battle_group = relationship("BattleGroup", backref="battles")
     # Is this the "final battle" of the group? Exactly one per group should be true
-    battle_group_final = db.Column(db.Boolean)
+    battle_group_final = Column(Boolean)
 
     def __init__(self, date, clan, enemy_clan, victory, draw, creator, battle_commander, map_name, map_province,
                  description='', replay=None, paid=False):
@@ -162,17 +178,17 @@ class Battle(db.Model):
         return "%s vs. %s on %s" % (self.clan, self.enemy_clan, self.map_name)
 
 
-class BattleGroup(db.Model):
+class BattleGroup(Base):
     """
         Representation of grouped battles, e.g. landings which span across multiple battles.
     """
     __tablename__ = 'battlegroup'
-    id = db.Column(db.Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
 
-    title = db.Column(db.String(100))
-    description = db.Column(db.Text)
-    clan = db.Column(db.String(10))
-    date = db.Column(db.DateTime)
+    title = Column(String(100))
+    description = Column(Text)
+    clan = Column(String(10))
+    date = Column(DateTime)
 
     def __init__(self, title, description, clan, date):
         self.title = title
@@ -211,13 +227,13 @@ class BattleGroup(db.Model):
         return None
 
 
-class Replay(db.Model):
+class Replay(Base):
     __tablename__ = 'replay'
-    id = db.Column(db.Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     # The data returned by replays.parse_replay as Python pickle
-    replay_pickle = db.Column(db.Binary)
+    replay_pickle = Column(Binary)
     # The replay file
-    replay_blob = deferred(db.Column(db.Binary))
+    replay_blob = deferred(Column(Binary))
 
 
     def __init__(self, replay_blob, replay_pickle):

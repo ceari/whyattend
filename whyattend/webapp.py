@@ -20,8 +20,8 @@ from sqlalchemy import or_
 from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename
 
-from . import config, replays, wotapi, util
-from .model import db, Player, Battle, BattleAttendance, Replay, BattleGroup
+from . import config, replays, wotapi, util, tasks
+from .model import Player, Battle, BattleAttendance, Replay, BattleGroup, db_session
 
 # Set up Flask application
 app = Flask(__name__)
@@ -30,7 +30,6 @@ app.config['SQLALCHEMY_ECHO'] = False
 app.config['SECRET_KEY'] = config.SECRET_KEY
 app.config['UPLOAD_FOLDER'] = config.UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16 MB at a time should be plenty for replays
-db.init_app(app)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 oid = OpenID(app, config.OID_STORE_PATH)
 
@@ -71,6 +70,13 @@ def csrf_protect():
         if not token or token != request.form.get('_csrf_token'):
             flash('Invalid CSRF token. Please try again or contact an administrator for help.')
             return redirect(url_for('index'))
+
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    """Remove the database session at the end of the request or when the application shuts down.
+    This is needed to use SQLAlchemy in a declarative way."""
+    db_session.remove()
 
 
 def generate_csrf_token():
@@ -175,8 +181,8 @@ def require_role(f, roles):
 @app.route('/createdb')
 def create_db():
     if config.API_KEY == request.args['API_KEY']:
-        db.create_all()
-        logger.info("Database created.")
+        from .model import init_db
+        init_db()
     return redirect(url_for('index'))
 
 
@@ -223,16 +229,16 @@ def sync_players(clan_id):
                            clan_info['data'][str(clan_id)]['abbreviation'],
                            player['role'])
                 logger.info('Adding player ' + player['account_name'])
-            db.session.add(p)
+            db_session.add(p)
 
         # All players of the clan in the DB, which are no longer in the clan
         for player in Player.query.filter_by(clan=clan_info['data'][str(clan_id)]['abbreviation']):
             if player.id in processed or player.id is None: continue
             logger.info("Locking player " + player.name)
             player.locked = True
-            db.session.add(player)
+            db_session.add(player)
 
-        db.session.commit()
+        db_session.commit()
         logger.info("Clan member synchronization successful")
 
     else:
@@ -367,8 +373,8 @@ def create_profile():
             flash(u'Error: Could not retrieve player role from wargaming server', 'error')
             return render_template('create_profile.html', next_url=oid.get_next_url())
 
-        db.session.add(Player(wot_id, session['openid'], member_since, session['nickname'], clan, role))
-        db.session.commit()
+        db_session.add(Player(wot_id, session['openid'], member_since, session['nickname'], clan, role))
+        db_session.commit()
         logger.info("New player profile registered [" + session['nickname'] + ", " + clan + ", " + role + "]")
         flash(u'Welcome!', 'success')
         return redirect(oid.get_next_url())
@@ -493,20 +499,20 @@ def edit_battle(battle_id):
             if bg:
                 battle.battle_group_final = battle_group_final
                 battle.battle_group = bg
-                db.session.add(bg)
+                db_session.add(bg)
 
             for ba in battle.attendances:
                 if not ba.reserve:
-                    db.session.delete(ba)
+                    db_session.delete(ba)
 
             for player_id in players:
                 player = Player.query.get(player_id)
                 if not player: abort(404)
                 ba = BattleAttendance(player, battle, reserve=False)
-                db.session.add(ba)
+                db_session.add(ba)
 
-            db.session.add(battle)
-            db.session.commit()
+            db_session.add(battle)
+            db_session.commit()
             logger.info(g.player.name + " updated the battle " + str(battle.id))
             return redirect(url_for('battles', clan=g.player.clan))
 
@@ -649,7 +655,7 @@ def create_battle():
             if bg:
                 battle.battle_group_final = battle_group_final
                 battle.battle_group = bg
-                db.session.add(bg)
+                db_session.add(bg)
 
             if config.STORE_REPLAYS_IN_DB:
                 battle.replay = Replay(file_blob, pickle.dumps(replay))
@@ -660,10 +666,10 @@ def create_battle():
                 player = Player.query.get(player_id)
                 if not player: abort(404)
                 ba = BattleAttendance(player, battle, reserve=False)
-                db.session.add(ba)
+                db_session.add(ba)
 
-            db.session.add(battle)
-            db.session.commit()
+            db_session.add(battle)
+            db_session.commit()
             logger.info(g.player.name + " added the battle " + str(battle.id))
             return redirect(url_for('battles', clan=g.player.clan))
 
@@ -729,13 +735,13 @@ def delete_battle(battle_id):
     battle = Battle.query.get(battle_id) or abort(404)
     if battle.clan != g.player.clan and g.player.name not in config.ADMINS: abort(403)
     for ba in battle.attendances:
-        db.session.delete(ba)
+        db_session.delete(ba)
     if battle.battle_group and len(battle.battle_group.battles) == 1:
         # last battle in battle group, delete the group as well
-        db.session.delete(battle.battle_group)
-    db.session.delete(battle)
+        db_session.delete(battle.battle_group)
+    db_session.delete(battle)
     logger.info(g.player.name + " deleted the battle " + str(battle.id) + " " + str(battle))
-    db.session.commit()
+    db_session.commit()
 
     return redirect(url_for('battles', clan=g.player.clan))
 
@@ -896,9 +902,9 @@ def sign_as_reserve(battle_id):
 
     if not battle.has_player(g.player) and not battle.has_reserve(g.player):
         ba = BattleAttendance(g.player, battle, reserve=True)
-        db.session.add(ba)
+        db_session.add(ba)
         logger.info(g.player.name + " signed himself as reserve for " + str(battle))
-        db.session.commit()
+        db_session.commit()
 
     if back_to_battle:
         return redirect(url_for('battle_details', battle_id=battle.id))
@@ -925,9 +931,9 @@ def unsign_as_reserve(battle_id):
         return redirect(url_for('battles', clan=g.player.clan))
 
     ba = BattleAttendance.query.filter_by(player=g.player, battle=battle, reserve=True).first() or abort(500)
-    db.session.delete(ba)
+    db_session.delete(ba)
     logger.info(g.player.name + " removed himself as reserve for " + str(battle))
-    db.session.commit()
+    db_session.commit()
 
     if back_to_battle:
         return redirect(url_for('battle_details', battle_id=battle.id))
@@ -1098,14 +1104,14 @@ def battle_reserves_update(battle_id):
     for ba in battle.attendances:
         if ba.reserve:
             reserve_before.add(ba.player)
-            db.session.delete(ba)
+            db_session.delete(ba)
     reserve_now = set()
     for reserve in reserves:
         player = Player.query.get(reserve['id'])
         reserve_now.add(player)
         ba = BattleAttendance(player, battle, reserve=True)
-        db.session.add(ba)
-    db.session.commit()
+        db_session.add(ba)
+    db_session.commit()
     logger.info(g.player.name + " updated the reserves for " + str(battle) + " - added: " + \
                 ", ".join([p.name for p in (reserve_now - reserve_before)]) + " - deleted: " + \
                 ", ".join([p.name for p in (reserve_before - reserve_now)])

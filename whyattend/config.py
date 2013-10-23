@@ -70,6 +70,9 @@ STORE_REPLAYS_IN_DB = True
 ERROR_LOG_FILE = '/tmp/error.log'
 LOG_FILE = '/tmp/whyattend.log'
 
+CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+
 # Override settings with local config, if present
 try:
     from local_config import *
