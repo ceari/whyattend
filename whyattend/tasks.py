@@ -56,7 +56,7 @@ def synchronize_players(clan_id):
             continue # API Error?
 
         since = datetime.datetime.fromtimestamp(
-            float(player_data['data'][str(player['account_id'])]['clan']['since'])) # might have rejoined
+            float(player_data['data'][str(player['account_id'])]['clan']['since']))
 
         if p:
             # Player exists, update information
@@ -64,7 +64,7 @@ def synchronize_players(clan_id):
             p.locked = False
             p.clan = clan_info['data'][str(clan_id)]['abbreviation']
             p.role = player['role'] # role might have changed
-            p.member_since = since
+            p.member_since = since # might have rejoined
         else:
             # New player
             p = Player(str(player['account_id']),
@@ -77,7 +77,7 @@ def synchronize_players(clan_id):
             logger.info('Adding player ' + player['account_name'])
         db_session.add(p)
 
-    # All players of the clan in the DB, which are no longer in the clan
+    # Lock players which are no longer in the clan
     for player in Player.query.filter_by(clan=clan_info['data'][str(clan_id)]['abbreviation']):
         if player.id in processed or player.id is None: continue
         logger.info("Locking player " + player.name)

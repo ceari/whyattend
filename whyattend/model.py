@@ -19,10 +19,8 @@ Base.query = db_session.query_property()
 
 
 def init_db():
-    """
-    Creates the database schema.
-    :return:
-    """
+    """ Creates the database tables from the model class declarations.
+    Existing tables will not be overwritten. """
     Base.metadata.create_all(bind=engine)
 
 
@@ -57,16 +55,6 @@ class Player(Base):
     def battles_reserve(self):
         return BattleAttendance.query.filter_by(player=self, reserve=True)
 
-    def battles_played_participation_ratio(self):
-        played_battles = BattleAttendance.query.filter_by(player=self, reserve=False).count()
-        possible_battles = Battle.query.filter(Battle.date >= self.member_since, Battle.clan == self.clan).count()
-        return played_battles / float(possible_battles) if possible_battles > 0 else 0
-
-    def participation_ratio(self):
-        attended_battles = BattleAttendance.query.filter_by(player=self).count()
-        possible_battles = Battle.query.filter(Battle.date >= self.member_since, Battle.clan == self.clan).count()
-        return attended_battles / float(possible_battles) if possible_battles > 0 else 0
-
     def __repr__(self):
         return "<Player %r, %r, %r, %r>" % (self.wot_id, self.name, self.clan, self.role)
 
@@ -81,6 +69,7 @@ class Player(Base):
 
 
 class BattleAttendance(Base):
+    """ Association class between players and battles. """
     __tablename__ = 'player_battle'
     player_id = Column(Integer, ForeignKey('player.id'), primary_key=True)
     battle_id = Column(Integer, ForeignKey('battle.id'), primary_key=True)

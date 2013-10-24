@@ -94,7 +94,6 @@ decorator_with_args = lambda decorator: lambda *args, **kwargs: \
 @app.before_request
 def lookup_current_user():
     g.player = None
-    if 'createdb' in request.url: return
     if 'openid' in session:
         # Checking if player exists for every request might be overkill
         g.player = Player.query.filter_by(openid=session.get('openid')).first()
@@ -178,14 +177,6 @@ def require_role(f, roles):
 
 ############## API request handlers
 
-@app.route('/createdb')
-def create_db():
-    if config.API_KEY == request.args['API_KEY']:
-        from .model import init_db
-        init_db()
-    return redirect(url_for('index'))
-
-
 @app.route('/sync-players/<int:clan_id>')
 def sync_players(clan_id):
     """
@@ -210,7 +201,7 @@ def sync_players(clan_id):
                 continue # API Error?
 
             since = datetime.datetime.fromtimestamp(
-                float(player_data['data'][str(player['account_id'])]['clan']['since'])) # might have rejoined
+                float(player_data['data'][str(player['account_id'])]['clan']['since']))
 
             if p:
                 # Player exists, update information
@@ -218,7 +209,7 @@ def sync_players(clan_id):
                 p.locked = False
                 p.clan = clan_info['data'][str(clan_id)]['abbreviation']
                 p.role = player['role'] # role might have changed
-                p.member_since = since
+                p.member_since = since # might have rejoined
             else:
                 # New player
                 p = Player(str(player['account_id']),
