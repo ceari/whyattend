@@ -7,10 +7,16 @@ import datetime
 
 from config import API_URL, API_TOKEN, WOT_SERVER_REGION_CODE
 
+# timeout for requests to WG server in seconds
+API_REQUEST_TIMEOUT = 10
+
 
 def get_player(id):
-    r = requests.get('http://api.worldoftanks.eu/2.0/account/info/?application_id=d0a293dc77667c9328783d489c8cef73&account_id=' + id,
-                 timeout=10)
+    r = requests.get(API_URL + '/2.0/account/info/', timeout=API_REQUEST_TIMEOUT,
+                     params={
+                         'application_id': API_TOKEN,
+                         'account_id': id
+                     })
     json = r.json()
     if json['status'] == 'ok':
         return json
@@ -18,8 +24,11 @@ def get_player(id):
 
 
 def get_clan(id):
-    r = requests.get('http://api.worldoftanks.eu/2.0/clan/info/?application_id=d0a293dc77667c9328783d489c8cef73&clan_id=' + id,
-                     timeout=10)
+    r = requests.get(API_URL + '/2.0/clan/info/', timeout=API_REQUEST_TIMEOUT,
+                     params={
+                         'application_id': API_TOKEN,
+                         'clan_id': id
+                     })
     json = r.json()
     if json['status'] == 'ok':
         return json
@@ -32,7 +41,7 @@ def get_scheduled_battles(clan_id):
                          params={'id': 'js-battles-table'},
                          headers={'X-Requested-With': 'XMLHttpRequest',
                                   'Accept': 'application/json, text/javascript, text/html, */*'},
-                         timeout=10)
+                         timeout=API_REQUEST_TIMEOUT)
         if r.ok and r.json()['result'] == 'success':
             return r.json()
         else:
