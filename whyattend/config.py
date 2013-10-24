@@ -30,7 +30,7 @@ UPLOAD_FOLDER = 'tmp/uploads'
 
 # Wargaming.net API token and base URL
 API_URL = 'http://api.worldoftanks.eu/'
-API_TOKEN = 'WG-WoT_Assistant-1.3.2'
+API_TOKEN = 'd0a293dc77667c9328783d489c8cef73'
 
 # WoT Server region code
 WOT_SERVER_REGION_CODE = 'eu'
