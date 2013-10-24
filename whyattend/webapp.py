@@ -474,7 +474,6 @@ def edit_battle(battle_id):
         elif battle_group >= 0:
             # existing group
             bg = BattleGroup.query.get(battle_group) or abort(500)
-            print bg, bg.get_final_battle(), battle_group_final, battle
             if bg.get_final_battle() is not None and bg.get_final_battle() is not battle and battle_group_final:
                 flash(u'Selected battle group already contains a battle marked as final')
                 errors = True
