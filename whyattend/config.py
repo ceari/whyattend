@@ -16,7 +16,7 @@ DATABASE_URI = 'sqlite:///../tmp/test.db'
 # Path to temporary folder for OpenID authentication files
 OID_STORE_PATH = 'tmp/oid'
 
-# generate one via e.g. "import os; os.urandom(24)"
+# generate one via e.g. "import os; os.urandom(24)". The key is used to sign the session cookies.
 SECRET_KEY = ''
 
 CLAN_NAMES = ('CLAN', 'STRONK')
@@ -70,10 +70,12 @@ STORE_REPLAYS_IN_DB = True
 ERROR_LOG_FILE = '/tmp/error.log'
 LOG_FILE = '/tmp/whyattend.log'
 
+# Celery task queue settings
+# See http://docs.celeryproject.org/en/latest/getting-started/first-steps-with-celery.html#choosing-a-broker
 CELERY_BROKER_URL = 'redis://localhost:6379'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379'
 
-# Override settings with local config, if present
+# Override settings with local config, if present.
 try:
     from local_config import *
 except ImportError:
