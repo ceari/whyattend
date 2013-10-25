@@ -46,5 +46,46 @@
           </div>
         </div>
         </div>
+
+        {% if provinces_owned and provinces_owned.request_data['items'] %}
+        <div class="row">
+            <div class="col-lg-12">
+              <div class="panel panel-default">
+              <div style="min-height: 170px;" class="panel-body">
+                <h4 class="text-center">Provinces owned</h4>
+                    <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Province</th>
+                            <th>Map</th>
+                            <th>Prime Time</th>
+                            <th><img style="margin-left: 5px; width: 16px; height:16px;" src="{{url_for('static', filename='img/gold_coin_stack.png')}}"></th>
+                            <th>Time Owned</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in provinces_owned.request_data['items'] %}
+                    <tr>
+                        <td><a href="http://worldoftanks.{{g.WOT_SERVER_REGION_CODE}}/clanwars/maps/?province={{item.id}}">{{item.name}}</a></td>
+                        <td>{{item.arena_name}}</td>
+                        <td>{{datetime.datetime.fromtimestamp(item.prime_time).strftime('%H:%M')}}</td>
+                        <td style="color: gold">{{item.revenue}}</td>
+                        <td>{{item.occupancy_time}} day{{'s' if item.occupancy_time != 1 else '' }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td style="color: gold">{{ total_revenue }}</td>
+                        <td></td>
+                    </tr>
+                    </tbody>
+                    </table>
+              </div>
+              </div>
+            </div>
+        </div>
+        {% endif %}
     {% endif %}
 {% endblock %}

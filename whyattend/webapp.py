@@ -254,13 +254,26 @@ def index():
             logger.info("Querying Wargaming server for battle schedule of clan " + str(clan_id) + " " + g.player.clan)
             return wotapi.get_scheduled_battles(clan_id)
 
+        # Cache provinces owned for 60 seconds to avoid spamming WG's server
+        @cache.memoize(timeout=60)
+        def cached_provinces_owned(clan_id):
+            logger.info("Querying Wargaming server for provinces owned by clan " + str(clan_id) + " " + g.player.clan)
+            return wotapi.get_provinces(clan_id)
+
+        provinces_owned = cached_provinces_owned(config.CLAN_IDS[g.player.clan])
+        total_revenue = 0
+        for p in provinces_owned['request_data']['items']:
+            total_revenue += p['revenue']
         scheduled_battles = cached_scheduled_battles(config.CLAN_IDS[g.player.clan])
     else:
         latest_battles = None
         scheduled_battles = None
+        provinces_owned = None
+        total_revenue = 0
 
     return render_template('index.html', clans=config.CLAN_NAMES, latest_battles=latest_battles,
-                           scheduled_battles=scheduled_battles, datetime=datetime)
+                           scheduled_battles=scheduled_battles, provinces_owned=provinces_owned,
+                           total_revenue=total_revenue, datetime=datetime)
 
 
 @app.route('/admin')
