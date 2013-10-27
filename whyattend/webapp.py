@@ -263,8 +263,9 @@ def index():
 
         provinces_owned = cached_provinces_owned(config.CLAN_IDS[g.player.clan])
         total_revenue = 0
-        for p in provinces_owned['request_data']['items']:
-            total_revenue += p['revenue']
+        if provinces_owned:
+            for p in provinces_owned['request_data']['items']:
+                total_revenue += p['revenue']
         scheduled_battles = cached_scheduled_battles(config.CLAN_IDS[g.player.clan])
     else:
         latest_battles = None
