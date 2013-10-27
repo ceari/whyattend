@@ -33,26 +33,50 @@
 {% block content %}
     <h2>Clan Statistics</h2>
     <div class="row">
-        <div class="col-lg-3">
-            <h4>Total</h4>
+        <div class="panel panel-default">
+        <div style="min-height: 170px;" class="panel-body">
+            <div class="col-lg-3">
+                <h4>Total</h4>
+                <ul>
+                    <li>played: {{ battles|length }}</li>
+                    <li>won: {{ battles_won }} ({{ ((battles_won / total_battles * 100.0) if total_battles > 0 else 0)|int }}%)</li>
+                </ul>
+                <h4>Last 7 Days</h4>
+                <ul>
+                    <li>played: {{ battles_one_week|length }}</li>
+                    <li>won: {{ battles_one_week_won }} ({{ ((battles_one_week_won / (battles_one_week|length) * 100.0) if battles_one_week else 0)|int }}%)</li>
+                </ul>
+                <h4>Last 30 Days</h4>
+                <ul>
+                    <li>played: {{ battles_thirty_days|length }}</li>
+                    <li>won: {{ battles_thirty_days_won }} ({{ (((battles_thirty_days_won / (battles_thirty_days|length) * 100.0)) if battles_thirty_days else 0)|int }}%)</li>
+                </ul>
+            </div>
+            <div class="col-lg-9 text-center">
+                <h4>Maps</h4>
+                <div id="maps"></div>
+            </div>
+        </div></div>
+    </div>
+    <div class="row">
+        <div class="panel panel-default">
+        <div style="min-height: 170px;" class="panel-body">
+        <div class="col-lg-6">
+            <h4 class="text-center">Players Left</h4>
             <ul>
-                <li>played: {{ battles|length }}</li>
-                <li>won: {{ battles_won }} ({{ ((battles_won / total_battles * 100.0) if total_battles > 0 else 0)|int }}%)</li>
-            </ul>
-            <h4>Last 7 Days</h4>
-            <ul>
-                <li>played: {{ battles_one_week|length }}</li>
-                <li>won: {{ battles_one_week_won }} ({{ ((battles_one_week_won / (battles_one_week|length) * 100.0) if battles_one_week else 0)|int }}%)</li>
-            </ul>
-            <h4>Last 30 Days</h4>
-            <ul>
-                <li>played: {{ battles_thirty_days|length }}</li>
-                <li>won: {{ battles_thirty_days_won }} ({{ ((battles_thirty_days_won / (battles_thirty_days|length) * 100.0)) if battles_thirty_days else 0|int }}%)</li>
+                {% for player in players_left[:10] %}
+                <li>{{ player.lock_date.strftime('%d.%m.%Y')}}: {{player.name}}</li>
+                {% endfor %}
             </ul>
         </div>
-        <div class="col-lg-4 text-center">
-            <h4>Maps</h4>
-            <div id="maps"></div>
+        <div class="col-lg-6">
+            <h4 class="text-center">Players Joined</h4>
+            <ul>
+                {% for player in players_joined[:10] %}
+                <li>{{player.member_since.strftime('%d.%m.%Y')}}: {{player.name}}</li>
+                {% endfor %}
+            </ul>
         </div>
+        </div></div>
     </div>
 {% endblock %}

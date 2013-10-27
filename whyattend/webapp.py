@@ -224,9 +224,10 @@ def sync_players(clan_id):
 
         # All players of the clan in the DB, which are no longer in the clan
         for player in Player.query.filter_by(clan=clan_info['data'][str(clan_id)]['abbreviation']):
-            if player.id in processed or player.id is None: continue
+            if player.id in processed or player.id is None or player.locked: continue
             logger.info("Locking player " + player.name)
             player.locked = True
+            player.lock_date = datetime.datetime.now()
             db_session.add(player)
 
         db_session.commit()
@@ -1198,9 +1199,13 @@ def clan_statistics(clan):
         battles_by_map[battle.map_name] += 1
     map_battles = list(battles_by_map.iteritems())
 
+    players_joined = Player.query.filter_by(clan=clan, locked=False).order_by('member_since desc').all()
+    players_left = Player.query.filter_by(clan=clan, locked=True)\
+        .filter(Player.lock_date.isnot(None)).order_by('lock_date desc').all()
+
     return render_template('clan_stats.html', battles=battles, total_battles=len(battles),
                            battles_one_week=battles_one_week, battles_one_week_won=battles_one_week_won,
-                           map_battles=map_battles, battles_won=battles_won,
+                           map_battles=map_battles, battles_won=battles_won, players_joined=players_joined, players_left=players_left,
                            battles_thirty_days=battles_thirty_days, battles_thirty_days_won=battles_thirty_days_won)
 
 

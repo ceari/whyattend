@@ -34,8 +34,9 @@ class Player(Base):
 
     name = Column(String(100), unique=True)
     clan = Column(String(10))
-    role = Column(String(50))  # one of {leader, vice_leader, commander, recruiter, private (=soldier), recruit}
-    locked = Column(Boolean)
+    role = Column(String(50))       # one of {leader, vice_leader, commander, recruiter, private (=soldier), recruit}
+    locked = Column(Boolean)        # set to true if player left the clan. Login is no longer possible then.
+    lock_date = Column(DateTime)    # When did the player leave
 
     gold_earned = Column(Integer)
 

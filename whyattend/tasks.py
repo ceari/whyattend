@@ -79,9 +79,10 @@ def synchronize_players(clan_id):
 
     # Lock players which are no longer in the clan
     for player in Player.query.filter_by(clan=clan_info['data'][str(clan_id)]['abbreviation']):
-        if player.id in processed or player.id is None: continue
+        if player.id in processed or player.id is None or player.locked: continue
         logger.info("Locking player " + player.name)
         player.locked = True
+        player.lock_date = datetime.datetime.now()
         db_session.add(player)
 
     try:
