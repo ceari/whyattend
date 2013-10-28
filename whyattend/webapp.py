@@ -1200,7 +1200,7 @@ def clan_statistics(clan):
         battles_by_map[battle.map_name] += 1
     map_battles = list(battles_by_map.iteritems())
 
-    players_joined = Player.query.filter_by(clan=clan, locked=False).order_by('member_since desc').all()
+    players_joined = Player.query.filter_by(clan=clan).order_by('member_since desc').all()
     players_left = Player.query.filter_by(clan=clan, locked=True)\
         .filter(Player.lock_date.isnot(None)).order_by('lock_date desc').all()
 
