@@ -75,6 +75,12 @@ LOG_FILE = '/tmp/whyattend.log'
 CELERY_BROKER_URL = 'redis://localhost:6379'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379'
 
+MENU_LINKS = [
+    ('Clan Forum', '#forum'),
+    ('Global Map', 'http://worldoftanks.eu/clanwars/maps/globalmap/'),
+    ('Campaign Map', 'http://worldoftanks.eu/clanwars/eventmap/'),
+]
+
 # Override settings with local config, if present.
 try:
     from local_config import *

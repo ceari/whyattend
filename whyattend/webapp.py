@@ -120,6 +120,7 @@ def inject_constants():
     g.ADMIN_ROLES = config.ADMIN_ROLES
     g.PLAYER_PERFORMANCE_ROLES = config.PLAYER_PERFORMANCE_ROLES
     g.RESERVE_SIGNUP_ALLOWED = config.RESERVE_SIGNUP_ALLOWED
+    g.MENU_LINKS = config.MENU_LINKS
 
 
 def require_login(f):
