@@ -40,6 +40,9 @@ class Player(Base):
 
     gold_earned = Column(Integer)
 
+    fame_points = Column(Integer)
+    fame_position = Column(Integer)
+
     def __init__(self, wot_id, openid, member_since, name, clan, role, locked=False):
         self.wot_id = wot_id
         self.openid = openid

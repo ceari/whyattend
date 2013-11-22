@@ -55,6 +55,8 @@ def synchronize_players(clan_id):
             if p: processed.add(p.id) # skip this guy later when locking players
             continue # API Error?
 
+        fame_position, fame_points = wotapi.get_fame_position_points(player['account_name'], str(player['account_id']))
+
         since = datetime.datetime.fromtimestamp(
             float(player_data['data'][str(player['account_id'])]['clan']['since']))
 
@@ -75,6 +77,8 @@ def synchronize_players(clan_id):
                        clan_info['data'][str(clan_id)]['abbreviation'],
                        player['role'])
             logger.info('Adding player ' + player['account_name'])
+        p.fame_points = fame_points
+        p.fame_position = fame_position
         db_session.add(p)
 
     # Lock players which are no longer in the clan

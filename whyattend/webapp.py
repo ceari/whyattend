@@ -192,7 +192,7 @@ def sync_players(clan_id):
         processed = set()
         for player_id in clan_info['data'][str(clan_id)]['members']:
             import time
-            time.sleep(0.3)
+            time.sleep(1)
             player = clan_info['data'][str(clan_id)]['members'][player_id]
             player_data = wotapi.get_player(str(player['account_id']))
             p = Player.query.filter_by(wot_id=str(player['account_id'])).first()
@@ -200,6 +200,8 @@ def sync_players(clan_id):
                 if p: processed.add(p.id) # skip this guy later when locking players
                 logger.info("WOTAPI Error: Could not retrieve player information of " + str(player['account_id']))
                 continue # API Error?
+
+            fame_position, fame_points = wotapi.get_fame_position_points(player['account_name'], str(player['account_id']))
 
             since = datetime.datetime.fromtimestamp(
                 float(player_data['data'][str(player['account_id'])]['clan']['since']))
@@ -221,7 +223,10 @@ def sync_players(clan_id):
                            clan_info['data'][str(clan_id)]['abbreviation'],
                            player['role'])
                 logger.info('Adding player ' + player['account_name'])
+            p.fame_points = fame_points
+            p.fame_position = fame_position
             db_session.add(p)
+            db_session.commit()
 
         # All players of the clan in the DB, which are no longer in the clan
         for player in Player.query.filter_by(clan=clan_info['data'][str(clan_id)]['abbreviation']):
