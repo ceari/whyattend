@@ -207,6 +207,7 @@ def sync_players(clan_id):
             if p:
                 # Player exists, update information
                 processed.add(p.id)
+                p.name = player['account_name']
                 p.locked = False
                 p.clan = clan_info['data'][str(clan_id)]['abbreviation']
                 p.role = player['role'] # role might have changed
