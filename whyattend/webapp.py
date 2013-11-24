@@ -201,7 +201,10 @@ def sync_players(clan_id):
                 logger.info("WOTAPI Error: Could not retrieve player information of " + str(player['account_id']))
                 continue # API Error?
 
-            fame_position, fame_points = wotapi.get_fame_position_points(player['account_name'], str(player['account_id']))
+            try:
+                fame_position, fame_points = wotapi.get_fame_position_points(player['account_name'], str(player['account_id']))
+            except:
+                fame_position, fame_points = None, None
 
             since = datetime.datetime.fromtimestamp(
                 float(player_data['data'][str(player['account_id'])]['clan']['since']))

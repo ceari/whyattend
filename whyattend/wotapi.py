@@ -8,7 +8,7 @@ import datetime
 from config import API_URL, API_TOKEN, WOT_SERVER_REGION_CODE
 
 # timeout for requests to WG server in seconds
-API_REQUEST_TIMEOUT = 20
+API_REQUEST_TIMEOUT = 40
 
 
 def get_player(id):
