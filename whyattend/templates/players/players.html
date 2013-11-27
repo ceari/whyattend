@@ -81,8 +81,8 @@
                 <a href="{{ url_for('battle_details', battle_id=last_battle_by_player[player].id) }}">{{ last_battle_by_player[player].date.strftime('%d.%m.%Y %H:%M') }}</a>
                 {% endif %}
             </td>
-            <td>{{player.fame_position}}</td>
-            <td>{{player.fame_points}}</td>
+            <td>{{player.fame_position or ''}}</td>
+            <td>{{player.fame_points or ''}}</td>
             <td>{{player.gold_earned}}</td>
         </tr>
         {% endfor %}
