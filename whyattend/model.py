@@ -68,6 +68,21 @@ class Player(Base):
             "gold_earned": self.gold_earned
         }
 
+    def player_role_value(self):
+        """Return an integer for each player role that can be used as sorting key."""
+        v = {
+            'leader': 6,
+            'vice_leader': 5,
+            'commander': 4,
+            'recruiter': 2,
+            'private': 1,
+            'recruit': 0,
+            'treasurer': 3
+        }
+        if self.role not in v:
+            return 0
+        return v[self.role]
+
 
 class BattleAttendance(Base):
     """ Association class between players and battles. """

@@ -436,6 +436,7 @@ def edit_battle(battle_id):
     if battle.clan != g.player.clan and g.player.name not in config.ADMINS: abort(403)
 
     all_players = Player.query.filter_by(clan=g.player.clan, locked=False).order_by('lower(name)').all()
+    sorted_players = sorted(all_players, reverse=True, key=lambda p: p.player_role_value())
     date = battle.date
     map_name = battle.map_name
     province = battle.map_province
@@ -530,7 +531,7 @@ def edit_battle(battle_id):
                            battle_groups=battle_groups,
                            battle_commander=battle_commander, enemy_clan=enemy_clan, battle_result=battle_result,
                            battle_group_final=battle_group_final, players=players, description=description,
-                           replay=replay, replays=replays, all_players=all_players)
+                           replay=replay, replays=replays, all_players=all_players, sorted_players=sorted_players)
 
 
 @app.route('/battles/create', methods=['GET', 'POST'])
@@ -542,6 +543,7 @@ def create_battle():
     :return:
     """
     all_players = Player.query.filter_by(clan=g.player.clan, locked=False).order_by('lower(name)').all()
+    sorted_players = sorted(all_players, reverse=True, key=lambda p: p.player_role_value())
 
     # Prefill form with data from replay
     enemy_clan = ''
@@ -693,7 +695,8 @@ def create_battle():
                            map_name=map_name, province=province, description=description, replays=replays,
                            battle_result=battle_result, date=date, battle_groups=battle_groups,
                            battle_group=battle_group, battle_group_title=battle_group_title,
-                           battle_group_description=battle_group_description, battle_group_final=battle_group_final)
+                           battle_group_description=battle_group_description, battle_group_final=battle_group_final,
+                           sorted_players=sorted_players)
 
 
 @app.route('/battles/list/<clan>')

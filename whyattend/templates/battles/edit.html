@@ -98,7 +98,7 @@
                   <label for="battle_commander" class="col-lg-2 control-label">Battle commander</label>
                   <div class="col-lg-10">
                   <select class="form-control" id="battle_commander" name="battle_commander">
-                      {% for player in all_players %}
+                      {% for player in sorted_players %}
                       <option value="{{player.id}}" {{'selected' if player.id==battle_commander.id else ''}}>{{player.name}}</option>
                       {% endfor %}
                   </select>
