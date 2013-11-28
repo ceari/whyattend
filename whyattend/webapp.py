@@ -414,9 +414,12 @@ def create_battle_from_replay():
     if request.method == 'POST':
         file = request.files['replay']
         if file and file.filename.endswith('.wotreplay'):
+            folder = datetime.datetime.now().strftime("%d.%m.%Y")
             filename = secure_filename(g.player.name + '_' + file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return redirect(url_for('create_battle', filename=filename))
+            if not os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], folder)):
+                os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], folder))
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], folder, filename))
+            return redirect(url_for('create_battle', folder=folder, filename=filename))
     return render_template('battles/create_from_replay.html')
 
 
@@ -556,11 +559,13 @@ def create_battle():
     battle_group_description = ''
     battle_group_final = False
     filename = request.args.get('filename', '')
+    folder = request.args.get('folder', '')
     if request.method == 'POST':
         filename = request.form.get('filename', '')
+        folder = request.form.get('folder', '')
 
     if filename:
-        file_blob = open(os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(filename)), 'rb').read()
+        file_blob = open(os.path.join(app.config['UPLOAD_FOLDER'], folder, secure_filename(filename)), 'rb').read()
         replay = replays.parse_replay(file_blob)
         if not replay:
             flash(u'Error: Parsing replay file failed :-(.', 'error')
@@ -592,6 +597,7 @@ def create_battle():
     if request.method == 'POST':
         players = map(int, request.form.getlist('players'))
         filename = request.form.get('filename', '')
+        folder = request.form.get('folder', '')
         map_name = request.form.get('map_name', '')
         province = request.form.get('province', '')
         enemy_clan = request.form.get('enemy_clan', '')
@@ -613,7 +619,7 @@ def create_battle():
 
         # Validation
         if filename:
-            file_blob = open(os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(filename)), 'rb').read()
+            file_blob = open(os.path.join(app.config['UPLOAD_FOLDER'], folder, secure_filename(filename)), 'rb').read()
         else:
             if not 'replay' in request.files or not request.files['replay']:
                 flash(u'No replay selected', 'error')
@@ -682,7 +688,8 @@ def create_battle():
 
     return render_template('battles/create.html', CLAN_NAMES=config.CLAN_NAMES, all_players=all_players,
                            players=players,
-                           enemy_clan=enemy_clan, filename=filename, replay=replay, battle_commander=battle_commander,
+                           enemy_clan=enemy_clan, filename=filename, folder=folder, replay=replay,
+                           battle_commander=battle_commander,
                            map_name=map_name, province=province, description=description, replays=replays,
                            battle_result=battle_result, date=date, battle_groups=battle_groups,
                            battle_group=battle_group, battle_group_title=battle_group_title,
