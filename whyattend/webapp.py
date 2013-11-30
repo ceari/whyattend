@@ -362,21 +362,21 @@ def create_profile():
             return render_template('create_profile.html', next_url=oid.get_next_url())
 
         player_data = wotapi.get_player(wot_id)
-        if not player_data or not player_data['data'] or not player_data['data']['clan']:
+        if not player_data or not player_data['data'][str(wot_id)] or not player_data['data'][str(wot_id)]['clan']:
             flash(u'Error: Could not retrieve player information from Wargaming. Contact an admin for help :-)',
                   'error')
             return render_template('create_profile.html', next_url=oid.get_next_url())
 
-        clan_ids_to_name = dict((v,k) for k, v in map.iteritems())
-        clan_id = player_data['data'][str(wot_id)]['clan']['clan_id']
+        clan_ids_to_name = dict((v,k) for k, v in config.CLAN_IDS.iteritems())
+        clan_id = str(player_data['data'][str(wot_id)]['clan']['clan_id'])
+        print clan_ids_to_name, clan_id
         clan = clan_ids_to_name[str(clan_id)]
         if clan_id not in config.CLAN_IDS.values():
             flash(u'You have to be in one of the clans to login', 'error')
             return render_template('create_profile.html', next_url=oid.get_next_url())
 
         role = player_data['data'][str(wot_id)]['clan']['role']
-        member_since = datetime.datetime.fromtimestamp(
-                float(player_data['data'][str(player['account_id'])]['clan']['since']))
+        member_since = datetime.datetime.fromtimestamp(float(player_data['data'][str(wot_id)]['clan']['since']))
         if not role:
             flash(u'Error: Could not retrieve player role from wargaming server', 'error')
             return render_template('create_profile.html', next_url=oid.get_next_url())
@@ -1296,3 +1296,12 @@ def player_performance(clan):
                            avg_dmg=avg_dmg, avg_kills=avg_kills, avg_spotted=avg_spotted, survival_rate=survival_rate,
                            avg_spot_damage=avg_spot_damage, clan=clan, avg_pot_damage=avg_pot_damage, win_rate=win_rate,
                            wn7=wn7, avg_decap=avg_decap)
+
+@app.route('/profile', methods=['GET', 'POST'])
+@require_login
+def profile():
+    if request.method == 'POST':
+        g.player.email = request.form.get('email', '')
+        db_session.add(g.player)
+        db_session.commit()
+    return render_template('players/profile.html')
