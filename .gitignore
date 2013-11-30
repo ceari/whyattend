@@ -8,3 +8,4 @@ tmp
 *test.db
 createdb.py
 *.wotreplay
+alembic.ini
