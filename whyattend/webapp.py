@@ -14,13 +14,13 @@ import hashlib
 from collections import defaultdict
 from functools import wraps
 from flask import Flask, g, session, render_template, flash, redirect, request, url_for, abort, make_response, jsonify
-from flask.ext.openid import OpenID
-from flask.ext.cache import Cache
+from flask_openid import OpenID
+from flask_cache import Cache
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename
 
-from . import config, replays, wotapi, util, tasks
+from . import config, replays, wotapi, util, tasks, constants
 from .model import Player, Battle, BattleAttendance, Replay, BattleGroup, db_session
 
 # Set up Flask application
@@ -577,7 +577,7 @@ def create_battle():
                 flash(
                     u'Error: "Friendly" clan was not in the list of clans supported by this website or you are not a member',
                     'error')
-            map_name = replay['first']['mapDisplayName']
+            map_name = constants.MAP_EN_NAME_BY_ID.get(replay['first']['mapName'], 'Unknown')
             all_players = Player.query.filter_by(clan=clan, locked=False).order_by('lower(name)')
             players = Player.query.filter(Player.name.in_(replays.player_team(replay))).order_by('lower(name)').all()
             if g.player in players:
