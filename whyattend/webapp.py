@@ -34,6 +34,7 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 oid = OpenID(app, config.OID_STORE_PATH)
 
 app.jinja_env.filters['pretty_date'] = util.pretty_date
+app.jinja_env.filters['int'] = int
 
 # Uncomment to set up middleware in case we are behind a reverse proxy server
 # from .util import ReverseProxied
@@ -399,7 +400,7 @@ def logout():
     session.pop('openid', None)
     session.pop('nickname', None)
     g.player = None
-    flash(u'You were signed out', 'info')
+    flash(u'You were signed out from the tracker. You have to sign out from Wargaming\'s website yourself if you wish to do that.', 'info')
     return redirect(oid.get_next_url())
 
 
@@ -1205,12 +1206,17 @@ def clan_statistics(clan):
     battles_thirty_days_won = battles_thirty_days_query.filter_by(victory=True).count()
 
     # Battles played by map
-    battles_by_map = dict()
+    battles_by_map = defaultdict(int)
+    victories_by_map = defaultdict(int)
     for battle in battles:
-        if battle.map_name not in battles_by_map:
-            battles_by_map[battle.map_name] = 0
         battles_by_map[battle.map_name] += 1
+        if battle.victory:
+            victories_by_map[battle.map_name] += 1
     map_battles = list(battles_by_map.iteritems())
+
+    win_ratio_by_map = dict()
+    for map_name in battles_by_map:
+        win_ratio_by_map[map_name] = float(victories_by_map[map_name]) / battles_by_map[map_name]
 
     players_joined = Player.query.filter_by(clan=clan).order_by('member_since desc').all()
     players_left = Player.query.filter_by(clan=clan, locked=True)\
@@ -1219,7 +1225,8 @@ def clan_statistics(clan):
     return render_template('clan_stats.html', battles=battles, total_battles=len(battles),
                            battles_one_week=battles_one_week, battles_one_week_won=battles_one_week_won,
                            map_battles=map_battles, battles_won=battles_won, players_joined=players_joined, players_left=players_left,
-                           battles_thirty_days=battles_thirty_days, battles_thirty_days_won=battles_thirty_days_won)
+                           battles_thirty_days=battles_thirty_days, battles_thirty_days_won=battles_thirty_days_won,
+                           win_ratio_by_map=win_ratio_by_map)
 
 
 @app.route('/statistics/<clan>/players')
