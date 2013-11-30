@@ -8,6 +8,10 @@
           {% if player.locked %}
           <dt><span style="color: darkred">Player no longer in clan. Below is the last known information while in clan.</span></dt>
           {% endif %}
+          {% if g.player and (g.player.name in g.ADMINS or g.player.role in g.ADMIN_ROLES) %}
+          <dt><abbr title="Only visible to admins">e-mail</abbr></dt>
+          <dd>{{player.email}}</dd>
+          {% endif %}
           <dt>Position</dt>
           <dd><span class="{{player.role}}">{{g.roles[player.role]}}</span></dd>
           <dt>World of Tanks Profile</dt>
