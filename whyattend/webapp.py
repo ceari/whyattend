@@ -370,7 +370,6 @@ def create_profile():
 
         clan_ids_to_name = dict((v,k) for k, v in config.CLAN_IDS.iteritems())
         clan_id = str(player_data['data'][str(wot_id)]['clan']['clan_id'])
-        print clan_ids_to_name, clan_id
         clan = clan_ids_to_name[str(clan_id)]
         if clan_id not in config.CLAN_IDS.values():
             flash(u'You have to be in one of the clans to login', 'error')
@@ -1217,8 +1216,6 @@ def clan_statistics(clan):
             victories_by_map[battle.map_name] += 1
             wins_by_commander[battle.battle_commander] += 1
     map_battles = list(battles_by_map.iteritems())
-
-    print battles_by_commander, wins_by_commander
 
     win_ratio_by_commander = dict((c, wins_by_commander[c] / float(battles_by_commander[c])) for c in battles_by_commander
                             if battles_by_commander[c] > 10)
