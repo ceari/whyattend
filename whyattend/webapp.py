@@ -1338,9 +1338,8 @@ def export_emails(clan):
     for player in Player.query.filter_by(locked=False, clan=clan).order_by('email'):
         csv_writer.writerow([player.name, player.email])
 
-    csv_response.seek(0)
     headers = Headers()
     headers.add('Content-Type', 'text/csv')
     headers.add('Content-Disposition', 'attachment',
                 filename=secure_filename(clan + "_emails.csv"))
-    return Response(response=csv_response.read(), headers=headers)
+    return Response(response=csv_response.getvalue(), headers=headers)
