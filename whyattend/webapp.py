@@ -5,20 +5,23 @@
     Implementation of all request handlers and core functionality.
 """
 
+import csv
 import datetime
 import os
 import pickle
 import logging
 import hashlib
+import StringIO
 
 from collections import defaultdict
 from functools import wraps
 from flask import Flask, g, session, render_template, flash, redirect, request, url_for, abort, make_response, jsonify
+from flask import Response
 from flask_openid import OpenID
 from flask_cache import Cache
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload, joinedload_all
-from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename, Headers
 
 from . import config, replays, wotapi, util, tasks, constants
 from .model import Player, Battle, BattleAttendance, Replay, BattleGroup, db_session
@@ -1294,6 +1297,7 @@ def player_performance(clan):
     import math
     min = lambda a, b: a if a <= b else b
 
+
     wn7 = defaultdict(float)
     for p in clan_players:
         if battle_count[p] == 0: continue
@@ -1320,3 +1324,23 @@ def profile():
         db_session.add(g.player)
         db_session.commit()
     return render_template('players/profile.html')
+
+
+@app.route('/admin/export-emails/<clan>')
+@require_login
+@require_clan_membership
+@require_role(config.ADMIN_ROLES)
+def export_emails(clan):
+    csv_response = StringIO.StringIO()
+    csv_writer = csv.writer(csv_response)
+    csv_writer.writerow(["Name", "e-mail"])
+
+    for player in Player.query.filter_by(locked=False, clan=clan).order_by('email'):
+        csv_writer.writerow([player.name, player.email])
+
+    csv_response.seek(0)
+    headers = Headers()
+    headers.add('Content-Type', 'text/csv')
+    headers.add('Content-Disposition', 'attachment',
+                filename=secure_filename(clan + "_emails.csv"))
+    return Response(response=csv_response.read(), headers=headers)

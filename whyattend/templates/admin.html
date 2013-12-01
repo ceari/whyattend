@@ -4,5 +4,6 @@
     <h2>Administration</h2>
     <ul>
         {% if g.player.name in g.ADMINS %}<li><a href="{{ url_for('sync_players', clan_id=g.clan_ids[g.player.clan]) }}?API_KEY={{ API_KEY }}">Trigger Clan Synchronisation</a> (wait for the page to load, can take a minute)</li>{% endif %}
+        <li><a href="{{url_for('export_emails', clan=g.player.clan)}}">Export player e-mail addresses (CSV)</a></li>
     </ul>
 {% endblock %}
