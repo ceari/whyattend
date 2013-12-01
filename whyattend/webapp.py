@@ -1206,14 +1206,24 @@ def clan_statistics(clan):
     battles_thirty_days_won = battles_thirty_days_query.filter_by(victory=True).count()
 
     # Battles played by map
+    wins_by_commander = defaultdict(int)
+    battles_by_commander = defaultdict(int)
     battles_by_map = defaultdict(int)
     victories_by_map = defaultdict(int)
     for battle in battles:
+        battles_by_commander[battle.battle_commander] += 1
         battles_by_map[battle.map_name] += 1
         if battle.victory:
             victories_by_map[battle.map_name] += 1
+            wins_by_commander[battle.battle_commander] += 1
     map_battles = list(battles_by_map.iteritems())
 
+    print battles_by_commander, wins_by_commander
+
+    win_ratio_by_commander = dict((c, wins_by_commander[c] / float(battles_by_commander[c])) for c in battles_by_commander
+                            if battles_by_commander[c] > 10)
+
+    # Win ratio by map
     win_ratio_by_map = dict()
     for map_name in battles_by_map:
         win_ratio_by_map[map_name] = float(victories_by_map[map_name]) / battles_by_map[map_name]
@@ -1226,7 +1236,8 @@ def clan_statistics(clan):
                            battles_one_week=battles_one_week, battles_one_week_won=battles_one_week_won,
                            map_battles=map_battles, battles_won=battles_won, players_joined=players_joined, players_left=players_left,
                            battles_thirty_days=battles_thirty_days, battles_thirty_days_won=battles_thirty_days_won,
-                           win_ratio_by_map=win_ratio_by_map)
+                           win_ratio_by_map=win_ratio_by_map, win_ratio_by_commander=win_ratio_by_commander,
+                           wins_by_commander=wins_by_commander, battles_by_commander=battles_by_commander)
 
 
 @app.route('/statistics/<clan>/players')
@@ -1298,11 +1309,11 @@ def player_performance(clan):
                  - ((5.0 - min(tier, 5)) * 125.0) / (
                         1.0 + math.exp(( tier - (battle_count[p] / 220.0) ** (3.0 / tier) ) * 1.5))
 
-
     return render_template('players/performance.html', clan_players=clan_players, battle_count=battle_count,
                            avg_dmg=avg_dmg, avg_kills=avg_kills, avg_spotted=avg_spotted, survival_rate=survival_rate,
                            avg_spot_damage=avg_spot_damage, clan=clan, avg_pot_damage=avg_pot_damage, win_rate=win_rate,
                            wn7=wn7, avg_decap=avg_decap)
+
 
 @app.route('/profile', methods=['GET', 'POST'])
 @require_login

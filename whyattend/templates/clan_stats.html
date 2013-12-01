@@ -6,11 +6,11 @@
     <script src="{{url_for('static', filename='js/vendor/g.raphael-min.js')}}" type="text/javascript"></script>
     <script src="{{url_for('static', filename='js/vendor/g.pie-min.js')}}" type="text/javascript"></script>
     <script src="{{url_for('static', filename='js/vendor/g.bar-min.js')}}" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.1/jquery.flot.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.1/jquery.flot.categories.min.js" type="text/javascript"></script>
     <script>
         $(document).ready(function() {
             var r = Raphael(document.getElementById('maps'), 300, 300);
-            // Creates pie chart at with center at 320, 200,
-            // radius 100 and data: [55, 20, 13, 32, 5, 1, 2]
             var pie = r.piechart(150, 150, 130, [{% for mb in map_battles %} {{ mb.1 }}, {%endfor%}], {
                 minPercent: 3,
                 maxSlices: 10,
@@ -27,7 +27,66 @@
             });
 
 
-        })
+		var maps_wr = [
+		 {% for map_wr in win_ratio_by_map|dictsort(by="value")|reverse %}
+		 {
+		  data: [["{{map_wr.0}}", {{(map_wr.1 * 100.0)|round|int}}]],
+		  color: "{{"green" if map_wr.1 > 0.66 else "orange" if map_wr.1 > 0.33 else "red"}}",
+		 },
+		 {% endfor %}
+        ];
+
+		$.plot("#maps_wr", maps_wr, {
+			series: {
+				bars: {
+					show: true,
+					barWidth: 0.6,
+					align: "center"
+				}
+			},
+			xaxis: {
+				mode: "categories",
+				tickLength: 0,
+				tickLength: 0,
+			},
+			yaxis: {
+                min: 0,
+                max: 100,
+                ticks: 10
+			}
+		});
+
+		var commander_wr = [
+		 {% for c_wr in win_ratio_by_commander|dictsort(by="value")|reverse %}
+		 {
+		  data: [["{{c_wr.0.name}}", {{(c_wr.1 * 100.0)|round|int}}]],
+		  color: "lightblue",
+		 },
+		 {% endfor %}
+        ];
+
+		$.plot("#commander_wr", commander_wr, {
+			series: {
+				bars: {
+					show: true,
+					barWidth: 0.6,
+					align: "center"
+				}
+			},
+			xaxis: {
+				mode: "categories",
+				tickLength: 0,
+				tickLength: 0
+			},
+			yaxis: {
+                min: 0,
+                max: 100,
+                ticks: 10
+			}
+		});
+
+
+        });
     </script>
 {% endblock %}
 {% block content %}
@@ -35,7 +94,7 @@
     <div class="row">
         <div class="panel panel-default">
         <div style="min-height: 170px;" class="panel-body">
-            <div class="col-lg-3">
+            <div class="col-lg-4">
                 <h4>Total</h4>
                 <ul>
                     <li>played: {{ battles|length }}</li>
@@ -52,8 +111,8 @@
                     <li>won: {{ battles_thirty_days_won }} ({{ (((battles_thirty_days_won / (battles_thirty_days|length) * 100.0)) if battles_thirty_days else 0)|int }}%)</li>
                 </ul>
             </div>
-            <div class="col-lg-9 text-center">
-                <h4>Maps</h4>
+            <div class="col-lg-8 text-center">
+                <h4>Maps Played</h4>
                 <div id="maps"></div>
             </div>
         </div></div>
@@ -77,6 +136,24 @@
                 {% endfor %}
             </ul>
         </div>
+        </div></div>
+    </div>
+    <div class="row">
+        <div class="panel panel-default">
+        <div style="min-height: 170px;" class="panel-body">
+            <div class="col-lg-12">
+                <h4>Win Rate by Map</h4>
+                <div id="maps_wr" style="height: 300px"></div>
+            </div>
+        </div></div>
+    </div>
+    <div class="row">
+        <div class="panel panel-default">
+        <div style="min-height: 170px;" class="panel-body">
+            <div class="col-lg-12">
+                <h4>Win Rate by Commander</h4>
+                <div id="commander_wr" style="height: 300px"></div>
+            </div>
         </div></div>
     </div>
 {% endblock %}
