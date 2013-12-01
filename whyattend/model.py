@@ -37,6 +37,7 @@ class Player(Base):
     role = Column(String(50))       # one of {leader, vice_leader, commander, recruiter, private (=soldier), recruit}
     locked = Column(Boolean)        # set to true if player left the clan. Login is no longer possible then.
     lock_date = Column(DateTime)    # When did the player leave
+    email = Column(String(100), default='')
 
     gold_earned = Column(Integer)
 
@@ -52,6 +53,7 @@ class Player(Base):
         self.role = role
         self.gold_earned = 0
         self.locked = locked
+        self.email = ''
 
     def battles_played(self):
         return BattleAttendance.query.filter_by(player=self, reserve=False)
@@ -70,6 +72,21 @@ class Player(Base):
             "role": self.role,
             "gold_earned": self.gold_earned
         }
+
+    def player_role_value(self):
+        """Return an integer for each player role that can be used as sorting key."""
+        v = {
+            'leader': 6,
+            'vice_leader': 5,
+            'commander': 4,
+            'recruiter': 2,
+            'private': 1,
+            'recruit': 0,
+            'treasurer': 3
+        }
+        if self.role not in v:
+            return 0
+        return v[self.role]
 
 
 class BattleAttendance(Base):

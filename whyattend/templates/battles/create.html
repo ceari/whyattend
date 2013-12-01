@@ -104,7 +104,7 @@
                   <label for="battle_commander" class="col-lg-2 control-label">Battle commander</label>
                   <div class="col-lg-10">
                   <select class="form-control" id="battle_commander" name="battle_commander">
-                      {% for player in all_players %}
+                      {% for player in sorted_players %}
                       <option value="{{player.id}}" {{'selected="selected"' if player.id==battle_commander else ''}}>{{player.name}}</option>
                       {% endfor %}
                   </select>
@@ -193,6 +193,7 @@
 
               <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
               <input type="hidden" name="filename" value="{{filename}}">
+              <input type="hidden" name="folder" value="{{folder}}">
 
 
                 <div class="col-lg-offset-2 col-lg-10"><button type="submit" class="btn btn-success">Create this battle</button></div>

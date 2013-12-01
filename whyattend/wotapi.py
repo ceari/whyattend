@@ -63,19 +63,3 @@ def get_provinces(clan_id):
             return None
     except Exception as e:
         return None
-
-def get_fame_position_points(player_name, player_id):
-    try:
-        r = requests.get('http://worldoftanks.' + WOT_SERVER_REGION_CODE.lower() +
-                        '/clanwars/eventmap/alley/find_user/',
-                         params={'user': player_name},
-                         headers={'X-Requested-With': 'XMLHttpRequest',
-                                  'Accept': 'application/json, text/javascript, text/html, */*'},
-                         timeout=API_REQUEST_TIMEOUT)
-        if r.ok and r.json()['status'] == 'ok':
-            for u in r.json()['users_info']:
-                if str(u['user_id']) == str(player_id):
-                    return u['position'], u['glory_points']
-    except Exception as e:
-        print e
-        return None

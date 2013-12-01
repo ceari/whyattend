@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block title %}{{g.player.name}}{% endblock %}
+{% block head %}
+    {{super()}}
+{% endblock %}
+{% block content %}
+  <h2>Profile</h2>
+  <p>
+      <i class="icon-info icon-2x"></i> Optional information about yourself.
+  </p>
+  <form class="form-horizontal" role="form" action="{{url_for('profile')}}" method=post>
+      <div class="form-group">
+        <label class="col-sm-2 control-label" for="email">Email address</label>
+        <div class="col-sm-4">
+            <input type="email" class="form-control" name="email" id="email" placeholder="email" value="{{g.player.email or ''}}">
+        </div>
+      </div>
+      <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-10">
+             <button type="submit" class="btn btn-default">Save</button>
+          </div>
+      </div>
+      <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
+  </form>
+{% endblock %}

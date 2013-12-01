@@ -14,13 +14,13 @@ import hashlib
 from collections import defaultdict
 from functools import wraps
 from flask import Flask, g, session, render_template, flash, redirect, request, url_for, abort, make_response, jsonify
-from flask.ext.openid import OpenID
-from flask.ext.cache import Cache
+from flask_openid import OpenID
+from flask_cache import Cache
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename
 
-from . import config, replays, wotapi, util, tasks
+from . import config, replays, wotapi, util, tasks, constants
 from .model import Player, Battle, BattleAttendance, Replay, BattleGroup, db_session
 
 # Set up Flask application
@@ -34,6 +34,7 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 oid = OpenID(app, config.OID_STORE_PATH)
 
 app.jinja_env.filters['pretty_date'] = util.pretty_date
+app.jinja_env.filters['int'] = int
 
 # Uncomment to set up middleware in case we are behind a reverse proxy server
 # from .util import ReverseProxied
@@ -212,6 +213,7 @@ def sync_players(clan_id):
             if p:
                 # Player exists, update information
                 processed.add(p.id)
+                p.name = player['account_name']
                 p.locked = False
                 p.clan = clan_info['data'][str(clan_id)]['abbreviation']
                 p.role = player['role'] # role might have changed
@@ -369,21 +371,20 @@ def create_profile():
             return render_template('create_profile.html', next_url=oid.get_next_url())
 
         player_data = wotapi.get_player(wot_id)
-        if not player_data or not player_data['data'] or not player_data['data']['clan']:
+        if not player_data or not player_data['data'][str(wot_id)] or not player_data['data'][str(wot_id)]['clan']:
             flash(u'Error: Could not retrieve player information from Wargaming. Contact an admin for help :-)',
                   'error')
             return render_template('create_profile.html', next_url=oid.get_next_url())
 
-        clan_ids_to_name = dict((v,k) for k, v in map.iteritems())
-        clan_id = player_data['data'][str(wot_id)]['clan']['clan_id']
+        clan_ids_to_name = dict((v,k) for k, v in config.CLAN_IDS.iteritems())
+        clan_id = str(player_data['data'][str(wot_id)]['clan']['clan_id'])
         clan = clan_ids_to_name[str(clan_id)]
         if clan_id not in config.CLAN_IDS.values():
             flash(u'You have to be in one of the clans to login', 'error')
             return render_template('create_profile.html', next_url=oid.get_next_url())
 
         role = player_data['data'][str(wot_id)]['clan']['role']
-        member_since = datetime.datetime.fromtimestamp(
-                float(player_data['data'][str(player['account_id'])]['clan']['since']))
+        member_since = datetime.datetime.fromtimestamp(float(player_data['data'][str(wot_id)]['clan']['since']))
         if not role:
             flash(u'Error: Could not retrieve player role from wargaming server', 'error')
             return render_template('create_profile.html', next_url=oid.get_next_url())
@@ -406,7 +407,7 @@ def logout():
     session.pop('openid', None)
     session.pop('nickname', None)
     g.player = None
-    flash(u'You were signed out', 'info')
+    flash(u'You were signed out from the tracker. You have to sign out from Wargaming\'s website yourself if you wish to do that.', 'info')
     return redirect(oid.get_next_url())
 
 
@@ -421,9 +422,12 @@ def create_battle_from_replay():
     if request.method == 'POST':
         file = request.files['replay']
         if file and file.filename.endswith('.wotreplay'):
+            folder = datetime.datetime.now().strftime("%d.%m.%Y")
             filename = secure_filename(g.player.name + '_' + file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return redirect(url_for('create_battle', filename=filename))
+            if not os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], folder)):
+                os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], folder))
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], folder, filename))
+            return redirect(url_for('create_battle', folder=folder, filename=filename))
     return render_template('battles/create_from_replay.html')
 
 
@@ -440,6 +444,7 @@ def edit_battle(battle_id):
     if battle.clan != g.player.clan and g.player.name not in config.ADMINS: abort(403)
 
     all_players = Player.query.filter_by(clan=g.player.clan, locked=False).order_by('lower(name)').all()
+    sorted_players = sorted(all_players, reverse=True, key=lambda p: p.player_role_value())
     date = battle.date
     map_name = battle.map_name
     province = battle.map_province
@@ -534,7 +539,7 @@ def edit_battle(battle_id):
                            battle_groups=battle_groups,
                            battle_commander=battle_commander, enemy_clan=enemy_clan, battle_result=battle_result,
                            battle_group_final=battle_group_final, players=players, description=description,
-                           replay=replay, replays=replays, all_players=all_players)
+                           replay=replay, replays=replays, all_players=all_players, sorted_players=sorted_players)
 
 
 @app.route('/battles/create', methods=['GET', 'POST'])
@@ -546,6 +551,7 @@ def create_battle():
     :return:
     """
     all_players = Player.query.filter_by(clan=g.player.clan, locked=False).order_by('lower(name)').all()
+    sorted_players = sorted(all_players, reverse=True, key=lambda p: p.player_role_value())
 
     # Prefill form with data from replay
     enemy_clan = ''
@@ -563,11 +569,13 @@ def create_battle():
     battle_group_description = ''
     battle_group_final = False
     filename = request.args.get('filename', '')
+    folder = request.args.get('folder', '')
     if request.method == 'POST':
         filename = request.form.get('filename', '')
+        folder = request.form.get('folder', '')
 
     if filename:
-        file_blob = open(os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(filename)), 'rb').read()
+        file_blob = open(os.path.join(app.config['UPLOAD_FOLDER'], folder, secure_filename(filename)), 'rb').read()
         replay = replays.parse_replay(file_blob)
         if not replay:
             flash(u'Error: Parsing replay file failed :-(.', 'error')
@@ -577,7 +585,7 @@ def create_battle():
                 flash(
                     u'Error: "Friendly" clan was not in the list of clans supported by this website or you are not a member',
                     'error')
-            map_name = replay['first']['mapDisplayName']
+            map_name = constants.MAP_EN_NAME_BY_ID.get(replay['first']['mapName'], 'Unknown')
             all_players = Player.query.filter_by(clan=clan, locked=False).order_by('lower(name)')
             players = Player.query.filter(Player.name.in_(replays.player_team(replay))).order_by('lower(name)').all()
             if g.player in players:
@@ -599,6 +607,7 @@ def create_battle():
     if request.method == 'POST':
         players = map(int, request.form.getlist('players'))
         filename = request.form.get('filename', '')
+        folder = request.form.get('folder', '')
         map_name = request.form.get('map_name', '')
         province = request.form.get('province', '')
         enemy_clan = request.form.get('enemy_clan', '')
@@ -620,7 +629,7 @@ def create_battle():
 
         # Validation
         if filename:
-            file_blob = open(os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(filename)), 'rb').read()
+            file_blob = open(os.path.join(app.config['UPLOAD_FOLDER'], folder, secure_filename(filename)), 'rb').read()
         else:
             if not 'replay' in request.files or not request.files['replay']:
                 flash(u'No replay selected', 'error')
@@ -689,11 +698,13 @@ def create_battle():
 
     return render_template('battles/create.html', CLAN_NAMES=config.CLAN_NAMES, all_players=all_players,
                            players=players,
-                           enemy_clan=enemy_clan, filename=filename, replay=replay, battle_commander=battle_commander,
+                           enemy_clan=enemy_clan, filename=filename, folder=folder, replay=replay,
+                           battle_commander=battle_commander,
                            map_name=map_name, province=province, description=description, replays=replays,
                            battle_result=battle_result, date=date, battle_groups=battle_groups,
                            battle_group=battle_group, battle_group_title=battle_group_title,
-                           battle_group_description=battle_group_description, battle_group_final=battle_group_final)
+                           battle_group_description=battle_group_description, battle_group_final=battle_group_final,
+                           sorted_players=sorted_players)
 
 
 @app.route('/battles/list/<clan>')
@@ -1202,12 +1213,25 @@ def clan_statistics(clan):
     battles_thirty_days_won = battles_thirty_days_query.filter_by(victory=True).count()
 
     # Battles played by map
-    battles_by_map = dict()
+    wins_by_commander = defaultdict(int)
+    battles_by_commander = defaultdict(int)
+    battles_by_map = defaultdict(int)
+    victories_by_map = defaultdict(int)
     for battle in battles:
-        if battle.map_name not in battles_by_map:
-            battles_by_map[battle.map_name] = 0
+        battles_by_commander[battle.battle_commander] += 1
         battles_by_map[battle.map_name] += 1
+        if battle.victory:
+            victories_by_map[battle.map_name] += 1
+            wins_by_commander[battle.battle_commander] += 1
     map_battles = list(battles_by_map.iteritems())
+
+    win_ratio_by_commander = dict((c, wins_by_commander[c] / float(battles_by_commander[c])) for c in battles_by_commander
+                            if battles_by_commander[c] > 10)
+
+    # Win ratio by map
+    win_ratio_by_map = dict()
+    for map_name in battles_by_map:
+        win_ratio_by_map[map_name] = float(victories_by_map[map_name]) / battles_by_map[map_name]
 
     players_joined = Player.query.filter_by(clan=clan).order_by('member_since desc').all()
     players_left = Player.query.filter_by(clan=clan, locked=True)\
@@ -1216,7 +1240,9 @@ def clan_statistics(clan):
     return render_template('clan_stats.html', battles=battles, total_battles=len(battles),
                            battles_one_week=battles_one_week, battles_one_week_won=battles_one_week_won,
                            map_battles=map_battles, battles_won=battles_won, players_joined=players_joined, players_left=players_left,
-                           battles_thirty_days=battles_thirty_days, battles_thirty_days_won=battles_thirty_days_won)
+                           battles_thirty_days=battles_thirty_days, battles_thirty_days_won=battles_thirty_days_won,
+                           win_ratio_by_map=win_ratio_by_map, win_ratio_by_commander=win_ratio_by_commander,
+                           wins_by_commander=wins_by_commander, battles_by_commander=battles_by_commander)
 
 
 @app.route('/statistics/<clan>/players')
@@ -1288,8 +1314,17 @@ def player_performance(clan):
                  - ((5.0 - min(tier, 5)) * 125.0) / (
                         1.0 + math.exp(( tier - (battle_count[p] / 220.0) ** (3.0 / tier) ) * 1.5))
 
-
     return render_template('players/performance.html', clan_players=clan_players, battle_count=battle_count,
                            avg_dmg=avg_dmg, avg_kills=avg_kills, avg_spotted=avg_spotted, survival_rate=survival_rate,
                            avg_spot_damage=avg_spot_damage, clan=clan, avg_pot_damage=avg_pot_damage, win_rate=win_rate,
                            wn7=wn7, avg_decap=avg_decap)
+
+
+@app.route('/profile', methods=['GET', 'POST'])
+@require_login
+def profile():
+    if request.method == 'POST':
+        g.player.email = request.form.get('email', '')
+        db_session.add(g.player)
+        db_session.commit()
+    return render_template('players/profile.html')

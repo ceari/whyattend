@@ -6,7 +6,7 @@
     Hey {{session.nickname}}. This is the first time you logged in to this site
     and we just need your confirmation to go ahead and create an account for you.</p>
   <form action="{{url_for('create_profile')}}" method=post>
-      <input type=submit value="Create account">
+      <input class="btn btn-default" type=submit value="Create account">
       <input type=hidden name=next value="{{ next }}">
       <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
   </form>
