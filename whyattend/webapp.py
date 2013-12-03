@@ -514,6 +514,8 @@ def edit_battle(battle_id):
                 battle.battle_group_final = battle_group_final
                 battle.battle_group = bg
                 db_session.add(bg)
+            else:
+                battle.battle_group = None
 
             for ba in battle.attendances:
                 if not ba.reserve:
