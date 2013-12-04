@@ -1214,10 +1214,14 @@ def clan_statistics(clan):
     battles_by_commander = defaultdict(int)
     battles_by_map = defaultdict(int)
     victories_by_map = defaultdict(int)
+    battles_by_enemy = defaultdict(int)
+    wins_by_enemy = defaultdict(int)
     for battle in battles:
         battles_by_commander[battle.battle_commander] += 1
         battles_by_map[battle.map_name] += 1
+        battles_by_enemy[battle.enemy_clan] += 1
         if battle.victory:
+            wins_by_enemy[battle.enemy_clan] += 1
             victories_by_map[battle.map_name] += 1
             wins_by_commander[battle.battle_commander] += 1
     map_battles = list(battles_by_map.iteritems())
@@ -1230,6 +1234,25 @@ def clan_statistics(clan):
     for map_name in battles_by_map:
         win_ratio_by_map[map_name] = float(victories_by_map[map_name]) / battles_by_map[map_name]
 
+    # Win ratio by enemy clan
+    win_ratio_by_enemy_clan = dict()
+    for enemy_clan in battles_by_enemy:
+        if battles_by_enemy[enemy_clan] < 2: continue
+        win_ratio_by_enemy_clan[enemy_clan] = float(wins_by_enemy[enemy_clan]) / battles_by_enemy[enemy_clan]
+
+    from datetime import timedelta
+    import calendar
+    
+    def weekrange(start_date, end_date):
+        for n in range(int((end_date - start_date).days)):
+            yield start_date + timedelta(days=n)
+
+    battles_per_day = []
+    for start_date in weekrange(datetime.datetime.now() - datetime.timedelta(days=30), datetime.datetime.now()):
+        end_date = start_date + datetime.timedelta(days=1)
+        day_battles = battles_query.filter(Battle.date>=start_date, Battle.date<end_date)
+        battles_per_day.append((calendar.timegm(start_date.timetuple()) * 1000, day_battles.count()))
+
     players_joined = Player.query.filter_by(clan=clan).order_by('member_since desc').all()
     players_left = Player.query.filter_by(clan=clan, locked=True)\
         .filter(Player.lock_date.isnot(None)).order_by('lock_date desc').all()
@@ -1239,7 +1262,10 @@ def clan_statistics(clan):
                            map_battles=map_battles, battles_won=battles_won, players_joined=players_joined, players_left=players_left,
                            battles_thirty_days=battles_thirty_days, battles_thirty_days_won=battles_thirty_days_won,
                            win_ratio_by_map=win_ratio_by_map, win_ratio_by_commander=win_ratio_by_commander,
-                           wins_by_commander=wins_by_commander, battles_by_commander=battles_by_commander)
+                           wins_by_commander=wins_by_commander, battles_by_commander=battles_by_commander,
+                           win_ratio_by_enemy_clan=win_ratio_by_enemy_clan, battles_by_enemy=battles_by_enemy,
+                           wins_by_enemy=wins_by_enemy,
+                           battles_per_day=battles_per_day)
 
 
 @app.route('/statistics/<clan>/players')
