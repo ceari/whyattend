@@ -5,20 +5,23 @@
     Implementation of all request handlers and core functionality.
 """
 
+import csv
 import datetime
 import os
 import pickle
 import logging
 import hashlib
+import StringIO
 
 from collections import defaultdict
 from functools import wraps
 from flask import Flask, g, session, render_template, flash, redirect, request, url_for, abort, make_response, jsonify
+from flask import Response
 from flask_openid import OpenID
 from flask_cache import Cache
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload, joinedload_all
-from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename, Headers
 
 from . import config, replays, wotapi, util, tasks, constants
 from .model import Player, Battle, BattleAttendance, Replay, BattleGroup, db_session
@@ -519,6 +522,8 @@ def edit_battle(battle_id):
                 battle.battle_group_final = battle_group_final
                 battle.battle_group = bg
                 db_session.add(bg)
+            else:
+                battle.battle_group = None
 
             for ba in battle.attendances:
                 if not ba.reserve:
@@ -1250,6 +1255,7 @@ def clan_statistics(clan):
 @require_clan_membership
 @require_role(config.PLAYER_PERFORMANCE_ROLES)
 def player_performance(clan):
+    """ Player statistics from replay files: damage done, spots, wn7, ... """
     battles = Battle.query.options(joinedload('replay')).filter_by(clan=clan).all()
     clan_players = Player.query.filter_by(clan=clan, locked=False).all()
 
@@ -1264,7 +1270,7 @@ def player_performance(clan):
     decap = defaultdict(int)
     for battle in battles:
         replay_data = battle.replay.unpickle()
-        if not replay_data or not 'pickle' in replay_data: continue
+        if not replay_data or not 'pickle' in replay_data or not replay_data['pickle']: continue
         players_perf = replays.player_performance(replay_data['pickle'])
         for player in battle.get_players():
             if not str(player.wot_id) in players_perf: continue # Replay/Players mismatch (account sharing?)
@@ -1302,6 +1308,7 @@ def player_performance(clan):
     import math
     min = lambda a, b: a if a <= b else b
 
+
     wn7 = defaultdict(float)
     for p in clan_players:
         if battle_count[p] == 0: continue
@@ -1323,8 +1330,29 @@ def player_performance(clan):
 @app.route('/profile', methods=['GET', 'POST'])
 @require_login
 def profile():
+    """ Player profile page """
     if request.method == 'POST':
         g.player.email = request.form.get('email', '')
         db_session.add(g.player)
         db_session.commit()
     return render_template('players/profile.html')
+
+
+@app.route('/admin/export-emails/<clan>')
+@require_login
+@require_clan_membership
+@require_role(config.ADMIN_ROLES)
+def export_emails(clan):
+    """ Return names and email addresses as CSV file """
+    csv_response = StringIO.StringIO()
+    csv_writer = csv.writer(csv_response)
+    csv_writer.writerow(["Name", "e-mail"])
+
+    for player in Player.query.filter_by(locked=False, clan=clan).order_by('email'):
+        csv_writer.writerow([player.name, player.email])
+
+    headers = Headers()
+    headers.add('Content-Type', 'text/csv')
+    headers.add('Content-Disposition', 'attachment',
+                filename=secure_filename(clan + "_emails.csv"))
+    return Response(response=csv_response.getvalue(), headers=headers)
