@@ -1247,6 +1247,7 @@ def clan_statistics(clan):
 @require_clan_membership
 @require_role(config.PLAYER_PERFORMANCE_ROLES)
 def player_performance(clan):
+    """ Player statistics from replay files: damage done, spots, wn7, ... """
     battles = Battle.query.options(joinedload('replay')).filter_by(clan=clan).all()
     clan_players = Player.query.filter_by(clan=clan, locked=False).all()
 
@@ -1261,7 +1262,7 @@ def player_performance(clan):
     decap = defaultdict(int)
     for battle in battles:
         replay_data = battle.replay.unpickle()
-        if not replay_data or not 'pickle' in replay_data: continue
+        if not replay_data or not 'pickle' in replay_data or not replay_data['pickle']: continue
         players_perf = replays.player_performance(replay_data['pickle'])
         for player in battle.get_players():
             if not str(player.wot_id) in players_perf: continue # Replay/Players mismatch (account sharing?)
@@ -1321,6 +1322,7 @@ def player_performance(clan):
 @app.route('/profile', methods=['GET', 'POST'])
 @require_login
 def profile():
+    """ Player profile page """
     if request.method == 'POST':
         g.player.email = request.form.get('email', '')
         db_session.add(g.player)
@@ -1333,6 +1335,7 @@ def profile():
 @require_clan_membership
 @require_role(config.ADMIN_ROLES)
 def export_emails(clan):
+    """ Return names and email addresses as CSV file """
     csv_response = StringIO.StringIO()
     csv_writer = csv.writer(csv_response)
     csv_writer.writerow(["Name", "e-mail"])
