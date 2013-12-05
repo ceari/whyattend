@@ -28,14 +28,15 @@
           <div class="panel panel-default">
           <div style="min-height: 170px;"  class="panel-body">
           <h4 class="text-center">Scheduled Battles</h4>
-            {% if scheduled_battles and scheduled_battles.request_data['items'] %}
+            {% if scheduled_battles %}
                 <ul style="list-style: none">
-                {% for item in scheduled_battles.request_data['items'] %}
+                {% for battle in scheduled_battles %}
                 <li>
                     <img style="margin-right: 5px; width: 16px; height:16px;" src="{{url_for('static', filename='img/swords.png')}}">
-                    {% for p in item.provinces %}<a href="{{g.MAP_URL}}?province={{p.id}}">{{p.name}}</a>{% if loop.index < item.provinces|length %} - {%endif%}{% endfor %} -
-                    {% if item.time %}{{datetime.datetime.fromtimestamp(item.time)|pretty_date + (' or later' if not item.started else '')}} {%else%}today{%endif%}
-                    - on {% for map in item.arenas %}{{map}} {% if loop.index < item.provinces|length %} or {%endif%}{% endfor %}
+                    {% for p in battle.provinces %}<a href="{{g.MAP_URL}}?province={{p.id}}">{{p.name}}</a>{% if loop.index < battle.provinces|length %} - {%endif%}{% endfor %} -
+                    {% if battle.time %}{{battle.time|pretty_date + (' or later' if not battle.started else '')}} {%else%}today{%endif%}
+                    - on {% for map in battle.maps %}{{map}} {% if loop.index < battle.maps|length %} or {%endif%}{% endfor %}
+                    - vs. {% for enemy in battle.enemies %}<a href="http://www.worldoftanks.{{g.WOT_SERVER_REGION_CODE}}/community/{{enemy.url}}">{{enemy.tag}}</a> {% if loop.index < battle.enemies|length %} or {%endif%}{% endfor %}
                 </li>
                 {% endfor %}
                 </ul>

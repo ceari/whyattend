@@ -86,6 +86,11 @@ MENU_LINKS = [
 # The province ID gets appended, e.g. "?province=ML_17"
 MAP_URL = "http://worldoftanks.eu/clanwars/maps/eventmap/"
 
+# Subdomain of the CW map Ajax URLs, e.g. "http://cw1.worldoftanks.eu"
+# In EU, cw1 is the regular map, cw2 is the campaign map
+MAP_SUBDOMAIN = "http://cw2.worldoftanks.eu"
+MAP_REGIONS = [1,2,3] # 3 map regions with IDs 1,2,3 in EU
+
 # Override settings with local config, if present.
 try:
     from local_config import *

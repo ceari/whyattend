@@ -256,24 +256,23 @@ def index():
     if g.player:
         latest_battles = Battle.query.filter_by(clan=g.player.clan).order_by('date desc').limit(3)
 
-        # Cache battle status for 60 seconds to avoid spamming WG's server
-        @cache.memoize(timeout=60)
-        def cached_scheduled_battles(clan_id):
-            logger.info("Querying Wargaming server for battle schedule of clan " + str(clan_id) + " " + g.player.clan)
-            return wotapi.get_scheduled_battles(clan_id)
-
         # Cache provinces owned for 60 seconds to avoid spamming WG's server
         @cache.memoize(timeout=60)
         def cached_provinces_owned(clan_id):
             logger.info("Querying Wargaming server for provinces owned by clan " + str(clan_id) + " " + g.player.clan)
             return wotapi.get_provinces(clan_id)
 
+        @cache.memoize(timeout=60)
+        def cached_battle_schedule(clan_id):
+            logger.info("Querying Wargaming server for battle schedule of clan " + str(clan_id) + " " + g.player.clan)
+            return wotapi.get_battle_schedule(clan_id)
+
         provinces_owned = cached_provinces_owned(config.CLAN_IDS[g.player.clan])
         total_revenue = 0
         if provinces_owned:
             for p in provinces_owned['request_data']['items']:
                 total_revenue += p['revenue']
-        scheduled_battles = cached_scheduled_battles(config.CLAN_IDS[g.player.clan])
+        scheduled_battles = cached_battle_schedule(config.CLAN_IDS[g.player.clan])
     else:
         latest_battles = None
         scheduled_battles = None
