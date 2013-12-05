@@ -12,6 +12,7 @@ import datetime
 
 # Database URI (see http://docs.sqlalchemy.org/en/latest/core/engines.html#supported-databases)
 DATABASE_URI = 'sqlite:///../tmp/test.db'
+# DATABASE_URI = 'mysql://user@host/database?use_unicode=0' # forces UTF-8 encoding in DB
 
 # Path to temporary folder for OpenID authentication files
 OID_STORE_PATH = 'tmp/oid'
@@ -80,6 +81,10 @@ MENU_LINKS = [
     ('Global Map', 'http://worldoftanks.eu/clanwars/maps/globalmap/'),
     ('Campaign Map', 'http://worldoftanks.eu/clanwars/eventmap/'),
 ]
+
+# The URL prefix for the CW map that battle schedule links should lead to,
+# The province ID gets appended, e.g. "?province=ML_17"
+MAP_URL = "http://worldoftanks.eu/clanwars/maps/eventmap/"
 
 # Override settings with local config, if present.
 try:

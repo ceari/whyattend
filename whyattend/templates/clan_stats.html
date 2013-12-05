@@ -8,6 +8,7 @@
     <script src="{{url_for('static', filename='js/vendor/g.bar-min.js')}}" type="text/javascript"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.1/jquery.flot.min.js" type="text/javascript"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.1/jquery.flot.categories.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.1/jquery.flot.time.min.js" type="text/javascript"></script>
     <script>
         $(document).ready(function() {
             var r = Raphael(document.getElementById('maps'), 300, 300);
@@ -26,65 +27,112 @@
                 }]).attr({font: "11px 'Open Sans'"});
             });
 
+            var maps_wr = [
+             {% for map_wr in win_ratio_by_map|dictsort(by="value")|reverse %}
+             {
+              data: [["{{map_wr.0}}", {{(map_wr.1 * 100.0)|round|int}}]],
+              color: "{{"green" if map_wr.1 > 0.66 else "orange" if map_wr.1 > 0.33 else "red"}}",
+             },
+             {% endfor %}
+            ];
 
-		var maps_wr = [
-		 {% for map_wr in win_ratio_by_map|dictsort(by="value")|reverse %}
-		 {
-		  data: [["{{map_wr.0}}", {{(map_wr.1 * 100.0)|round|int}}]],
-		  color: "{{"green" if map_wr.1 > 0.66 else "orange" if map_wr.1 > 0.33 else "red"}}",
-		 },
-		 {% endfor %}
-        ];
+            $.plot("#maps_wr", maps_wr, {
+                series: {
+                    bars: {
+                        show: true,
+                        barWidth: 0.6,
+                        align: "center"
+                    }
+                },
+                xaxis: {
+                    mode: "categories",
+                    tickLength: 0,
+                    tickLength: 0,
+                },
+                yaxis: {
+                    min: 0,
+                    max: 100,
+                    ticks: 10
+                }
+            });
 
-		$.plot("#maps_wr", maps_wr, {
-			series: {
-				bars: {
-					show: true,
-					barWidth: 0.6,
-					align: "center"
-				}
-			},
-			xaxis: {
-				mode: "categories",
-				tickLength: 0,
-				tickLength: 0,
-			},
-			yaxis: {
-                min: 0,
-                max: 100,
-                ticks: 10
-			}
-		});
+            var commander_wr = [
+             {% for c_wr in win_ratio_by_commander|dictsort(by="value")|reverse %}
+             {
+              data: [["{{c_wr.0.name}}", {{(c_wr.1 * 100.0)|round|int}}]],
+              color: "lightblue",
+             },
+             {% endfor %}
+            ];
 
-		var commander_wr = [
-		 {% for c_wr in win_ratio_by_commander|dictsort(by="value")|reverse %}
-		 {
-		  data: [["{{c_wr.0.name}}", {{(c_wr.1 * 100.0)|round|int}}]],
-		  color: "lightblue",
-		 },
-		 {% endfor %}
-        ];
+            $.plot("#commander_wr", commander_wr, {
+                series: {
+                    bars: {
+                        show: true,
+                        barWidth: 0.6,
+                        align: "center"
+                    }
+                },
+                xaxis: {
+                    mode: "categories",
+                    tickLength: 0,
+                    tickLength: 0
+                },
+                yaxis: {
+                    min: 0,
+                    max: 100,
+                    ticks: 10
+                }
+            });
 
-		$.plot("#commander_wr", commander_wr, {
-			series: {
-				bars: {
-					show: true,
-					barWidth: 0.6,
-					align: "center"
-				}
-			},
-			xaxis: {
-				mode: "categories",
-				tickLength: 0,
-				tickLength: 0
-			},
-			yaxis: {
-                min: 0,
-                max: 100,
-                ticks: 10
-			}
-		});
 
+            var enemy_wr = [
+             {% for c_wr in win_ratio_by_enemy_clan|dictsort(by="value")|reverse %}
+             {
+              data: [["{{c_wr.0}} ({{wins_by_enemy[c_wr.0]}}/{{battles_by_enemy[c_wr.0]}})", {{(c_wr.1 * 100.0)|round|int}}]],
+              color: "{{"green" if c_wr.1 > 0.66 else "orange" if c_wr.1 > 0.33 else "red"}}",
+             },
+             {% endfor %}
+            ];
+
+            $.plot("#enemy_wr", enemy_wr, {
+                series: {
+                    bars: {
+                        show: true,
+                        barWidth: 0.6,
+                        align: "center"
+                    }
+                },
+                xaxis: {
+                    mode: "categories",
+                    tickLength: 0,
+                    tickLength: 0
+                },
+                yaxis: {
+                    min: 0,
+                    max: 100,
+                    ticks: 10
+                }
+            });
+
+            var battles_per_day = [
+             {% for bpd in battles_per_day %}
+               [{{bpd.0}}, {{bpd.1}}],
+             {% endfor %}
+            ];
+
+            $.plot("#battles_per_day",  [battles_per_day] , {
+                xaxis: {
+                    mode: "time",
+                    timeformat: "%e %b",
+                    minTickSize: [1, "day"],
+                },
+                yaxis: {
+                    min: 0,
+                    tickSize: 1,
+                    tickDecimals: 0
+                }
+            });
 
         });
     </script>
@@ -142,6 +190,15 @@
         <div class="panel panel-default">
         <div style="min-height: 170px;" class="panel-body">
             <div class="col-lg-12">
+                <h4>Battles per Day</h4>
+                <div id="battles_per_day" style="height: 300px"></div>
+            </div>
+        </div></div>
+    </div>
+    <div class="row">
+        <div class="panel panel-default">
+        <div style="min-height: 170px;" class="panel-body">
+            <div class="col-lg-12">
                 <h4>Win Rate by Map</h4>
                 <div id="maps_wr" style="height: 300px"></div>
             </div>
@@ -151,8 +208,17 @@
         <div class="panel panel-default">
         <div style="min-height: 170px;" class="panel-body">
             <div class="col-lg-12">
-                <h4>Win Rate by Commander</h4>
+                <h4>Win Rate by Commander (with more than 10 battles)</h4>
                 <div id="commander_wr" style="height: 300px"></div>
+            </div>
+        </div></div>
+    </div>
+    <div class="row">
+        <div class="panel panel-default">
+        <div style="min-height: 170px;" class="panel-body">
+            <div class="col-lg-12">
+                <h4>Win Rate Against Clans (more than 1 battle)</h4>
+                <div id="enemy_wr" style="height: 300px"></div>
             </div>
         </div></div>
     </div>
