@@ -33,7 +33,7 @@
                 {% for item in scheduled_battles.request_data['items'] %}
                 <li>
                     <img style="margin-right: 5px; width: 16px; height:16px;" src="{{url_for('static', filename='img/swords.png')}}">
-                    {% for p in item.provinces %}<a href="http://worldoftanks.{{g.WOT_SERVER_REGION_CODE}}/clanwars/maps/?province={{p.id}}">{{p.name}}</a>{% if loop.index < item.provinces|length %} - {%endif%}{% endfor %} -
+                    {% for p in item.provinces %}<a href="{{g.MAP_URL}}?province={{p.id}}">{{p.name}}</a>{% if loop.index < item.provinces|length %} - {%endif%}{% endfor %} -
                     {% if item.time %}{{datetime.datetime.fromtimestamp(item.time)|pretty_date + (' or later' if not item.started else '')}} {%else%}today{%endif%}
                     - on {% for map in item.arenas %}{{map}} {% if loop.index < item.provinces|length %} or {%endif%}{% endfor %}
                 </li>
