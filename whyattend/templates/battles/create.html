@@ -36,7 +36,7 @@
             $('#battle_group').change();
 
             var updateProvinces = function() {
-                var provinces = PROVINCES_BY_MAP[$('#map_name').val()];
+                var provinces = PROVINCES_BY_MAP[$('#map_name').val()].sort();
                 if (provinces) {
                     var output = [];
                     $('#province').html("");
