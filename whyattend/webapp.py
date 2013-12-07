@@ -268,12 +268,18 @@ def index():
         @cache.memoize(timeout=60)
         def cached_provinces_owned(clan_id):
             logger.info("Querying Wargaming server for provinces owned by clan " + str(clan_id) + " " + g.player.clan)
-            return wotapi.get_provinces(clan_id)
+            try:
+                return wotapi.get_provinces(clan_id)
+            except:
+                return None
 
         @cache.memoize(timeout=60)
         def cached_battle_schedule(clan_id):
             logger.info("Querying Wargaming server for battle schedule of clan " + str(clan_id) + " " + g.player.clan)
-            return wotapi.get_battle_schedule(clan_id)
+            try:
+                return wotapi.get_battle_schedule(clan_id)
+            except:
+                return None
 
         provinces_owned = cached_provinces_owned(config.CLAN_IDS[g.player.clan])
         total_revenue = 0
@@ -1297,6 +1303,7 @@ def player_performance(clan):
     for battle in battles:
         replay_data = battle.replay.unpickle()
         if not replay_data or not 'pickle' in replay_data or not replay_data['pickle']: continue
+        if not isinstance(replay_data['pickle']['vehicles'], dict): continue
         players_perf = replays.player_performance(replay_data['pickle'])
         for player in battle.get_players():
             if not str(player.wot_id) in players_perf: continue # Replay/Players mismatch (account sharing?)

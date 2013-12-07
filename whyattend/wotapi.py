@@ -50,20 +50,14 @@ def get_scheduled_battles(clan_id):
 
 
 def get_provinces(clan_id):
-    try:
-        r = requests.get('http://worldoftanks.' + WOT_SERVER_REGION_CODE.lower() +
-                         '/community/clans/' + str(clan_id) + '/provinces/list/',
-                         params={'id': 'js-provinces-table'},
-                         headers={'X-Requested-With': 'XMLHttpRequest',
-                                  'Accept': 'application/json, text/javascript, text/html, */*'},
-                         timeout=API_REQUEST_TIMEOUT)
-        if r.ok and r.json()['result'] == 'success':
-            return r.json()
-        else:
-            return None
-    except Exception as e:
-        return None
-
+    r = requests.get('http://worldoftanks.' + WOT_SERVER_REGION_CODE.lower() +
+                     '/community/clans/' + str(clan_id) + '/provinces/list/',
+                     params={'id': 'js-provinces-table'},
+                     headers={'X-Requested-With': 'XMLHttpRequest',
+                              'Accept': 'application/json, text/javascript, text/html, */*'},
+                     timeout=API_REQUEST_TIMEOUT)
+    if r.ok:
+        return r.json()
 
 def get_global_map_info(region):
     r = requests.get(MAP_SUBDOMAIN +
