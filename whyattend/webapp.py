@@ -1295,6 +1295,7 @@ def player_performance(clan):
     for battle in battles:
         replay_data = battle.replay.unpickle()
         if not replay_data or not 'pickle' in replay_data or not replay_data['pickle']: continue
+        if not isinstance(replay_data['pickle']['vehicles'], dict): continue
         players_perf = replays.player_performance(replay_data['pickle'])
         for player in battle.get_players():
             if not str(player.wot_id) in players_perf: continue # Replay/Players mismatch (account sharing?)
