@@ -38,6 +38,7 @@ oid = OpenID(app, config.OID_STORE_PATH)
 
 app.jinja_env.filters['pretty_date'] = util.pretty_date
 app.jinja_env.filters['int'] = int
+app.jinja_env.globals['STATISTICS_VISIBLE'] = config.STATISTICS_VISIBLE
 
 # Uncomment to set up middleware in case we are behind a reverse proxy server
 # from .util import ReverseProxied
