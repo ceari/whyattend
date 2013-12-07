@@ -260,12 +260,18 @@ def index():
         @cache.memoize(timeout=60)
         def cached_provinces_owned(clan_id):
             logger.info("Querying Wargaming server for provinces owned by clan " + str(clan_id) + " " + g.player.clan)
-            return wotapi.get_provinces(clan_id)
+            try:
+                return wotapi.get_provinces(clan_id)
+            except:
+                return None
 
         @cache.memoize(timeout=60)
         def cached_battle_schedule(clan_id):
             logger.info("Querying Wargaming server for battle schedule of clan " + str(clan_id) + " " + g.player.clan)
-            return wotapi.get_battle_schedule(clan_id)
+            try:
+                return wotapi.get_battle_schedule(clan_id)
+            except:
+                return None
 
         provinces_owned = cached_provinces_owned(config.CLAN_IDS[g.player.clan])
         total_revenue = 0
