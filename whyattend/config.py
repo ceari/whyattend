@@ -91,6 +91,10 @@ MAP_URL = "http://worldoftanks.eu/clanwars/maps/eventmap/"
 MAP_SUBDOMAIN = "http://cw2.worldoftanks.eu"
 MAP_REGIONS = [1,2,3] # 3 map regions with IDs 1,2,3 in EU
 
+STATISTICS_VISIBLE = {
+    'win_rate_by_commander': True,
+}
+
 # Override settings with local config, if present.
 try:
     from local_config import *

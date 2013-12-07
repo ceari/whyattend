@@ -56,6 +56,7 @@
                 }
             });
 
+            {% if STATISTICS_VISIBLE.win_rate_by_commander %}
             var commander_wr = [
              {% for c_wr in win_ratio_by_commander|dictsort(by="value")|reverse %}
              {
@@ -84,6 +85,7 @@
                     ticks: 10
                 }
             });
+            {% endif %}
 
 
             var enemy_wr = [
@@ -204,6 +206,7 @@
             </div>
         </div></div>
     </div>
+    {% if STATISTICS_VISIBLE.win_rate_by_commander %}
     <div class="row">
         <div class="panel panel-default">
         <div style="min-height: 170px;" class="panel-body">
@@ -213,6 +216,7 @@
             </div>
         </div></div>
     </div>
+    {% endif %}
     <div class="row">
         <div class="panel panel-default">
         <div style="min-height: 170px;" class="panel-body">
