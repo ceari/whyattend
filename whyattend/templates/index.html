@@ -36,7 +36,7 @@
                     {% for p in battle.provinces %}<a href="{{g.MAP_URL}}?province={{p.id}}">{{p.name}}</a>{% if loop.index < battle.provinces|length %} - {%endif%}{% endfor %} -
                     {% if battle.time %}{{battle.time|pretty_date + (' or later' if not battle.started else '')}} {%else%}today{%endif%}
                     - on {% for map in battle.maps %}{{map}} {% if loop.index < battle.maps|length %} or {%endif%}{% endfor %}
-                    - vs. {% for enemy in battle.enemies %}<a href="http://www.worldoftanks.{{g.WOT_SERVER_REGION_CODE}}/community/{{enemy.url}}">{{enemy.tag}}</a> {% if loop.index < battle.enemies|length %} or {%endif%}{% endfor %}
+                    {% if battle.enemies %}- vs. {% for enemy in battle.enemies %}<a href="http://www.worldoftanks.{{g.WOT_SERVER_REGION_CODE}}/community/{{enemy.url}}">{{enemy.tag}}</a> {% if loop.index < battle.enemies|length %} or {%endif%}{% endfor %}{% endif %}
                 </li>
                 {% endfor %}
                 </ul>

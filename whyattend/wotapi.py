@@ -121,7 +121,7 @@ def get_battle_schedule(clan_id):
 
         scheduled_battles.append({
             'provinces': provinces,
-            'time': at,
+            'time': at if item['time'] else None,
             'maps': maps,
             'enemies': enemies,
             'started': item['started']
