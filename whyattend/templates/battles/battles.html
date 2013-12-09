@@ -80,7 +80,7 @@
     </script>
 {% endblock %}
 {% block content %}
-  <h2>Battles of {{ clan }} <img style="height: 32px; width: 32px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"></h2>
+  <h2>Battles of {{ clan }} <img style="height: 32px; width: 32px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> {% if request.args.has_key('enemy') %}against {{request.args.get('enemy')}}{% endif %}</h2>
   <p>
       <i class="icon-info icon-2x"></i> Only one of the battles of a landing tournament is shown in the table.
       Follow the <i class="icon-list"></i> links to view all tournament battles.

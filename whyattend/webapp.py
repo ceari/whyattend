@@ -732,7 +732,10 @@ def battles(clan):
     if not clan in config.CLAN_NAMES:
         abort(404)
     battles = Battle.query.options(joinedload_all('battle_group.battles')).options(
-        joinedload_all('attendances.player')).filter_by(clan=clan).all()
+        joinedload_all('attendances.player')).filter_by(clan=clan)
+    if request.args.has_key('enemy'):
+        battles = battles.filter_by(enemy_clan=request.args.get('enemy', None))
+    battles = battles.all()
     return render_template('battles/battles.html', clan=clan, battles=battles)
 
 
