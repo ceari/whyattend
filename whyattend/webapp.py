@@ -13,8 +13,9 @@ import logging
 import hashlib
 import StringIO
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from functools import wraps
+from datetime import timedelta
 from flask import Flask, g, session, render_template, flash, redirect, request, url_for, abort, make_response, jsonify
 from flask import Response
 from flask_openid import OpenID
@@ -565,6 +566,7 @@ def create_battle():
     battle_result = ''
     map_name = ''
     province = ''
+    duration = 15*60
     battle_commander = None
     date = datetime.datetime.now()
     battle_groups = BattleGroup.query.filter_by(clan=g.player.clan).order_by('date').all()
@@ -608,6 +610,9 @@ def create_battle():
                 if replays.player_won(replay):
                     battle_result = 'victory'
 
+            if replay['pickle']:
+                duration = int(replay['pickle']['common']['duration'])
+
     if request.method == 'POST':
         players = map(int, request.form.getlist('players'))
         filename = request.form.get('filename', '')
@@ -618,6 +623,7 @@ def create_battle():
         battle_result = request.form.get('battle_result', '')
         battle_commander = Player.query.get(int(request.form['battle_commander']))
         description = request.form.get('description', '')
+        duration = request.form.get('duration', 15*60)
         battle_group = int(request.form['battle_group'])
         battle_group_title = request.form.get('battle_group_title', '')
         battle_group_description = request.form.get('battle_group_description', '')
@@ -655,6 +661,9 @@ def create_battle():
         if not battle_result:
             flash(u'Please select the correct outcome of the battle', 'errors')
             errors = True
+        if not duration:
+            flash(u'Please provide the duration of the battle', 'errors')
+            errors = True
 
         battle = Battle.query.filter_by(date=date, clan=g.player.clan, enemy_clan=enemy_clan).first()
         if battle:
@@ -677,7 +686,8 @@ def create_battle():
             battle = Battle(date, g.player.clan, enemy_clan, victory=(battle_result == 'victory'),
                             map_name=map_name, map_province=province,
                             draw=(battle_result == 'draw'), creator=g.player,
-                            battle_commander=battle_commander, description=description)
+                            battle_commander=battle_commander, description=description,
+                            duration=duration)
 
             if bg:
                 battle.battle_group_final = battle_group_final
@@ -706,7 +716,7 @@ def create_battle():
                            battle_commander=battle_commander,
                            map_name=map_name, province=province, description=description, replays=replays,
                            battle_result=battle_result, date=date, battle_groups=battle_groups,
-                           battle_group=battle_group, battle_group_title=battle_group_title,
+                           battle_group=battle_group, battle_group_title=battle_group_title, duration=duration,
                            battle_group_description=battle_group_description, battle_group_final=battle_group_final,
                            sorted_players=sorted_players)
 
@@ -999,6 +1009,38 @@ def payout(clan):
     :return:
     """
     return render_template('payout/payout.html', clan=clan)
+
+
+@app.route('/payout/reserve-conflicts/<clan>')
+@require_login
+@require_role(config.PAYOUT_ROLES)
+@require_clan_membership
+def reserve_conflicts(clan):
+    def overlapping_battles(battle, ordered_battles, before_dt=timedelta(minutes=0), after_dt=timedelta(minutes=0)):
+        """ Return a list of battles b whose start time lies within the interval
+            [battle.date - before_dt, battle.date + battle.duration + after_dt].
+            Such battles overlap with the given battle. """
+        res = list()
+        return [b for b in battles if battle.date - before_dt <= b.date <=
+                                      battle.date + timedelta(seconds=battle.duration) + after_dt]
+
+    def get_reserve_conflicts(battles):
+        """ Returns the players that are reserve in at least two of the given battles """
+        reserve_count = defaultdict(int)
+        for battle in battles:
+            for player in battle.get_reserve_players():
+                reserve_count[player] += 1
+        return sorted([p for p in reserve_count if reserve_count[p] > 1], key=lambda p: p.name)
+
+    battles = Battle.query.options(joinedload('attendances')).filter_by(clan=clan).order_by('date asc').all()
+    reserve_conflicts = OrderedDict()
+    for battle in battles:
+        overlaps = overlapping_battles(battle, battles)
+        conflicts = get_reserve_conflicts(overlaps)
+        if conflicts:
+            reserve_conflicts[tuple(overlaps)] = conflicts
+
+    return render_template('payout/reserve_conflicts.html', reserve_conflicts=reserve_conflicts)
 
 
 @app.route('/payout/<clan>/battles', methods=['GET', 'POST'])

@@ -135,6 +135,7 @@
 {% endblock %}
 {% block content %}
     <h2>Payout <img style="width:32px; height:32px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> </h2>
+    <h4><a href="{{url_for('reserve_conflicts', clan=clan)}}">Show reserve player conflicts</a></h4>
     <form class="form-inline" action="{{url_for('payout_battles', clan=clan)}}" method="GET">
     From <input class="form-control" type="datetime" id="fromDate" name="fromDate" placeholder="dd.mm.yyyy">
         to <input class="form-control" type="datetime" id="toDate" name="toDate" placeholder="dd.mm.yyyy">
