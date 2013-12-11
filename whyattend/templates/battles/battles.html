@@ -38,6 +38,11 @@
                 "fnDrawCallback": function (oSettings) {
                     var battle_ids = jQuery.map(jQuery(this._('tr', {'filter': 'applied'} )), function(element) { return jQuery(element)[0]; });
 
+                    if (battle_ids.length === 0) {
+                        $('#download_div').hide();
+                    } else {
+                        $('#download_div').show();
+                    }
                     $('#download').attr('href', '{{url_for('download_replays')}}?' + jQuery.param({ids: battle_ids}));
 
                     $("a.confirm-sign").on("click", function (e) {
@@ -169,6 +174,7 @@
         {% endfor %}
       </tbody>
   </table>
-  <a id="download" href="#"><i class="icon-download"></i> Download replays</a>
-
+  <div id="download_div">
+    <a id="download" href="#"><i class="icon-download"></i> Download replays</a>
+  </div>
 {% endblock %}
