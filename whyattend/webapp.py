@@ -11,8 +11,11 @@ import os
 import pickle
 import logging
 import hashlib
-import StringIO
+import tarfile
+import calendar
+import tempfile
 
+from cStringIO import StringIO
 from collections import defaultdict, OrderedDict
 from functools import wraps
 from datetime import timedelta
@@ -272,7 +275,8 @@ def index():
             logger.info("Querying Wargaming server for battle schedule of clan " + str(clan_id) + " " + g.player.clan)
             try:
                 return wotapi.get_battle_schedule(clan_id)
-            except:
+            except Exception as e:
+                print e
                 return None
 
         provinces_owned = cached_provinces_owned(config.CLAN_IDS[g.player.clan])
@@ -993,11 +997,36 @@ def download_replay(battle_id):
     """
     battle = Battle.query.get(battle_id) or abort(404)
     if not battle.replay_id: abort(404)
+    if not battle.replay.replay_blob: abort(404)
     response = make_response(battle.replay.replay_blob)
     response.headers['Content-Type'] = 'application/octet-stream'
     response.headers['Content-Disposition'] = 'attachment; filename=' + \
                                               secure_filename(battle.date.strftime(
                                                   '%d.%m.%Y_%H_%M_%S') + '_' + battle.clan + '_' + battle.enemy_clan + '.wotreplay')
+    return response
+
+@app.route('/battles/download-replays')
+@require_login
+def download_replays():
+    battle_ids = map(int, request.args.getlist('ids[]'))
+    if not battle_ids: abort(404)
+
+    buffer = StringIO()
+    tar = tarfile.open(mode='w', fileobj=buffer)
+    for battle in Battle.query.filter(Battle.id.in_(battle_ids)):
+        if not battle.replay or not battle.replay.replay_blob: continue
+        filename = secure_filename(battle.date.strftime(
+                                    '%d.%m.%Y_%H_%M_%S') + '_' + battle.clan + '_' + battle.enemy_clan + '.wotreplay')
+        info = tarfile.TarInfo(filename)
+        info.size = len(battle.replay.replay_blob)
+        info.mtime = calendar.timegm(battle.date.utctimetuple())
+        info.type = tarfile.REGTYPE
+        tar.addfile(info, StringIO(battle.replay.replay_blob))
+    tar.close()
+
+    response = make_response(buffer.getvalue())
+    response.headers['Content-Type'] = 'application/tar'
+    response.headers['Content-Disposition'] = 'attachment; filename=' + secure_filename("replays.tar")
     return response
 
 
@@ -1415,7 +1444,7 @@ def profile():
 @require_role(config.ADMIN_ROLES)
 def export_emails(clan):
     """ Return names and email addresses as CSV file """
-    csv_response = StringIO.StringIO()
+    csv_response = StringIO()
     csv_writer = csv.writer(csv_response)
     csv_writer.writerow(["Name", "e-mail"])
 
