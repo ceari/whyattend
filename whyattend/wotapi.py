@@ -114,7 +114,7 @@ def get_battle_schedule(clan_id):
             if battle['province_id'] in province_ids:
                 for cid in battle['combatants']:
                     if cid == str(clan_id): continue
-                    if battle['combatants'][cid]['at'] != item['time']: continue
+                    if battle['combatants'][cid]['at'] != item['time'] and battle['at'] != item['time']: continue
                     if not clans[cid]['tag'] in enemies_set:
                         enemies.append({
                             'tag': clans[cid]['tag'],
