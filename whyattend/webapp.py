@@ -429,12 +429,16 @@ def create_battle_from_replay():
     if request.method == 'POST':
         file = request.files['replay']
         if file and file.filename.endswith('.wotreplay'):
+            battle_group_id = int(request.form.get('battle_group_id', -2))
             folder = datetime.datetime.now().strftime("%d.%m.%Y")
             filename = secure_filename(g.player.name + '_' + file.filename)
             if not os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], folder)):
                 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], folder))
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], folder, filename))
-            return redirect(url_for('create_battle', folder=folder, filename=filename))
+            if battle_group_id:
+                return redirect(url_for('create_battle', battle_group_id=battle_group_id, folder=folder, filename=filename))
+            else:
+                return redirect(url_for('create_battle', folder=folder, filename=filename))
     return render_template('battles/create_from_replay.html')
 
 
@@ -574,7 +578,8 @@ def create_battle():
     battle_commander = None
     date = datetime.datetime.now()
     battle_groups = BattleGroup.query.filter_by(clan=g.player.clan).order_by('date').all()
-    battle_group = '-1'
+    battle_group = ''
+    battle_group_id = int(request.args.get('battle_group_id', -2))
     battle_group_title = ''
     battle_group_description = ''
     battle_group_final = False
@@ -616,6 +621,10 @@ def create_battle():
 
             if replay['pickle']:
                 duration = int(replay['pickle']['common']['duration'])
+            else:
+                flash('Warning. Replay seems to be incomplete (detailed battle information is missing). '
+                      'Cannot determine battle duration automatically and replay cannot be used in player performance'
+                      ' calculation!', 'error')
 
     if request.method == 'POST':
         players = map(int, request.form.getlist('players'))
@@ -722,7 +731,7 @@ def create_battle():
                            battle_result=battle_result, date=date, battle_groups=battle_groups,
                            battle_group=battle_group, battle_group_title=battle_group_title, duration=duration,
                            battle_group_description=battle_group_description, battle_group_final=battle_group_final,
-                           sorted_players=sorted_players)
+                           sorted_players=sorted_players, battle_group_id=battle_group_id)
 
 
 @app.route('/battles/list/<clan>')

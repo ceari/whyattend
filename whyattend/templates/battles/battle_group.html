@@ -88,6 +88,11 @@
   </dl>
   {% endif %}
   <hr>
+  {% if g.player and (g.player.role in g.CREATE_BATTLE_ROLES or g.player.name in g.ADMINS) %}
+  <div style="margin-bottom: 1em;">
+   <a class="btn btn-small btn-primary" href="{{url_for('create_battle_from_replay', battle_group_id=battle_group.id)}}">Add Battle To Group</a>
+  </div>
+  {% endif %}
   <table id="battles" class="table table-striped">
       <thead>
         <tr>

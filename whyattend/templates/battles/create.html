@@ -148,7 +148,7 @@
                       <option value="-2">Not in a group</option>
                       <option value="-1">Create a new group</option>
                       {% for battle_group in battle_groups %}
-                        <option value="{{battle_group.id}}">{{battle_group.date.strftime('%d.%m.%Y %H:%M:%S')}} - {{battle_group.title}}</option>
+                        <option value="{{battle_group.id}}" {{'selected' if battle_group.id==battle_group_id else ''}}>{{battle_group.date.strftime('%d.%m.%Y %H:%M:%S')}} - {{battle_group.title}}</option>
                       {% endfor %}
                   </select>
                   <div id="battle_group_create">

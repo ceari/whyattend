@@ -11,6 +11,7 @@
         <input type="file" id="replay" name="replay">
       </div>
       <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
+      <input id="battle_group_id" name="battle_group_id" type="hidden" value="{{request.args.get('battle_group_id', -2)}}">
       <button type="submit" class="btn btn-success">Click to add this replay</button>
     </form>
 
