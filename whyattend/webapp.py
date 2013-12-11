@@ -11,10 +11,14 @@ import os
 import pickle
 import logging
 import hashlib
-import StringIO
+import tarfile
+import calendar
+import tempfile
 
-from collections import defaultdict
+from cStringIO import StringIO
+from collections import defaultdict, OrderedDict
 from functools import wraps
+from datetime import timedelta
 from flask import Flask, g, session, render_template, flash, redirect, request, url_for, abort, make_response, jsonify
 from flask import Response
 from flask_openid import OpenID
@@ -279,7 +283,8 @@ def index():
             logger.info("Querying Wargaming server for battle schedule of clan " + str(clan_id) + " " + g.player.clan)
             try:
                 return wotapi.get_battle_schedule(clan_id)
-            except:
+            except Exception as e:
+                print e
                 return None
 
         provinces_owned = cached_provinces_owned(config.CLAN_IDS[g.player.clan])
@@ -432,12 +437,16 @@ def create_battle_from_replay():
     if request.method == 'POST':
         file = request.files['replay']
         if file and file.filename.endswith('.wotreplay'):
+            battle_group_id = int(request.form.get('battle_group_id', -2))
             folder = datetime.datetime.now().strftime("%d.%m.%Y")
             filename = secure_filename(g.player.name + '_' + file.filename)
             if not os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], folder)):
                 os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], folder))
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], folder, filename))
-            return redirect(url_for('create_battle', folder=folder, filename=filename))
+            if battle_group_id:
+                return redirect(url_for('create_battle', battle_group_id=battle_group_id, folder=folder, filename=filename))
+            else:
+                return redirect(url_for('create_battle', folder=folder, filename=filename))
     return render_template('battles/create_from_replay.html')
 
 
@@ -573,10 +582,12 @@ def create_battle():
     battle_result = ''
     map_name = ''
     province = ''
+    duration = 15*60
     battle_commander = None
     date = datetime.datetime.now()
     battle_groups = BattleGroup.query.filter_by(clan=g.player.clan).order_by('date').all()
-    battle_group = '-1'
+    battle_group = ''
+    battle_group_id = int(request.args.get('battle_group_id', -2))
     battle_group_title = ''
     battle_group_description = ''
     battle_group_final = False
@@ -616,6 +627,13 @@ def create_battle():
                 if replays.player_won(replay):
                     battle_result = 'victory'
 
+            if replay['pickle']:
+                duration = int(replay['pickle']['common']['duration'])
+            else:
+                flash('Warning. Replay seems to be incomplete (detailed battle information is missing). '
+                      'Cannot determine battle duration automatically and replay cannot be used in player performance'
+                      ' calculation!', 'error')
+
     if request.method == 'POST':
         players = map(int, request.form.getlist('players'))
         filename = request.form.get('filename', '')
@@ -626,6 +644,7 @@ def create_battle():
         battle_result = request.form.get('battle_result', '')
         battle_commander = Player.query.get(int(request.form['battle_commander']))
         description = request.form.get('description', '')
+        duration = request.form.get('duration', 15*60)
         battle_group = int(request.form['battle_group'])
         battle_group_title = request.form.get('battle_group_title', '')
         battle_group_description = request.form.get('battle_group_description', '')
@@ -663,6 +682,9 @@ def create_battle():
         if not battle_result:
             flash(u'Please select the correct outcome of the battle', 'errors')
             errors = True
+        if not duration:
+            flash(u'Please provide the duration of the battle', 'errors')
+            errors = True
 
         battle = Battle.query.filter_by(date=date, clan=g.player.clan, enemy_clan=enemy_clan).first()
         if battle:
@@ -685,7 +707,8 @@ def create_battle():
             battle = Battle(date, g.player.clan, enemy_clan, victory=(battle_result == 'victory'),
                             map_name=map_name, map_province=province,
                             draw=(battle_result == 'draw'), creator=g.player,
-                            battle_commander=battle_commander, description=description)
+                            battle_commander=battle_commander, description=description,
+                            duration=duration)
 
             if bg:
                 battle.battle_group_final = battle_group_final
@@ -714,9 +737,9 @@ def create_battle():
                            battle_commander=battle_commander,
                            map_name=map_name, province=province, description=description, replays=replays,
                            battle_result=battle_result, date=date, battle_groups=battle_groups,
-                           battle_group=battle_group, battle_group_title=battle_group_title,
+                           battle_group=battle_group, battle_group_title=battle_group_title, duration=duration,
                            battle_group_description=battle_group_description, battle_group_final=battle_group_final,
-                           sorted_players=sorted_players)
+                           sorted_players=sorted_players, battle_group_id=battle_group_id)
 
 
 @app.route('/battles/list/<clan>')
@@ -730,7 +753,10 @@ def battles(clan):
     if not clan in config.CLAN_NAMES:
         abort(404)
     battles = Battle.query.options(joinedload_all('battle_group.battles')).options(
-        joinedload_all('attendances.player')).filter_by(clan=clan).all()
+        joinedload_all('attendances.player')).filter_by(clan=clan)
+    if request.args.has_key('enemy'):
+        battles = battles.filter_by(enemy_clan=request.args.get('enemy', None))
+    battles = battles.all()
     return render_template('battles/battles.html', clan=clan, battles=battles)
 
 
@@ -988,11 +1014,36 @@ def download_replay(battle_id):
     """
     battle = Battle.query.get(battle_id) or abort(404)
     if not battle.replay_id: abort(404)
+    if not battle.replay.replay_blob: abort(404)
     response = make_response(battle.replay.replay_blob)
     response.headers['Content-Type'] = 'application/octet-stream'
     response.headers['Content-Disposition'] = 'attachment; filename=' + \
                                               secure_filename(battle.date.strftime(
                                                   '%d.%m.%Y_%H_%M_%S') + '_' + battle.clan + '_' + battle.enemy_clan + '.wotreplay')
+    return response
+
+@app.route('/battles/download-replays')
+@require_login
+def download_replays():
+    battle_ids = map(int, request.args.getlist('ids[]'))
+    if not battle_ids: abort(404)
+
+    buffer = StringIO()
+    tar = tarfile.open(mode='w', fileobj=buffer)
+    for battle in Battle.query.filter(Battle.id.in_(battle_ids)):
+        if not battle.replay or not battle.replay.replay_blob: continue
+        filename = secure_filename(battle.date.strftime(
+                                    '%d.%m.%Y_%H_%M_%S') + '_' + battle.clan + '_' + battle.enemy_clan + '.wotreplay')
+        info = tarfile.TarInfo(filename)
+        info.size = len(battle.replay.replay_blob)
+        info.mtime = calendar.timegm(battle.date.utctimetuple())
+        info.type = tarfile.REGTYPE
+        tar.addfile(info, StringIO(battle.replay.replay_blob))
+    tar.close()
+
+    response = make_response(buffer.getvalue())
+    response.headers['Content-Type'] = 'application/tar'
+    response.headers['Content-Disposition'] = 'attachment; filename=' + secure_filename("replays.tar")
     return response
 
 
@@ -1007,6 +1058,38 @@ def payout(clan):
     :return:
     """
     return render_template('payout/payout.html', clan=clan)
+
+
+@app.route('/payout/reserve-conflicts/<clan>')
+@require_login
+@require_role(config.PAYOUT_ROLES)
+@require_clan_membership
+def reserve_conflicts(clan):
+    def overlapping_battles(battle, ordered_battles, before_dt=timedelta(minutes=0), after_dt=timedelta(minutes=0)):
+        """ Return a list of battles b whose start time lies within the interval
+            [battle.date - before_dt, battle.date + battle.duration + after_dt].
+            Such battles overlap with the given battle. """
+        res = list()
+        return [b for b in battles if battle.date - before_dt <= b.date <=
+                                      battle.date + timedelta(seconds=battle.duration) + after_dt]
+
+    def get_reserve_conflicts(battles):
+        """ Returns the players that are reserve in at least two of the given battles """
+        reserve_count = defaultdict(int)
+        for battle in battles:
+            for player in battle.get_reserve_players():
+                reserve_count[player] += 1
+        return sorted([p for p in reserve_count if reserve_count[p] > 1], key=lambda p: p.name)
+
+    battles = Battle.query.options(joinedload('attendances')).filter_by(clan=clan).order_by('date asc').all()
+    reserve_conflicts = OrderedDict()
+    for battle in battles:
+        overlaps = overlapping_battles(battle, battles)
+        conflicts = get_reserve_conflicts(overlaps)
+        if conflicts:
+            reserve_conflicts[tuple(overlaps)] = conflicts
+
+    return render_template('payout/reserve_conflicts.html', reserve_conflicts=reserve_conflicts)
 
 
 @app.route('/payout/<clan>/battles', methods=['GET', 'POST'])
@@ -1378,7 +1461,7 @@ def profile():
 @require_role(config.ADMIN_ROLES)
 def export_emails(clan):
     """ Return names and email addresses as CSV file """
-    csv_response = StringIO.StringIO()
+    csv_response = StringIO()
     csv_writer = csv.writer(csv_response)
     csv_writer.writerow(["Name", "e-mail"])
 

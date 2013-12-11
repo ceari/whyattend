@@ -6,6 +6,10 @@
   <dd>{{replay.first.dateTime}}</dd>
   <dt>Map</dt>
   <dd>{{replay.first.mapDisplayName}}</dd>
+  {% if replay.pickle %}
+  <dt>Duration</dt>
+  <dd>{{(replay.pickle.common.duration / 60)|int}}m {{(replay.pickle.common.duration % 60)|int}}s</dd>
+  {% endif %}
 </dl>
   {% if replay.second %}
   <small>

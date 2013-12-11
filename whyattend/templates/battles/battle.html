@@ -133,8 +133,10 @@
         </dl>
         {% endif %}
     </div>
+    {% if battle.replay and battle.replay.replay_blob %}
     <dl>
         <dt>Replay</dt>
         <dd><a href="{{url_for('download_replay', battle_id=battle.id)}}"><i class="icon-download"></i> Download</a></dd>
     </dl>
+    {% endif %}
 {% endblock %}

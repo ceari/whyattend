@@ -9,7 +9,7 @@
     <script type="text/javascript">
         $(document).ready(function () {
 
-            $('#battles').dataTable({
+            var table = $('#battles').dataTable({
                 "oLanguage": {
                     "sLengthMenu": "Display _MENU_ battles per page",
                     "sZeroRecords": "No battles yet.",
@@ -21,6 +21,7 @@
                     [0, "desc"]
                 ],
                 "aoColumns": [
+                    { "bVisible": false },
                     { "sType": "date-euro-anchor"},
                     null,
                     null,
@@ -35,6 +36,15 @@
                     {"bSortable": false}
                 ],
                 "fnDrawCallback": function (oSettings) {
+                    var battle_ids = jQuery.map(jQuery(this._('tr', {'filter': 'applied'} )), function(element) { return jQuery(element)[0]; });
+
+                    if (battle_ids.length === 0) {
+                        $('#download_div').hide();
+                    } else {
+                        $('#download_div').show();
+                    }
+                    $('#download').attr('href', '{{url_for('download_replays')}}?' + jQuery.param({ids: battle_ids}));
+
                     $("a.confirm-sign").on("click", function (e) {
                         var link = this;
 
@@ -80,15 +90,16 @@
     </script>
 {% endblock %}
 {% block content %}
-  <h2>Battles of {{ clan }} <img style="height: 32px; width: 32px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"></h2>
+  <h2>Battles of {{ clan }} <img style="height: 32px; width: 32px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> {% if request.args.has_key('enemy') %}against {{request.args.get('enemy')}}{% endif %}</h2>
   <p>
       <i class="icon-info icon-2x"></i> Only one of the battles of a landing tournament is shown in the table.
       Follow the <i class="icon-list"></i> links to view all tournament battles.
   </p>
-        <hr>
+  <hr>
   <table id="battles" class="table table-striped">
       <thead>
         <tr>
+            <th>ID</th>
             <th>Date</th>
             <th>Type</th>
             <th>Map</th>
@@ -107,6 +118,7 @@
         {% for battle in battles %}
         {% if not battle.battle_group or (battle.battle_group and battle.battle_group.get_representative_battle() == battle) %}
         <tr>
+            <td>{{battle.id}}</td>
             <td><a href="{{url_for('battle_details', battle_id=battle.id)}}">{{battle.date.strftime('%d.%m.%Y %H:%M:%S')}}</a></td>
             <td>
                 {% if battle.battle_group %}
@@ -162,5 +174,7 @@
         {% endfor %}
       </tbody>
   </table>
-
+  <div id="download_div">
+    <a id="download" href="#"><i class="icon-download"></i> Download replays</a>
+  </div>
 {% endblock %}
