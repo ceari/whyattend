@@ -38,7 +38,7 @@
                     - on {% for map in battle.maps %}{{map}} {% if loop.index < battle.maps|length %} or {%endif%}{% endfor %}
                     {% if battle.enemies %}- vs. {% for enemy in battle.enemies %}
                     <a href="http://www.worldoftanks.{{g.WOT_SERVER_REGION_CODE}}/community/{{enemy.url}}">{{enemy.tag}}</a>
-                    <a href="{{url_for('battles', clan=g.player.clan)}}?enemy={{enemy.tag}}">(History)</a>{% if loop.index < battle.enemies|length %} or {%endif%}{% endfor %}{% endif %}
+                    (<a href="{{url_for('battles', clan=g.player.clan)}}?enemy={{enemy.tag}}">History</a>, <a href="http://wotcs.com/clan.php?wid={{enemy.clan_id}}">Stats</a>){% if loop.index < battle.enemies|length %} or {%endif%}{% endfor %}{% endif %}
                 </li>
                 {% endfor %}
                 </ul>

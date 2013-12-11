@@ -118,7 +118,8 @@ def get_battle_schedule(clan_id):
                     if not clans[cid]['tag'] in enemies_set:
                         enemies.append({
                             'tag': clans[cid]['tag'],
-                            'url': clans[cid]['url']
+                            'url': clans[cid]['url'],
+                            'clan_id': cid
                         })
                         enemies_set.add(clans[cid]['tag'])
 
