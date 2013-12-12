@@ -1465,3 +1465,18 @@ def export_emails(clan):
     headers.add('Content-Disposition', 'attachment',
                 filename=secure_filename(clan + "_emails.csv"))
     return Response(response=csv_response.getvalue(), headers=headers)
+
+
+@app.route('/api/battle-checksums')
+def battle_checksums():
+    import hashlib
+    hashes = list()
+    for battle in Battle.query.all():
+        replay = battle.replay.unpickle()
+        hash = hashlib.sha1()
+        hash.update(''.join(sorted(replays.player_team(replay))))
+        hash.update(replays.guess_enemy_clan(replay))
+        hash.update(replay['first']['mapName'])
+        hashes.append(hash.hexdigest())
+
+    return jsonify({'hashes': hashes})
