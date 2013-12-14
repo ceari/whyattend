@@ -20,7 +20,7 @@ from celery import Celery
 from celery.utils.log import get_task_logger
 
 from . import config, model, wotapi
-from .model import Player
+from .model import Player, WebappData
 
 celery = Celery(broker=config.CELERY_BROKER_URL)
 celery.conf.update({'CELERY_RESULT_BACKEND': config.CELERY_RESULT_BACKEND})
@@ -42,6 +42,11 @@ def get_clan_info(clan_id):
 def synchronize_players(clan_id):
     logger.info("synchronize_players(" + clan_id + ")")
     logger.info("Clan member synchronization triggered for " + str(clan_id))
+    webapp_data = WebappData.get()
+    webapp_data.last_sync_attempt = datetime.datetime.now()
+    db_session.add(webapp_data)
+    db_session.commit()
+    db_session.remove()
 
     from model import db_session
     clan_info = get_clan_info.delay(str(clan_id)).wait()
@@ -87,6 +92,8 @@ def synchronize_players(clan_id):
 
     try:
         db_session.commit()
+        webapp_data.last_successful_sync = datetime.datetime.now()
+        db_session.add(webapp_data)
         logger.info("Clan member synchronization successful")
     except Exception as e:
         logger.warning("Clan member synchronization failed. Rolling back database transaction:")

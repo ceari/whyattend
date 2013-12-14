@@ -251,3 +251,19 @@ class Replay(Base):
 
     def unpickle(self):
         return pickle.loads(self.replay_pickle)
+
+
+class WebappData(Base):
+    __tablename__ = 'webapp_data'
+    id = Column(Integer, primary_key=True)
+    last_successful_sync = Column(DateTime)
+    last_sync_attempt = Column(DateTime)
+
+    @classmethod
+    def get(cls):
+        data = WebappData.query.get(1)
+        if data is None:
+            data = WebappData()
+            db_session.add(data)
+            db_session.commit()
+        return data
