@@ -28,7 +28,7 @@ from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename, Headers
 
 from . import config, replays, wotapi, util, tasks, constants
-from .model import Player, Battle, BattleAttendance, Replay, BattleGroup, db_session
+from .model import Player, Battle, BattleAttendance, Replay, BattleGroup, db_session, WebappData
 
 # Set up Flask application
 app = Flask(__name__)
@@ -197,6 +197,11 @@ def sync_players(clan_id):
     """
     if config.API_KEY == request.args['API_KEY']:
         logger.info("Clan member synchronization triggered for " + str(clan_id))
+        webapp_data = WebappData.get()
+        webapp_data.last_sync_attempt = datetime.datetime.now()
+        db_session.add(webapp_data)
+        db_session.commit()
+        db_session.remove()
 
         clan_info = wotapi.get_clan(str(clan_id))
         processed = set()
@@ -250,6 +255,8 @@ def sync_players(clan_id):
             player.lock_date = datetime.datetime.now()
             db_session.add(player)
 
+        webapp_data.last_successful_sync = datetime.datetime.now()
+        db_session.add(webapp_data)
         db_session.commit()
         logger.info("Clan member synchronization successful")
 
@@ -312,7 +319,7 @@ def admin():
         Administration page.
     :return:
     """
-    return render_template('admin.html', API_KEY=config.API_KEY)
+    return render_template('admin.html', webapp_data=WebappData.get(), API_KEY=config.API_KEY)
 
 
 @app.route('/help')
@@ -1473,3 +1480,18 @@ def export_emails(clan):
     headers.add('Content-Disposition', 'attachment',
                 filename=secure_filename(clan + "_emails.csv"))
     return Response(response=csv_response.getvalue(), headers=headers)
+
+
+@app.route('/api/battle-checksums')
+def battle_checksums():
+    import hashlib
+    hashes = list()
+    for battle in Battle.query.all():
+        replay = battle.replay.unpickle()
+        hash = hashlib.sha1()
+        hash.update(''.join(sorted(replays.player_team(replay))))
+        hash.update(replays.guess_enemy_clan(replay))
+        hash.update(replay['first']['mapName'])
+        hashes.append(hash.hexdigest())
+
+    return jsonify({'hashes': hashes})
