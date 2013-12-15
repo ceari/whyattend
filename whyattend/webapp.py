@@ -188,69 +188,75 @@ def require_role(f, roles):
 
 ############## API request handlers
 
+@app.route('/sync-players/')
 @app.route('/sync-players/<int:clan_id>')
-def sync_players(clan_id):
+def sync_players(clan_id=None):
     """
         Synchronize players in the database with Wargaming servers.
     :param clan_id:
     :return:
     """
     if config.API_KEY == request.args['API_KEY']:
-        logger.info("Clan member synchronization triggered for " + str(clan_id))
-        webapp_data = WebappData.get()
-        webapp_data.last_sync_attempt = datetime.datetime.now()
-        db_session.add(webapp_data)
-        db_session.commit()
-        db_session.remove()
+        if clan_id:
+            clan_ids = [clan_id]
+        else:
+            clan_ids = config.CLAN_IDS.values()
+        for clan_id in clan_ids:
+            logger.info("Clan member synchronization triggered for " + str(clan_id))
+            webapp_data = WebappData.get()
+            webapp_data.last_sync_attempt = datetime.datetime.now()
+            db_session.add(webapp_data)
+            db_session.commit()
+            db_session.remove()
 
-        clan_info = wotapi.get_clan(str(clan_id))
-        processed = set()
-        for player_id in clan_info['data'][str(clan_id)]['members']:
-            import time
-            time.sleep(0.3)
-            player = clan_info['data'][str(clan_id)]['members'][player_id]
-            player_data = wotapi.get_player(str(player['account_id']))
-            p = Player.query.filter_by(wot_id=str(player['account_id'])).first()
-            if not player_data:
-                if p: processed.add(p.id) # skip this guy later when locking players
-                logger.info("WOTAPI Error: Could not retrieve player information of " + str(player['account_id']))
-                continue # API Error?
+            clan_info = wotapi.get_clan(str(clan_id))
+            player_ids = clan_info['data'][str(clan_id)]['members'].keys()
+            players_info = wotapi.get_players(player_ids)
+            processed = set()
+            for player_id in player_ids:
+                player = clan_info['data'][str(clan_id)]['members'][player_id]
+                player_data = players_info['data'][player_id]
+                p = Player.query.filter_by(wot_id=str(player['account_id'])).first()
+                if not player_data:
+                    if p: processed.add(p.id) # skip this guy later when locking players
+                    logger.info("Missing player info of " + player['account_name'])
+                    continue # API Error?
 
-            since = datetime.datetime.fromtimestamp(
-                float(player_data['data'][str(player['account_id'])]['clan']['since']))
+                since = datetime.datetime.fromtimestamp(
+                    float(player_data['clan']['since']))
 
-            if p:
-                # Player exists, update information
-                processed.add(p.id)
-                p.name = player['account_name']
-                p.locked = False
-                p.clan = clan_info['data'][str(clan_id)]['abbreviation']
-                p.role = player['role'] # role might have changed
-                p.member_since = since # might have rejoined
-            else:
-                # New player
-                p = Player(str(player['account_id']),
-                           'https://eu.wargaming.net/id/' + str(player['account_id']) + '-' + player[
-                               'account_name'] + '/',
-                           since,
-                           player['account_name'],
-                           clan_info['data'][str(clan_id)]['abbreviation'],
-                           player['role'])
-                logger.info('Adding player ' + player['account_name'])
-            db_session.add(p)
+                if p:
+                    # Player exists, update information
+                    processed.add(p.id)
+                    p.name = player['account_name']
+                    p.locked = False
+                    p.clan = clan_info['data'][str(clan_id)]['abbreviation']
+                    p.role = player['role'] # role might have changed
+                    p.member_since = since # might have rejoined
+                else:
+                    # New player
+                    p = Player(str(player['account_id']),
+                               'https://eu.wargaming.net/id/' + str(player['account_id']) + '-' + player[
+                                   'account_name'] + '/',
+                               since,
+                               player['account_name'],
+                               clan_info['data'][str(clan_id)]['abbreviation'],
+                               player['role'])
+                    logger.info('Adding player ' + player['account_name'])
+                db_session.add(p)
 
-        # All players of the clan in the DB, which are no longer in the clan
-        for player in Player.query.filter_by(clan=clan_info['data'][str(clan_id)]['abbreviation']):
-            if player.id in processed or player.id is None or player.locked: continue
-            logger.info("Locking player " + player.name)
-            player.locked = True
-            player.lock_date = datetime.datetime.now()
-            db_session.add(player)
+            # All players of the clan in the DB, which are no longer in the clan
+            for player in Player.query.filter_by(clan=clan_info['data'][str(clan_id)]['abbreviation']):
+                if player.id in processed or player.id is None or player.locked: continue
+                logger.info("Locking player " + player.name)
+                player.locked = True
+                player.lock_date = datetime.datetime.now()
+                db_session.add(player)
 
-        webapp_data.last_successful_sync = datetime.datetime.now()
-        db_session.add(webapp_data)
-        db_session.commit()
-        logger.info("Clan member synchronization successful")
+            webapp_data.last_successful_sync = datetime.datetime.now()
+            db_session.add(webapp_data)
+            db_session.commit()
+            logger.info("Clan member synchronization successful")
 
     else:
         abort(403)

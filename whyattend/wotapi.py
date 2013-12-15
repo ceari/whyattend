@@ -22,6 +22,17 @@ def get_player(id):
         return json
 
 
+def get_players(ids):
+    r = requests.get(API_URL + '/2.0/account/info/', timeout=API_REQUEST_TIMEOUT,
+                     params={
+                         'application_id': API_TOKEN,
+                         'account_id': ','.join(ids)
+                     })
+    json = r.json()
+    if json['status'] == 'ok':
+        return json
+
+
 def get_clan(id):
     r = requests.get(API_URL + '/2.0/clan/info/', timeout=API_REQUEST_TIMEOUT,
                      params={
