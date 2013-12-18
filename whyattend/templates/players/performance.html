@@ -27,6 +27,7 @@
                     null,
                     null,
                     null,
+                    null,
                     null
                 ]
             });
@@ -39,7 +40,7 @@
 {% block content %}
   <h2>Performance of {{ clan }} <img style="height: 32px; width: 32px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> Players</h2>
   <p>
-      <i class="icon-info icon-2x"></i> Only showing players with at least one battle played. The calculation is only correct for tier 10 battles!
+      <i class="icon-info icon-2x"></i> Only showing players with at least one battle played. The WN7 calculation might be wrong if tanks are not recognized!
   </p>
   <hr>
   <table id="players" class="table table-striped">
@@ -54,24 +55,26 @@
             <th>Avg. Spotted</th>
             <th>Avg. Pot. Dmg.</th>
             <th>Avg. decap</th>
+            <th>Avg. Tier</th>
             <th>WN7</th>
         </tr>
       </thead>
       <tbody>
         {% for player in clan_players %}
-        {% if battle_count[player] > 0 %}
+        {% if result.battle_count[player] > 0 %}
         <tr>
 
             <td><a title="{{player.name}}" href="{{url_for('player', player_id=player.id)}}">{{player.name}}</a></td>
-            <td>{{battle_count[player]}}</td>
-            <td>{{avg_dmg[player]|int}}</td>
-            <td>{{avg_kills[player]|round(2)}}</td>
-            <td>{{avg_spot_damage[player]|int}}</td>
-            <td>{{ (survival_rate[player] * 100.0)|round(1) }} %</td>
-            <td>{{avg_spotted[player]|round(2)}}</td>
-            <td>{{ avg_pot_damage[player]|int }}</td>
-            <td>{{ avg_decap[player]|round(2) }}</td>
-            <td>{{ wn7[player]|int }}</td>
+            <td>{{ result.battle_count[player]}}</td>
+            <td>{{ result.avg_dmg[player]|int}}</td>
+            <td>{{ result.avg_kills[player]|round(2)}}</td>
+            <td>{{ result.avg_spot_damage[player]|int}}</td>
+            <td>{{ (result.survival_rate[player] * 100.0)|round(1) }} %</td>
+            <td>{{ result.avg_spotted[player]|round(2)}}</td>
+            <td>{{ result.avg_pot_damage[player]|int }}</td>
+            <td>{{ result.avg_decap[player]|round(2) }}</td>
+            <td>{{ result.avg_tier[player]|round(2) }}</td>
+            <td>{{ result.wn7[player]|int }}</td>
         </tr>
         {% endif %}
         {% endfor %}

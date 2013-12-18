@@ -27,7 +27,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename, Headers
 
-from . import config, replays, wotapi, util, tasks, constants
+from . import config, replays, wotapi, util, tasks, constants, analysis
 from .model import Player, Battle, BattleAttendance, Replay, BattleGroup, db_session, WebappData
 
 # Set up Flask application
@@ -1381,84 +1381,25 @@ def player_performance(clan):
     battles = Battle.query.options(joinedload('replay')).filter_by(clan=clan).all()
     clan_players = Player.query.filter_by(clan=clan, locked=False).all()
 
-    battle_count = defaultdict(int)
-    dmg = defaultdict(float)
-    kills = defaultdict(int)
-    survived = defaultdict(int)
-    spotted = defaultdict(int)
-    spot_damage = defaultdict(float)
-    potential_damage = defaultdict(float)
-    wins = defaultdict(int)
-    decap = defaultdict(int)
-    for battle in battles:
-        replay_data = battle.replay.unpickle()
-        if not replay_data or not 'pickle' in replay_data or not replay_data['pickle']: continue
-        if not isinstance(replay_data['pickle']['vehicles'], dict): continue
-        players_perf = replays.player_performance(replay_data['pickle'])
-        for player in battle.get_players():
-            if not str(player.wot_id) in players_perf: continue # Replay/Players mismatch (account sharing?)
-            perf = players_perf[str(player.wot_id)]
-            battle_count[player] += 1
-            dmg[player] += perf['damageDealt']
-            spot_damage[player] += perf['damageAssistedRadio']
-            kills[player] += perf['kills']
-            survived[player] += 1 if perf['survived'] else 0
-            potential_damage[player] += perf['potentialDamageReceived']
-            wins[player] += 1 if battle.victory else 0
-            spotted[player] += perf['spotted']
-            decap[player] += perf['droppedCapturePoints']
+    result = analysis.player_performance(battles, clan_players)
 
-    avg_dmg = defaultdict(float)
-    avg_kills = defaultdict(float)
-    survival_rate = defaultdict(float)
-    avg_spotted = defaultdict(float)
-    avg_spot_damage = defaultdict(float)
-    avg_pot_damage = defaultdict(float)
-    win_rate = defaultdict(float)
-    avg_decap = defaultdict(float)
-    for p in clan_players:
-        if battle_count[p] > 0:
-            bc = float(battle_count[p])
-            avg_dmg[p] = dmg[p] / bc
-            avg_kills[p] = kills[p] / bc
-            survival_rate[p] = survived[p] / bc
-            avg_spotted[p] = spotted[p] / bc
-            avg_spot_damage[p] = spot_damage[p] / bc
-            avg_pot_damage[p] = potential_damage[p] / bc
-            win_rate[p] = wins[p] / bc
-            avg_decap[p] = decap[p] / bc
-
-    import math
-    min = lambda a, b: a if a <= b else b
-
-
-    wn7 = defaultdict(float)
-    for p in clan_players:
-        if battle_count[p] == 0: continue
-        tier = 10.0
-        wn7[p] = (1240.0 - 1040.0 / ((min(6, tier)) ** 0.164)) * avg_kills[p] \
-                 + avg_dmg[p] * 530.0 / (184.0 * math.exp(0.24 * tier) + 130.0) \
-                 + avg_spotted[p] * 125.0 * min(tier, 3) / 3.0 \
-                 + min(avg_decap[p], 2.2) * 100.0 \
-                 + ((185 / (0.17 + math.exp((win_rate[p] * 100.0 - 35.0) * -0.134))) - 500.0) * 0.45 \
-                 - ((5.0 - min(tier, 5)) * 125.0) / (
-                        1.0 + math.exp(( tier - (battle_count[p] / 220.0) ** (3.0 / tier) ) * 1.5))
-
-    return render_template('players/performance.html', clan_players=clan_players, battle_count=battle_count,
-                           avg_dmg=avg_dmg, avg_kills=avg_kills, avg_spotted=avg_spotted, survival_rate=survival_rate,
-                           avg_spot_damage=avg_spot_damage, clan=clan, avg_pot_damage=avg_pot_damage, win_rate=win_rate,
-                           wn7=wn7, avg_decap=avg_decap)
+    return render_template('players/performance.html', clan_players=clan_players, result=result, clan=clan)
 
 
 @app.route('/profile', methods=['GET', 'POST'])
 @require_login
 def profile():
     """ Player profile page """
+    played_battles = Battle.query.join(Battle.attendances).filter(Battle.attendances.any(player_id=g.player.id))\
+        .filter(BattleAttendance.reserve==False).all()
+
+    performance = analysis.player_performance(played_battles, [g.player])
+
     if request.method == 'POST':
         g.player.email = request.form.get('email', '')
         db_session.add(g.player)
         db_session.commit()
-    return render_template('players/profile.html')
+    return render_template('players/profile.html', played_battles=played_battles, performance=performance)
 
 
 @app.route('/admin/export-emails/<clan>')

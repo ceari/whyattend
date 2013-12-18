@@ -2,6 +2,46 @@
 {% block title %}{{g.player.name}}{% endblock %}
 {% block head %}
     {{super()}}
+    <script src="{{url_for('static', filename='js/vendor/jquery.dataTables.min.js')}}" type="text/javascript"></script>
+    <script src="{{url_for('static', filename='js/vendor/dataTables.bootstrap.js')}}" type="text/javascript"></script>
+    <link href="{{url_for('static', filename='css/dataTables.bootstrap.css')}}" rel="stylesheet" media="screen">
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            var table = $('#battles').dataTable({
+                "oLanguage": {
+                    "sLengthMenu": "Display _MENU_ battles per page",
+                    "sZeroRecords": "No battles yet.",
+                    "sInfo": "Showing _START_ to _END_ of _TOTAL_ battles",
+                    "sInfoEmpty": "Showing 0 to 0 of 0 battles",
+                    "sInfoFiltered": "(filtered from _MAX_ total battles)"
+                },
+                "aaSorting": [
+                    [0, "desc"]
+                ],
+                "aoColumns": [
+                    { "bVisible": false },
+                    { "sType": "date-euro-anchor"},
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    {"bSortable": false},
+                    {"bSortable": false},
+                    {"bSortable": false}
+                ],
+            });
+
+
+            $('#battles_filter label input').addClass('form-control');
+            $('#battles_length label select').addClass('form-control');
+        });
+    </script>
 {% endblock %}
 {% block content %}
   <h2>Profile</h2>
@@ -22,4 +62,100 @@
       </div>
       <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
   </form>
+  <h4>Performance statistics</h4>
+  <dl class="dl-horizontal">
+    <dt>Played</dt>
+    <dd>{{performance.battle_count[g.player]}}</dd>
+    <dt>Avg. Damage</dt>
+    <dd>{{performance.avg_dmg[g.player]|round|int }}</dd>
+    <dt>Avg. Kills</dt>
+    <dd>{{performance.avg_kills[g.player]|round(2) }}</dd>
+    <dt>Avg. Spot Dmg.</dt>
+    <dd>{{performance.avg_spot_damage[g.player]|round|int }}</dd>
+    <dt>Survival rate.</dt>
+    <dd>{{(performance.survival_rate[player] * 100.0)|round(1)}} %</dd>
+    <dt>Avg. Spotted</dt>
+    <dd>{{performance.avg_spotted[g.player]|round(2) }}</dd>
+    <dt>Avg. Pot. Dmg.</dt>
+    <dd>{{performance.avg_pot_damage[g.player]|round|int }}</dd>
+    <dt>Avg. decap</dt>
+    <dd>{{performance.avg_decap[g.player]|round(2) }}</dd>
+    <dt>Avg. Tier</dt>
+    <dd>{{performance.avg_tier[g.player]|round(2) }}</dd>
+    <dt>WN7</dt>
+    <dd>{{performance.wn7[g.player]|round|int}}</dd>
+  </dl>
+  <h4>Played battles</h4>
+  <table id="battles" class="table table-striped">
+      <thead>
+        <tr>
+            <th>ID</th>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Map</th>
+            <th>Province</th>
+            <th>Commander</th>
+            <th>Outcome</th>
+            <th>Enemy</th>
+            <th>Player</th>
+            <th>Reserve</th>
+            <th></th>
+            <th></th>
+            <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for battle in played_battles %}
+        {% if not battle.battle_group or (battle.battle_group and battle.battle_group.get_representative_battle() == battle) %}
+        <tr>
+            <td>{{battle.id}}</td>
+            <td><a href="{{url_for('battle_details', battle_id=battle.id)}}">{{battle.date.strftime('%d.%m.%Y %H:%M:%S')}}</a></td>
+            <td>
+                {% if battle.battle_group %}
+                    <a href="{{url_for('battle_group', group_id=battle.battle_group.id)}}">
+                    {% if battle.battle_group_final %}
+                        Final
+                    {% else %}
+                        Landing battle
+                    {% endif %}
+                    </a>
+                {% else %}
+                    Normal
+                {% endif %}
+            </td>
+            <td>{{battle.map_name}}</td>
+            <td>{{battle.map_province}}</td>
+            <td><span class="{{battle.battle_commander.role}}">{{battle.battle_commander.name}}</span></td>
+            <td><span class="{{battle.outcome_str().lower()}}">{{battle.outcome_str()}}</span></td>
+            <td>{{battle.enemy_clan}}</td>
+            <td>{{battle.get_players()|length}}</td>
+            <td>{{battle.get_reserve_players()|length}}</td>
+            <td>
+                {% if not battle.battle_group %}
+                {% if g.player.clan == clan and g.RESERVE_SIGNUP_ALLOWED %}
+                    {% if not battle.has_player(g.player) and not battle.has_reserve(g.player) %}
+                    <a href="{{url_for('sign_as_reserve', battle_id=battle.id)}}" class="confirm-sign btn btn-primary btn-sm">Sign as reserve</a>
+                    {% elif battle.has_reserve(g.player) %}
+                    <a href="{{url_for('unsign_as_reserve', battle_id=battle.id)}}" class="btn btn-danger btn-sm">Remove from reserve</a>
+                    {% endif %}
+                {% endif %}
+                {% endif %}
+            </td>
+            <td>
+                {% if battle.battle_group %}
+                    <a href="{{url_for('battle_group', group_id=battle.battle_group.id)}}" class="btn btn-primary btn-sm" title="Show landing battles"><i class="icon-list"></i></a>
+                {% endif %}
+            </td>
+            <td>
+                {% if battle.paid %}
+                <span class="label label-success">paid</span>
+                {% endif %}
+            </td>
+
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+  </table>
+
 {% endblock %}

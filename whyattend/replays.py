@@ -9,6 +9,8 @@ import json
 import struct
 import pickle
 
+from .constants import WOT_TANKS
+
 
 def parse_replay(replay_blob):
     """
@@ -105,10 +107,19 @@ def guess_enemy_clan(replay_json):
     return players_list(replay_json, 1 if friendly_team == 2 else 2)[0]['clanAbbrev']
 
 
-def player_performance(replay_pickle):
+def player_performance(replay_pickle, json_second):
+    tank_info_by_player_name = {}
+    for k, v in json_second[1].iteritems():
+        if not v['vehicleType']: continue # unrevealed enemy tank?
+        tank_id = v['vehicleType'].split(':')[1] # extract the tank text_id of the player
+        tank_info_by_player_name[v['name']] = WOT_TANKS.get(tank_id, {'tier': 10})
+
     perf = dict()
-    for v in replay_pickle['vehicles'].itervalues():
+    for k, v in replay_pickle['vehicles'].iteritems():
+        player_name = replay_pickle['players'][v['accountDBID']]['name']
+        if not player_name in tank_info_by_player_name: continue
         perf[str(v['accountDBID'])] = {
+            'tank_info': tank_info_by_player_name[player_name],
             'damageDealt': v['damageDealt'],
             'potentialDamageReceived': v['potentialDamageReceived'],
             'xp': v['xp'],
