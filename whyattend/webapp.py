@@ -1390,16 +1390,36 @@ def player_performance(clan):
 @require_login
 def profile():
     """ Player profile page """
+    clan_battles_query = Battle.query.filter_by(clan=g.player.clan)
     played_battles = Battle.query.join(Battle.attendances).filter(Battle.attendances.any(player_id=g.player.id))\
-        .filter(BattleAttendance.reserve==False).all()
+        .filter(BattleAttendance.reserve==False).distinct()
+
 
     performance = analysis.player_performance(played_battles, [g.player])
+
+    def weekrange(start_date, end_date):
+        for n in range(int((end_date - start_date).days)):
+            yield start_date + timedelta(days=n)
+
+    player_battles_per_day = []
+    battles_per_day = []
+    for start_date in weekrange(datetime.datetime.now() - datetime.timedelta(days=30), datetime.datetime.now()):
+        end_date = start_date + datetime.timedelta(days=1)
+
+        # All clan battles
+        day_battles = clan_battles_query.filter(Battle.date>=start_date, Battle.date<end_date)
+        battles_per_day.append((calendar.timegm(start_date.timetuple()) * 1000, day_battles.count()))
+
+        # Player's battles
+        day_battles_played = played_battles.filter(Battle.date>=start_date, Battle.date<end_date)
+        player_battles_per_day.append((calendar.timegm(start_date.timetuple()) * 1000, day_battles_played.count()))
 
     if request.method == 'POST':
         g.player.email = request.form.get('email', '')
         db_session.add(g.player)
         db_session.commit()
-    return render_template('players/profile.html', played_battles=played_battles, performance=performance)
+    return render_template('players/profile.html', played_battles=played_battles, performance=performance,
+                           battles_per_day=battles_per_day, player_battles_per_day=player_battles_per_day)
 
 
 @app.route('/admin/export-emails/<clan>')

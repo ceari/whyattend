@@ -5,6 +5,9 @@
     <script src="{{url_for('static', filename='js/vendor/jquery.dataTables.min.js')}}" type="text/javascript"></script>
     <script src="{{url_for('static', filename='js/vendor/dataTables.bootstrap.js')}}" type="text/javascript"></script>
     <link href="{{url_for('static', filename='css/dataTables.bootstrap.css')}}" rel="stylesheet" media="screen">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.1/jquery.flot.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.1/jquery.flot.categories.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.1/jquery.flot.time.min.js" type="text/javascript"></script>
 
     <script type="text/javascript">
         $(document).ready(function () {
@@ -40,6 +43,42 @@
 
             $('#battles_filter label input').addClass('form-control');
             $('#battles_length label select').addClass('form-control');
+
+            var battles_per_day = [
+             {% for bpd in battles_per_day %}
+               [{{bpd.0}}, {{bpd.1}}],
+             {% endfor %}
+            ];
+
+            var player_battles_per_day = [
+             {% for bpd in player_battles_per_day %}
+               [{{bpd.0}}, {{bpd.1}}],
+             {% endfor %}
+            ];
+
+            var battles_per_day_data = [
+                {
+                    label: '{{g.player.name}}',
+                    data: player_battles_per_day
+                },
+                {
+                    label: 'possible',
+                    data: battles_per_day
+                }
+            ];
+
+            $.plot("#battles_per_day", battles_per_day_data , {
+                xaxis: {
+                    mode: "time",
+                    timeformat: "%e %b",
+                    minTickSize: [1, "day"],
+                },
+                yaxis: {
+                    min: 0,
+                    tickSize: 1,
+                    tickDecimals: 0
+                }
+            });
         });
     </script>
 {% endblock %}
@@ -157,5 +196,15 @@
         {% endfor %}
       </tbody>
   </table>
+
+    <div class="row">
+        <div class="panel panel-default">
+        <div style="min-height: 170px;" class="panel-body">
+            <div class="col-lg-12">
+                <h4>Battles per Day</h4>
+                <div id="battles_per_day" style="height: 300px"></div>
+            </div>
+        </div></div>
+    </div>
 
 {% endblock %}
