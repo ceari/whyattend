@@ -29,7 +29,7 @@
                 <tr>
                     <td><img style="margin-right: 5px; width: 16px; height:16px;" src="{{url_for('static', filename='img/swords.png')}}"></td>
                     <td>{% for p in battle.provinces %}<a href="{{g.MAP_URL}}?province={{p.id}}">{{p.name}}</a>{% if loop.index < battle.provinces|length %} - {%endif%}{% endfor %}</td>
-                    <td style="{% if battle.time < datetime.datetime.now() %}color: #555{% endif %}">{% if battle.time %}{{battle.time|pretty_date + (' or later' if not battle.started else '')}} {%else%}today{%endif%}</td>
+                    <td style="{% if battle.time and battle.time < datetime.datetime.now() %}color: #555{% endif %}">{% if battle.time %}{{battle.time|pretty_date + (' or later' if not battle.started else '')}} {%else%}today{%endif%}</td>
                     <td>{% for map in battle.maps %}{{map}} {% if loop.index < battle.maps|length %} or {%endif%}{% endfor %}</td>
                     <td>{% if battle.enemies %}vs. {% for enemy in battle.enemies %}
                     <a href="http://www.worldoftanks.{{g.WOT_SERVER_REGION_CODE}}/community/{{enemy.url}}">[{{enemy.tag}}]</a>
