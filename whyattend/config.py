@@ -30,8 +30,9 @@ CLAN_IDS = {
 UPLOAD_FOLDER = 'tmp/uploads'
 
 # Wargaming.net API token and base URL
+# API tokens can be generated using the Wargaming Developer Partner program
 API_URL = 'http://api.worldoftanks.eu/'
-API_TOKEN = 'd0a293dc77667c9328783d489c8cef73'
+API_TOKEN = ''
 
 # WoT Server region code
 WOT_SERVER_REGION_CODE = 'eu'
