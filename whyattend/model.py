@@ -111,7 +111,8 @@ class Battle(Base):
     draw = Column(Boolean)
     paid = Column(Boolean)
     description = Column(Text)
-    duration = Column(Integer) # duration of the battle in seconds
+    # duration of the battle in seconds
+    duration = Column(Integer)
 
     # WoT map name
     map_name = Column(String(80))
@@ -132,8 +133,8 @@ class Battle(Base):
     # Is this the "final battle" of the group? Exactly one per group should be true
     battle_group_final = Column(Boolean)
 
-    def __init__(self, date, clan, enemy_clan, victory, draw, creator, battle_commander, map_name, map_province, duration,
-                 description='', replay=None, paid=False):
+    def __init__(self, date, clan, enemy_clan, victory, draw, creator, battle_commander, map_name, map_province,
+                 duration, description='', paid=False):
         self.date = date
         self.clan = clan
         self.enemy_clan = enemy_clan
@@ -243,7 +244,6 @@ class Replay(Base):
     replay_pickle = Column(Binary)
     # The replay file
     replay_blob = deferred(Column(Binary))
-
 
     def __init__(self, replay_blob, replay_pickle):
         self.replay_pickle = replay_pickle

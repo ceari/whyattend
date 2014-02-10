@@ -15,9 +15,6 @@ from .constants import WOT_TANKS
 def parse_replay(replay_blob):
     """
         Parse the replay file and return the extracted information as Python dictionary
-
-    :param file:
-    :return:
     """
     num_blocks = struct.unpack('I', replay_blob[4:8])[0]
     first_chunk_length = struct.unpack('I', replay_blob[8:12])[0]
@@ -28,13 +25,13 @@ def parse_replay(replay_blob):
 
     try:
         first_chunk = json.loads(first_chunk.decode('utf-8'))
-    except UnicodeDecodeError as e:
+    except UnicodeDecodeError:
         # if we can't decode the first chunk, this is probably not even a wotreplay file
         return None
 
     try:
         second_chunk = json.loads(second_chunk.decode('utf-8'))
-    except UnicodeDecodeError as e:
+    except UnicodeDecodeError:
         # Second chunk does not exist if the battle was left before it ended
         second_chunk = None
 
@@ -43,13 +40,13 @@ def parse_replay(replay_blob):
     if num_blocks == 3:
         try:
             pickle_start = second_chunk_start + second_chunk_length + 4
-            pickle_length = struct.unpack('I', replay_blob[
-                                               second_chunk_start + second_chunk_length:second_chunk_start + second_chunk_length + 4])[
-                0]
+            pickle_length = struct.unpack('I',
+                                          replay_blob[
+                                               second_chunk_start +
+                                               second_chunk_length:second_chunk_start + second_chunk_length + 4])[0]
             the_pickle = pickle.loads(replay_blob[pickle_start:pickle_start + pickle_length])
-        except Exception as e:
+        except pickle.UnpicklingError:
             the_pickle = None
-
 
     return {'first': first_chunk,
             'second': second_chunk,
@@ -110,14 +107,18 @@ def guess_enemy_clan(replay_json):
 def player_performance(replay_pickle, json_second):
     tank_info_by_player_name = {}
     for k, v in json_second[1].iteritems():
-        if not v['vehicleType']: continue # unrevealed enemy tank?
-        tank_id = v['vehicleType'].split(':')[1] # extract the tank text_id of the player
+        if not v['vehicleType']:
+             # unrevealed enemy tank?
+            continue
+        # extract the tank text_id of the player
+        tank_id = v['vehicleType'].split(':')[1]
         tank_info_by_player_name[v['name']] = WOT_TANKS.get(tank_id, {'tier': 10})
 
     perf = dict()
     for k, v in replay_pickle['vehicles'].iteritems():
         player_name = replay_pickle['players'][v['accountDBID']]['name']
-        if not player_name in tank_info_by_player_name: continue
+        if not player_name in tank_info_by_player_name:
+            continue
         perf[str(v['accountDBID'])] = {
             'tank_info': tank_info_by_player_name[player_name],
             'damageDealt': v['damageDealt'],

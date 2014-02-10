@@ -42,9 +42,6 @@ MAP_EN_NAME_BY_ID = {
     "85_winter": "Belogorsk-19",
     "73_asia_korea": "Sacred Valley",
     "60_asia_miao": "Pearl River",
-    "00_tank_tutorial": "Training area",
-    "60_asia_miao": "Pearl River",
-    "73_asia_korea": "Sacred Valley",
     "00_tank_tutorial": "Training area"
 }
 

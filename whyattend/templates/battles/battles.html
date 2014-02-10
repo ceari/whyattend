@@ -122,7 +122,7 @@
             <td><a href="{{url_for('battle_details', battle_id=battle.id)}}">{{battle.date.strftime('%d.%m.%Y %H:%M:%S')}}</a></td>
             <td>
                 {% if battle.battle_group %}
-                    <a href="{{url_for('battle_group', group_id=battle.battle_group.id)}}">
+                    <a href="{{url_for('battle_group_details', group_id=battle.battle_group.id)}}">
                     {% if battle.battle_group_final %}
                         Final
                     {% else %}
@@ -160,7 +160,7 @@
                         <a href="{{url_for('edit_battle', battle_id=battle.id)}}" class="btn btn-primary btn-sm" title="Edit battle"><i class="icon-pencil"></i></a>
                     {% endif %}
                 {% else %}
-                    <a href="{{url_for('battle_group', group_id=battle.battle_group.id)}}" class="btn btn-primary btn-sm" title="Show landing battles"><i class="icon-list"></i></a>
+                    <a href="{{url_for('battle_group_details', group_id=battle.battle_group.id)}}" class="btn btn-primary btn-sm" title="Show landing battles"><i class="icon-list"></i></a>
                 {% endif %}
             </td>
             <td>

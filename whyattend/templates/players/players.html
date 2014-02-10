@@ -65,7 +65,7 @@
       <tbody>
         {% for player in players %}
         <tr>
-            <td><a title="{{player.name}}" href="{{url_for('player', player_id=player.id)}}">{{player.name}}</a></td>
+            <td><a title="{{player.name}}" href="{{url_for('player_details', player_id=player.id)}}">{{player.name}}</a></td>
             <td><span class="{{player.role}}">{{g.roles[player.role]}}</span></td>
             <td>{{player.member_since.strftime('%d.%m.%Y %H:%M')}}</td>
             <td>{{played[player]}}</td>

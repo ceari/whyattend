@@ -76,7 +76,7 @@
     <div class="row">
         <dl class="col-lg-3">
             <dt>Battle added by</dt>
-            <dd><a href="{{url_for('player', player_id=battle.creator.id)}}"><span class="{{battle.creator.role}}">{{battle.creator.name}}</span></a></dd>
+            <dd><a href="{{url_for('player_details', player_id=battle.creator.id)}}"><span class="{{battle.creator.role}}">{{battle.creator.name}}</span></a></dd>
             <dt>Outcome</dt>
             <dd><span class="{{battle.outcome_str().lower()}}">{{battle.outcome_str()}}</span></dd>
             <dt>Map</dt>
@@ -84,7 +84,7 @@
             <dt>Province</dt>
             <dd>{{battle.map_province}}</dd>
             <dt>Battle Commander</dt>
-            <dd><a href="{{url_for('player', player_id=battle.battle_commander.id)}}"><span class="{{battle.battle_commander.role}}">{{battle.battle_commander.name}}</span></a></dd>
+            <dd><a href="{{url_for('player_details', player_id=battle.battle_commander.id)}}"><span class="{{battle.battle_commander.role}}">{{battle.battle_commander.name}}</span></a></dd>
             <dt>Date</dt>
             <dd>{{battle.date.strftime('%d.%m.%Y %H:%M:%S')}}</dd>
             {% if battle.description %}
@@ -97,7 +97,7 @@
             <dd>
                 <ul>
                 {% for player in battle.get_players()|sort(attribute='name') %}
-                    <li><a href="{{url_for('player', player_id=player.id)}}">{{player.name}}</a></li>
+                    <li><a href="{{url_for('player_details', player_id=player.id)}}">{{player.name}}</a></li>
                 {% endfor %}
                 </ul>
             </dd>
@@ -110,7 +110,7 @@
             <dd>
                 <ul>
                 {% for player in battle.get_reserve_players()|sort(attribute='name') %}
-                    <li><a href="{{url_for('player', player_id=player.id)}}">{{player.name}}</a></li>
+                    <li><a href="{{url_for('player_details', player_id=player.id)}}">{{player.name}}</a></li>
                 {% endfor %}
                 </ul>
             </dd>

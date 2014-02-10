@@ -85,12 +85,12 @@ MENU_LINKS = [
 
 # The URL prefix for the CW map that battle schedule links should lead to,
 # The province ID gets appended, e.g. "?province=ML_17"
-MAP_URL = "http://worldoftanks.eu/clanwars/maps/eventmap/"
+MAP_URL = "http://worldoftanks.eu/clanwars/maps/globalmap/"
 
 # Subdomain of the CW map Ajax URLs, e.g. "http://cw1.worldoftanks.eu"
 # In EU, cw1 is the regular map, cw2 is the campaign map
-MAP_SUBDOMAIN = "http://cw2.worldoftanks.eu"
-MAP_REGIONS = [1,2,3] # 3 map regions with IDs 1,2,3 in EU
+MAP_SUBDOMAIN = "http://cw1.worldoftanks.eu"
+MAP_REGIONS = [1, 2, 3]  # 3 map regions with IDs 1,2,3 in EU
 
 STATISTICS_VISIBLE = {
     'win_rate_by_commander': True,

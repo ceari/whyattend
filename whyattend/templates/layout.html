@@ -59,7 +59,7 @@
                 <li class="divider"></li>
                 {% endif %}
                 {% for clan in g.clans %}
-                <li><a href="{{url_for('battles', clan=clan)}}"><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> {{clan}}</a></li>
+                <li><a href="{{url_for('battles_list', clan=clan)}}"><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> {{clan}}</a></li>
                 {% endfor %}
             </ul>
           </li>
@@ -70,7 +70,7 @@
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i style="margin-right:5px; color: #ccc" class="icon-group"></i>Players <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 {% for clan in g.clans %}
-                <li><a href="{{url_for('players', clan=clan)}}"><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> {{clan}}</a></li>
+                <li><a href="{{url_for('clan_players', clan=clan)}}"><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> {{clan}}</a></li>
                 {% endfor %}
             </ul>
           </li>
@@ -142,7 +142,7 @@
         <div id="footer">
             <hr>
             <small>Developed by <a href="http://worldoftanks.eu/community/accounts/501615100-fantastico/"><img title="WHY" style="height:16px; width:16px;" src="{{url_for('static', filename='img/clanicons/WHY.png')}}"/> fantastico</a></small>
-            --- <small><a href="{{url_for('help')}}"><i style="color: #0088cc;" class="icon-question-sign"></i> Help</a></small>
+            --- <small><a href="{{url_for('help_page')}}"><i style="color: #0088cc;" class="icon-question-sign"></i> Help</a></small>
             <div style="float:right">
             <small><a href="{{url_for('attributions')}}">Attributions</a></small>
             </div>
