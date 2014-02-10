@@ -56,7 +56,7 @@ def get_scheduled_battles(clan_id):
             return r.json()
         else:
             return None
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -69,6 +69,7 @@ def get_provinces(clan_id):
                      timeout=API_REQUEST_TIMEOUT)
     if r.ok:
         return r.json()
+
 
 def get_global_map_info(region):
     r = requests.get(MAP_SUBDOMAIN +
@@ -100,7 +101,7 @@ def get_battles(clan_id):
                 if str(clan_id) in p_combats[combat_id]['combatants'].keys():
                     combat = p_combats[combat_id]
                     combat.update({
-                        'province_id': prov_id, # Add province ID to the combat dictionary
+                        'province_id': prov_id,  # Add province ID to the combat dictionary
                     })
                     clan_combats.append(combat)
 
@@ -109,7 +110,7 @@ def get_battles(clan_id):
 
 def get_battle_schedule(clan_id):
     schedule = get_scheduled_battles(clan_id)
-    battles, clans = get_battles(clan_id)
+    #battles, clans = get_battles(clan_id)
 
     scheduled_battles = []
     for item in schedule['request_data']['items']:
@@ -117,28 +118,30 @@ def get_battle_schedule(clan_id):
         provinces = [{'id': p['id'], 'name': p['name']} for p in item['provinces']]
         at = datetime.datetime.fromtimestamp(item['time'])
         maps = [m for m in item['arenas']]
-
-        enemies = list()
-        enemies_set = set()
-        # find matching battle info from map information and extract enemy clans
-        for battle in battles:
-            if battle['province_id'] in province_ids:
-                for cid in battle['combatants']:
-                    if cid == str(clan_id): continue
-                    if battle['combatants'][cid]['at'] != item['time'] and battle['at'] != item['time']: continue
-                    if not clans[cid]['tag'] in enemies_set:
-                        enemies.append({
-                            'tag': clans[cid]['tag'],
-                            'url': clans[cid]['url'],
-                            'clan_id': cid
-                        })
-                        enemies_set.add(clans[cid]['tag'])
+        #
+        # enemies = list()
+        # enemies_set = set()
+        # # find matching battle info from map information and extract enemy clans
+        # for battle in battles:
+        #     if battle['province_id'] in province_ids:
+        #         for cid in battle['combatants']:
+        #             if cid == str(clan_id):
+        #                 continue
+        #             if battle['combatants'][cid]['at'] != item['time'] and battle['at'] != item['time']:
+        #                 continue
+        #             if not clans[cid]['tag'] in enemies_set:
+        #                 enemies.append({
+        #                     'tag': clans[cid]['tag'],
+        #                     'url': clans[cid]['url'],
+        #                     'clan_id': cid
+        #                 })
+        #                 enemies_set.add(clans[cid]['tag'])
 
         scheduled_battles.append({
             'provinces': provinces,
             'time': at if item['time'] else None,
             'maps': maps,
-            'enemies': enemies,
+            #'enemies': enemies,
             'started': item['started']
         })
 
