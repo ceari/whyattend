@@ -63,7 +63,8 @@ def players_list(replay_json, team):
 
 
 def player_won(replay_json):
-    return replay_json['second'][0]['isWinner'] == 1
+    own_team = replay_json['first']['vehicles'].values()[0]['team']
+    return replay_json['second'][0]['common']['winnerTeam'] == own_team
 
 
 def player_team(replay_json):
