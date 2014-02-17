@@ -105,7 +105,7 @@ def guess_enemy_clan(replay_json):
     return players_list(replay_json, 1 if friendly_team == 2 else 2)[0]['clanAbbrev']
 
 
-def player_performance(json_second):
+def player_performance(replay_pickle, json_second):
     tank_info_by_player_name = {}
     for k, v in json_second[1].iteritems():
         if not v['vehicleType']:
@@ -116,8 +116,8 @@ def player_performance(json_second):
         tank_info_by_player_name[v['name']] = WOT_TANKS.get(tank_id, {'tier': 10})
 
     perf = dict()
-    for k, v in json_second[0]['vehicles'].iteritems():
-        player_name = json_second[0]['players'][str(v['accountDBID'])]['name']
+    for k, v in replay_pickle['vehicles'].iteritems():
+        player_name = replay_pickle['players'][v['accountDBID']]['name']
         if not player_name in tank_info_by_player_name:
             continue
         perf[str(v['accountDBID'])] = {

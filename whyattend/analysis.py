@@ -23,9 +23,11 @@ def player_performance(battles, players):
     tier = defaultdict(int)
     for battle in battles:
         replay_data = battle.replay.unpickle()
-        if not 'vehicles' in replay_data['second'][0]:
+        if not replay_data or not 'pickle' in replay_data or not replay_data['pickle']:
             continue
-        players_perf = replays.player_performance(replay_data['second'])
+        if not isinstance(replay_data['pickle']['vehicles'], dict):
+            continue
+        players_perf = replays.player_performance(replay_data['pickle'], replay_data['second'])
         for player in battle.get_players():
             if not player in players:
                 continue
