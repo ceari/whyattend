@@ -652,8 +652,8 @@ def create_battle():
                 if replays.player_won(replay):
                     battle_result = 'victory'
 
-            if replay['pickle']:
-                duration = int(replay['pickle']['common']['duration'])
+            if replay['second']:
+                duration = int(replay['second'][0]['common']['duration'])
             else:
                 flash('Warning. Replay seems to be incomplete (detailed battle information is missing). '
                       'Cannot determine battle duration automatically and replay cannot be used in player performance'
