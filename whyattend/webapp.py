@@ -1492,6 +1492,8 @@ def battle_checksums():
     hashes = list()
     for battle in Battle.query.all():
         replay = battle.replay.unpickle()
+        if not replay:
+            continue
         sha = hashlib.sha1()
         sha.update(''.join(sorted(replays.player_team(replay))))
         sha.update(replays.guess_enemy_clan(replay))

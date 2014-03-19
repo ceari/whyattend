@@ -23,6 +23,8 @@ def player_performance(battles, players):
     tier = defaultdict(int)
     for battle in battles:
         replay_data = battle.replay.unpickle()
+        if not replay_data:
+            continue
         if replay_data['first']['clientVersionFromExe'] == '0, 8, 11 0':
             players_perf = replays.player_performance(replay_data['second'], replay_data['second'][0]['vehicles'],
                                                       replay_data['second'][0]['players'])

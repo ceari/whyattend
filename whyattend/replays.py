@@ -68,7 +68,8 @@ def player_won(replay_json):
 
 
 def player_team(replay_json):
-    return [v['name'] for v in replay_json['first']['vehicles'].values()]
+    own_team = replay_json['first']['vehicles'].values()[0]['team']
+    return [v['name'] for v in replay_json['first']['vehicles'].values() if v['team'] == own_team]
 
 
 def is_cw(replay_json):

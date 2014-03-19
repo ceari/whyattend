@@ -10,12 +10,12 @@ sys.path += ['.', '..']
 
 from whyattend import replays
 
-TRACKER_URL = 'http://localhost:5000'
+TRACKER_URL = sys.argv[1]
 
 if __name__ == '__main__':
     checksums = json.load(urllib2.urlopen(TRACKER_URL + '/api/battle-checksums'))['hashes']
 
-    for root, subfolders, files in os.walk('/tmp/'):
+    for root, subfolders, files in os.walk(sys.argv[2]):
         for file in files:
             if not file.endswith('.wotreplay'): continue
             try:
@@ -30,7 +30,6 @@ if __name__ == '__main__':
 
                 if hash.hexdigest() not in checksums:
                     print file, 'is an unknown CW replay!'
-                else:
-                    print file, 'already in tracker'
             except Exception as e:
-                print "Error processing " + file + " " + str(e)
+                pass
+                #print "Error processing " + file + " " + str(e)
