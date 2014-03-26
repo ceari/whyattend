@@ -237,6 +237,7 @@ def sync_players(clan_id=None):
                     # Player exists, update information
                     processed.add(p.id)
                     p.name = player['account_name']
+                    p.openid = 'https://'+config.WOT_SERVER_REGION_CODE+'.wargaming.net/id/' + str(player_id) + '-' + player['account_name'] + '/'
                     p.locked = False
                     p.clan = clan_info['data'][str(clan_id)]['abbreviation']
                     p.role = player['role']  # role might have changed
@@ -244,7 +245,7 @@ def sync_players(clan_id=None):
                 else:
                     # New player
                     p = Player(str(player['account_id']),
-                               'https://eu.wargaming.net/id/' + str(player['account_id']) + '-' + player[
+                               'https://'+config.WOT_SERVER_REGION_CODE+'.wargaming.net/id/' + str(player['account_id']) + '-' + player[
                                    'account_name'] + '/',
                                since,
                                player['account_name'],
