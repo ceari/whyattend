@@ -126,7 +126,7 @@ class Battle(Base):
     creator = relationship("Player", backref="battles_created", foreign_keys=[creator_id])
 
     replay_id = Column(Integer, ForeignKey('replay.id'))
-    replay = relationship("Replay", backref="battle", uselist=False)
+    replay = relationship("Replay", backref="battle", uselist=False, foreign_keys=[replay_id])
 
     battle_group_id = Column(Integer, ForeignKey('battlegroup.id'))
     battle_group = relationship("BattleGroup", backref="battles")
@@ -244,6 +244,10 @@ class Replay(Base):
     replay_pickle = Column(Binary)
     # The replay file
     replay_blob = deferred(Column(Binary))
+
+    associated_battle_id = Column(Integer, ForeignKey('battle.id', use_alter=True, name="add_replay_battle_id"))
+    associated_battle = relationship("Battle", backref="additional_replays", foreign_keys=[associated_battle_id])
+    player_name = Column(String(100)) # Name of the player recording the replay
 
     def __init__(self, replay_blob, replay_pickle):
         self.replay_pickle = replay_pickle

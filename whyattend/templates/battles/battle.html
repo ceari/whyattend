@@ -139,4 +139,22 @@
         <dd><a href="{{url_for('download_replay', battle_id=battle.id)}}"><i class="icon-download"></i> Download</a></dd>
     </dl>
     {% endif %}
+    {% if battle.additional_replays %}
+    <h5>Additional replays</h5>
+    <ul>
+    {% for replay in battle.additional_replays %}
+        <li><a href="{{url_for('download_additional_replay', replay_id=replay.id)}}"><i class="icon-download"></i> Download perspective of {{replay.unpickle().first.playerName}}</a>{% if g.player.name in g.ADMINS or g.player.role in g.DELETE_BATTLE_ROLES %}<a style="margin: 5px;" href="{{url_for('delete_replay', replay_id=replay.id)}}" class="confirm-delete btn btn-danger btn-xs"><i class="icon-remove"></i></a>{% endif %}</li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+    {% if g.STORE_REPLAYS_IN_DB %}
+    <p>Upload an additional replay for this battle</p>
+      <form action="{{url_for('add_replay', battle_id=battle.id)}}" method="POST" role="form" enctype="multipart/form-data">
+      <div class="form-group">
+        <input type="file" id="replay" name="replay">
+      </div>
+      <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-success">Upload</button>
+    </form>
+    {% endif %}
 {% endblock %}

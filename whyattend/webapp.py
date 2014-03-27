@@ -135,6 +135,7 @@ def inject_constants():
     g.RESERVE_SIGNUP_ALLOWED = config.RESERVE_SIGNUP_ALLOWED
     g.MENU_LINKS = config.MENU_LINKS
     g.MAP_URL = config.MAP_URL
+    g.STORE_REPLAYS_IN_DB = config.STORE_REPLAYS_IN_DB
 
 
 def require_login(f):
@@ -472,6 +473,45 @@ def create_battle_from_replay():
     return render_template('battles/create_from_replay.html')
 
 
+@app.route('/battles/add-replay/<int:battle_id>', methods=['POST'])
+@require_login
+def add_replay(battle_id):
+    """
+        Upload additional replays for battles.
+    """
+    battle = Battle.query.get(battle_id) or abort(404)
+    battle_replay = battle.replay
+    if request.method == 'POST':
+        replay_file = request.files['replay']
+        if replay_file and replay_file.filename.endswith('.wotreplay'):
+            replay_blob = replay_file.read()
+            replay = replays.parse_replay(replay_blob)
+
+            if set(replays.player_team(replay)) != set(replays.player_team(battle_replay.unpickle())):
+                flash(u'The selected replay is most likely from a different battle (list of players differs)', 'error')
+                return redirect(url_for('battle_details', battle_id=battle.id))
+
+            if replay['first']['mapName'] != battle_replay.unpickle()['first']['mapName']:
+                flash(u'The selected replay is most likely for a different battle (map name differs)', 'error')
+                return redirect(url_for('battle_details', battle_id=battle.id))
+
+            if replay['first']['playerName'] == battle_replay.player_name:
+                flash(u'Replay of this player already exists', 'error')
+                return redirect(url_for('battle_details', battle_id=battle.id))
+
+            for existing_replay in battle.additional_replays:
+                if existing_replay.player_name == replay['first']['playerName']:
+                    flash(u'Replay of this player already exists', 'error')
+                    return redirect(url_for('battle_details', battle_id=battle.id))
+
+            r = Replay(replay_blob, pickle.dumps(replay))
+            r.associated_battle = battle
+            r.player_name = replay['first']['playerName']
+            db_session.commit()
+
+    return redirect(url_for('battle_details', battle_id=battle.id))
+
+
 @app.route('/battles/edit/<int:battle_id>', methods=['GET', 'POST'])
 @require_login
 @require_role(roles=config.CREATE_BATTLE_ROLES)
@@ -746,6 +786,8 @@ def create_battle():
                 battle.replay = Replay(file_blob, pickle.dumps(replay))
             else:
                 battle.replay = Replay(None, pickle.dumps(replay))
+
+            battle.replay.player_name = replay['first']['playerName']
 
             for player_id in players:
                 player = Player.query.get(player_id)
@@ -1062,6 +1104,40 @@ def download_replay(battle_id):
                                                   '%d.%m.%Y_%H_%M_%S') + '_' + battle.clan + '_' +
                                               battle.enemy_clan + '.wotreplay')
     return response
+
+
+@app.route('/replays/download/<int:replay_id>')
+@require_login
+def download_additional_replay(replay_id):
+    """
+        Replay download handler. Returns the requested replay blob as binary download.
+    :param replay_id:
+    :return:
+    """
+    replay = Replay.query.get(replay_id) or abort(404)
+    battle = replay.associated_battle
+    if not replay.replay_blob:
+        abort(404)
+    response = make_response(replay.replay_blob)
+    response.headers['Content-Type'] = 'application/octet-stream'
+    response.headers['Content-Disposition'] = 'attachment; filename=' + \
+                                              secure_filename(battle.date.strftime(
+                                                  '%d.%m.%Y_%H_%M_%S') + '_' + battle.clan + '_' +
+                                              battle.enemy_clan + '.wotreplay')
+    return response
+
+
+@app.route('/replays/delete/<int:replay_id>')
+@require_login
+@require_role(config.DELETE_BATTLE_ROLES)
+def delete_replay(replay_id):
+    replay = Replay.query.get(replay_id) or abort(404)
+    battle_id = replay.associated_battle_id
+
+    db_session.delete(replay)
+    db_session.commit()
+
+    return redirect(url_for('battle_details', battle_id=battle_id))
 
 
 @app.route('/battles/download-replays')
