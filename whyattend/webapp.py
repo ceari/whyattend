@@ -1191,7 +1191,7 @@ def reserve_conflicts(clan):
             [battle.date - before_dt, battle.date + battle.duration + after_dt].
             Such battles overlap with the given battle. """
         return [b for b in ordered_battles if battle.date - before_dt <= b.date <=
-                battle.date + timedelta(seconds=battle.duration) + after_dt]
+                battle.date + timedelta(seconds=battle.duration or (15*60)) + after_dt]
 
     # noinspection PyShadowingNames
     def get_reserve_conflicts(battles):
