@@ -1457,10 +1457,20 @@ def clan_statistics(clan):
     for map_name in battles_by_map:
         win_ratio_by_map[map_name] = float(victories_by_map[map_name]) / battles_by_map[map_name]
 
+    enemies_by_battle_count = defaultdict(int)
+    for enemy_clan in battles_by_enemy:
+        enemies_by_battle_count[battles_by_enemy[enemy_clan]] += 1
+
+    battle_count_cutoff = 0
+    for battle_count in range(1, max(battles_by_enemy.values())):
+        if enemies_by_battle_count[battle_count] <= 20:
+            battle_count_cutoff = battle_count
+            break
+
     # Win ratio by enemy clan
     win_ratio_by_enemy_clan = dict()
     for enemy_clan in battles_by_enemy:
-        if battles_by_enemy[enemy_clan] < 2:
+        if battles_by_enemy[enemy_clan] < battle_count_cutoff:
             continue
         win_ratio_by_enemy_clan[enemy_clan] = float(wins_by_enemy[enemy_clan]) / battles_by_enemy[enemy_clan]
 
@@ -1489,7 +1499,7 @@ def clan_statistics(clan):
                            win_ratio_by_map=win_ratio_by_map, win_ratio_by_commander=win_ratio_by_commander,
                            wins_by_commander=wins_by_commander, battles_by_commander=battles_by_commander,
                            win_ratio_by_enemy_clan=win_ratio_by_enemy_clan, battles_by_enemy=battles_by_enemy,
-                           wins_by_enemy=wins_by_enemy,
+                           wins_by_enemy=wins_by_enemy, battle_count_cutoff=battle_count_cutoff,
                            battles_per_day=battles_per_day)
 
 
