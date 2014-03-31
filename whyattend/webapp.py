@@ -22,7 +22,7 @@ from flask import Flask, g, session, render_template, flash, redirect, request, 
 from flask import Response
 from flask_openid import OpenID
 from flask_cache import Cache
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename, Headers
 
@@ -1404,6 +1404,57 @@ def payout_battles_json():
              battle.enemy_clan,
              battle.creator.name,
              battle.outcome_str()] for battle in battles
+        ]
+    })
+
+
+@app.route('/players/commanded')
+@require_login
+@require_role(config.PAYOUT_ROLES)
+def players_commanded():
+    commanders = Player.query.filter_by(locked=False).filter(Player.id.in_(db_session.query(Battle.battle_commander_id) \
+                                .distinct())).order_by(Player.name).all()
+
+    return render_template('players/commanding.html', commanders=commanders, clan=g.player.clan)
+
+
+@app.route('/players/commanded-json')
+@require_login
+@require_role(config.PAYOUT_ROLES)
+def players_commanded_json():
+    from_date = request.args.get('fromDate', None)
+    to_date = request.args.get('toDate', None)
+
+    from_date = datetime.datetime.strptime(from_date, '%d.%m.%Y')
+    to_date = datetime.datetime.strptime(to_date, '%d.%m.%Y') + datetime.timedelta(days=1)
+    commander = Player.query.get(int(request.args.get('commander_id'))) or abort(404)
+    use_battle_groups = request.args.get('use_battle_groups', False) == 'on'
+
+    battles = Battle.query.options(joinedload_all('battle_group.battles')).options(
+        joinedload_all('attendances.player')).filter(Battle.date >= from_date).filter(Battle.date <= to_date) \
+                            .filter_by(battle_commander=commander)
+    player_count = defaultdict(int)
+    for battle in battles:
+        if use_battle_groups:
+            if battle.battle_group_id and battle.battle_group_final:
+                players = battle.battle_group.get_players()
+            elif not battle.battle_group_id:
+                players = battle.get_players()
+            else:
+                continue
+        else:
+            players = battle.get_players()
+
+        for player in players:
+            player_count[player] += 1
+
+    return jsonify({
+        "sEcho": 1,
+        "iTotalRecords": len(player_count),
+        "iTotalDisplayRecords": len(player_count),
+        "aaData": [
+            (k.name,
+             v) for k, v in player_count.iteritems()
         ]
     })
 

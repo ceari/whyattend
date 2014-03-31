@@ -82,6 +82,9 @@
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i style="margin-right:5px; color: #ccc" class="icon-bar-chart"></i> Statistics <b class="caret"></b></a>
             <ul class="dropdown-menu">
               <li><a href="{{url_for('clan_statistics', clan=g.player.clan)}}">Clan</a></li>
+              {% if g.player.role in g.PAYOUT_ROLES or g.player.name in g.ADMINS %}
+              <li><a href="{{url_for('players_commanded')}}">Commanding</a></li>
+              {% endif %}
               {% if g.player.role in g.PLAYER_PERFORMANCE_ROLES or g.player.name in g.ADMINS %}
               <li><a href="{{url_for('player_performance', clan=g.player.clan)}}">Players</a></li>
               {% endif %}
