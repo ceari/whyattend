@@ -1408,14 +1408,14 @@ def payout_battles_json():
     })
 
 
-@app.route('/players/commanded')
+@app.route('/players/commanded/<clan>')
 @require_login
 @require_role(config.COMMANDED_ROLES)
-def players_commanded():
-    commanders = Player.query.filter_by(locked=False).filter(Player.id.in_(db_session.query(Battle.battle_commander_id) \
+def players_commanded(clan):
+    commanders = Player.query.filter_by(locked=False, clan=clan).filter(Player.id.in_(db_session.query(Battle.battle_commander_id) \
                                 .distinct())).order_by(Player.name).all()
 
-    return render_template('players/commanding.html', commanders=commanders, clan=g.player.clan)
+    return render_template('players/commanding.html', commanders=commanders, clan=clan)
 
 
 @app.route('/players/commanded-json')
@@ -1545,7 +1545,7 @@ def clan_statistics(clan):
     return render_template('clan_stats.html', battles=battles, total_battles=len(battles),
                            battles_one_week=battles_one_week, battles_one_week_won=battles_one_week_won,
                            map_battles=map_battles, battles_won=battles_won, players_joined=players_joined,
-                           players_left=players_left,
+                           players_left=players_left, clan=clan,
                            battles_thirty_days=battles_thirty_days, battles_thirty_days_won=battles_thirty_days_won,
                            win_ratio_by_map=win_ratio_by_map, win_ratio_by_commander=win_ratio_by_commander,
                            wins_by_commander=wins_by_commander, battles_by_commander=battles_by_commander,

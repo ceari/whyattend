@@ -81,12 +81,25 @@
           <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i style="margin-right:5px; color: #ccc" class="icon-bar-chart"></i> Statistics <b class="caret"></b></a>
             <ul class="dropdown-menu">
-              <li><a href="{{url_for('clan_statistics', clan=g.player.clan)}}">Clan</a></li>
+              <li>General</li>
+              {% for clan in g.clans %}
+              {% if g.player.name in g.ADMINS or g.player.clan == clan %}
+              <li><a href="{{url_for('clan_statistics', clan=clan)}}"><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> {{clan}}</a></li>
+              {% endif %}
+              {% endfor %}
               {% if g.player.role in g.COMMANDED_ROLES or g.player.name in g.ADMINS %}
-              <li><a href="{{url_for('players_commanded')}}">Commanding</a></li>
+              <li>Commanding</li>
+              {% for clan in g.clans %}
+              <li><a href="{{url_for('players_commanded', clan=clan)}}"><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> {{clan}}</a></li>
+              {% endfor %}
               {% endif %}
               {% if g.player.role in g.PLAYER_PERFORMANCE_ROLES or g.player.name in g.ADMINS %}
-              <li><a href="{{url_for('player_performance', clan=g.player.clan)}}">Players</a></li>
+              <li>Players</li>
+              {% for clan in g.clans %}
+              {% if g.player.name in g.ADMINS or g.player.clan == clan %}
+              <li><a href="{{url_for('player_performance', clan=clan)}}"><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> {{clan}}</a></li>
+              {% endif %}
+              {% endfor %}
               {% endif %}
             </ul>
           </li>
@@ -95,7 +108,14 @@
 
         {% if g.player and (g.player.role in g.PAYOUT_ROLES or g.player.name in g.ADMINS) %}
         <ul class="nav navbar-nav ">
-          <li><a href="{{url_for('payout', clan=g.player.clan)}}"><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/gold_coin_stack.png')}}"> Payout</a></li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/gold_coin_stack.png')}}"> Payout <b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              {% for clan in g.clans %}
+              <li><a href="{{url_for('payout', clan=clan)}}"> <img style="width: 16px; height:16px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> {{clan}}</a></li>
+              {% endfor %}
+            </ul>
+          </li>
         </ul>
         {% endif %}
 
