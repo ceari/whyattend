@@ -1554,18 +1554,32 @@ def clan_statistics(clan):
                            battles_per_day=battles_per_day)
 
 
-@app.route('/statistics/<clan>/players')
+@app.route('/statistics/<clan>/players', methods=['GET', 'POST'])
 @require_login
 @require_clan_membership
 @require_role(config.PLAYER_PERFORMANCE_ROLES)
 def player_performance(clan):
     """ Player statistics from replay files: damage done, spots, wn7, ... """
-    battles = Battle.query.options(joinedload('replay')).filter_by(clan=clan).all()
+    from_date = request.form.get('fromDate', None)
+    to_date = request.form.get('toDate', None)
+
+    if from_date is None:
+        from_date = datetime.datetime.now() - datetime.timedelta(days=4*7)
+    else:
+        from_date = datetime.datetime.strptime(from_date, '%d.%m.%Y')
+
+    if to_date is None:
+        to_date = datetime.datetime.now()
+    else:
+        to_date = datetime.datetime.strptime(to_date, '%d.%m.%Y') + datetime.timedelta(days=1)
+
+    battles = Battle.query.options(joinedload('replay')).filter_by(clan=clan).filter(Battle.date>=from_date, Battle.date<=to_date).all()
     players = Player.query.filter_by(clan=clan, locked=False).all()
 
     result = analysis.player_performance(battles, players)
 
-    return render_template('players/performance.html', clan_players=players, result=result, clan=clan)
+    return render_template('players/performance.html', clan_players=players, result=result, clan=clan,
+                           from_date=from_date, to_date=to_date)
 
 
 @app.route('/profile', methods=['GET', 'POST'])
