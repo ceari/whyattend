@@ -59,6 +59,7 @@ DELETE_BATTLE_ROLES = ('leader', 'vice_leader', 'treasurer')
 PAYOUT_ROLES = ('leader', 'vice_leader', 'treasurer')
 ADMIN_ROLES = ('leader', 'vice_leader', 'commander', 'treasurer')
 PLAYER_PERFORMANCE_ROLES = ('leader', 'vice_leader')
+COMMANDED_ROLES = ('leader', 'vice_leader', 'commander', 'treasurer')
 
 # How long after the battle date should reserves be able to sign in themselves
 RESERVE_SIGNUP_DURATION = datetime.timedelta(days=7)

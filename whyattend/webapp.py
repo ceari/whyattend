@@ -1410,7 +1410,7 @@ def payout_battles_json():
 
 @app.route('/players/commanded')
 @require_login
-@require_role(config.PAYOUT_ROLES)
+@require_role(config.COMMANDED_ROLES)
 def players_commanded():
     commanders = Player.query.filter_by(locked=False).filter(Player.id.in_(db_session.query(Battle.battle_commander_id) \
                                 .distinct())).order_by(Player.name).all()
@@ -1420,10 +1420,10 @@ def players_commanded():
 
 @app.route('/players/commanded-json')
 @require_login
-@require_role(config.PAYOUT_ROLES)
+@require_role(config.COMMANDED_ROLES)
 def players_commanded_json():
-    from_date = request.args.get('fromDate', None)
-    to_date = request.args.get('toDate', None)
+    from_date = request.args.get('fromDate', None) or abort(404)
+    to_date = request.args.get('toDate', None) or abort(404)
 
     from_date = datetime.datetime.strptime(from_date, '%d.%m.%Y')
     to_date = datetime.datetime.strptime(to_date, '%d.%m.%Y') + datetime.timedelta(days=1)
