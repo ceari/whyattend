@@ -542,6 +542,11 @@ def edit_battle(battle_id):
     players = battle.get_players()
     description = battle.description
     replay = battle.replay.unpickle()
+    duration = battle.duration
+    if battle.battle_group:
+        battle_group_description = battle.battle_group.description
+    else:
+        battle_group_description = ''
 
     if request.method == 'POST':
         players = map(int, request.form.getlist('players'))
@@ -555,6 +560,7 @@ def edit_battle(battle_id):
         battle_group_title = request.form.get('battle_group_title', '')
         battle_group_description = request.form.get('battle_group_description', '')
         battle_group_final = request.form.get('battle_group_final', '') == 'on'
+        duration = request.form.get('duration', 15 * 60)
 
         errors = False
         date = None
@@ -600,6 +606,7 @@ def edit_battle(battle_id):
             battle.map_province = province
             battle.battle_commander_id = battle_commander.id
             battle.description = description
+            battle.duration = duration
 
             if bg:
                 battle.battle_group_final = battle_group_final
@@ -625,7 +632,7 @@ def edit_battle(battle_id):
             return redirect(url_for('battles_list', clan=g.player.clan))
 
     return render_template('battles/edit.html', date=date, map_name=map_name, province=province, battle=battle,
-                           battle_groups=battle_groups,
+                           battle_groups=battle_groups, duration=duration, battle_group_description=battle_group_description,
                            battle_commander=battle_commander, enemy_clan=enemy_clan, battle_result=battle_result,
                            battle_group_final=battle_group_final, players=players, description=description,
                            replay=replay, replays=replays, all_players=all_players, sorted_players=sorted_players)
