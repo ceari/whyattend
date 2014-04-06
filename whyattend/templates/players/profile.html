@@ -170,15 +170,6 @@
             <td>{{battle.get_players()|length}}</td>
             <td>{{battle.get_reserve_players()|length}}</td>
             <td>
-                {% if not battle.battle_group %}
-                {% if g.player.clan == clan and g.RESERVE_SIGNUP_ALLOWED %}
-                    {% if not battle.has_player(g.player) and not battle.has_reserve(g.player) %}
-                    <a href="{{url_for('sign_as_reserve', battle_id=battle.id)}}" class="confirm-sign btn btn-primary btn-sm">Sign as reserve</a>
-                    {% elif battle.has_reserve(g.player) %}
-                    <a href="{{url_for('unsign_as_reserve', battle_id=battle.id)}}" class="btn btn-danger btn-sm">Remove from reserve</a>
-                    {% endif %}
-                {% endif %}
-                {% endif %}
             </td>
             <td>
                 {% if battle.battle_group %}

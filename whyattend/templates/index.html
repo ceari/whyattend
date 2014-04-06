@@ -31,9 +31,6 @@
                     <td>{% for p in battle.provinces %}<a href="{{g.MAP_URL}}?province={{p.id}}">{{p.name}}</a>{% if loop.index < battle.provinces|length %} - {%endif%}{% endfor %}</td>
                     <td style="{% if battle.time and battle.time < datetime.datetime.now() %}color: #555{% endif %}">{% if battle.time %}{{battle.time|pretty_date + (' or later' if not battle.started else '')}} {%else%}today{%endif%}</td>
                     <td>{% for map in battle.maps %}{{map.name}} {% if loop.index < battle.maps|length %} or {%endif%}{% endfor %}</td>
-                    <td>{% if battle.enemies %}vs. {% for enemy in battle.enemies %}
-                    <a href="http://www.worldoftanks.{{g.WOT_SERVER_REGION_CODE}}/community/{{enemy.url}}">[{{enemy.tag}}]</a>
-                    <a title="Battle History" href="{{url_for('battles_list', clan=g.player.clan)}}?enemy={{enemy.tag}}"><i class="icon-book"></i></a><a style="margin-left: 5px;" title="Statistics and tanks" href="http://wotcs.com/clan.php?wid={{enemy.clan_id}}"><i class="icon-bar-chart"></i> </a>{% if loop.index < battle.enemies|length %} or {%endif%}{% endfor %}{% endif %}</td>
                 </tr>
                 {% endfor %}
                 </tbody>

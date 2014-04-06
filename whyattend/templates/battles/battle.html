@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% block title %}Battles of {{ clan }}{% endblock %}
+{% block title %}{{battle.clan}} vs. {{battle.enemy_clan}}{% endblock %}
 {% block head %}
     {{super()}}
     <link href="{{url_for('static', filename='css/token-input.css')}}" rel="stylesheet" media="screen">

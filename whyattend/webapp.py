@@ -18,6 +18,7 @@ from cStringIO import StringIO
 from collections import defaultdict, OrderedDict
 from functools import wraps
 from datetime import timedelta
+import jinja2
 from flask import Flask, g, session, render_template, flash, redirect, request, url_for, abort, make_response, jsonify
 from flask import Response
 from flask_openid import OpenID
@@ -38,6 +39,8 @@ app.config['UPLOAD_FOLDER'] = config.UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB at a time should be plenty for replays
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 oid = OpenID(app, config.OID_STORE_PATH)
+
+app.jinja_env.undefined = jinja2.StrictUndefined
 
 app.jinja_env.filters['pretty_date'] = util.pretty_date
 app.jinja_env.filters['int'] = int
@@ -1306,7 +1309,7 @@ def payout_battles(clan):
     return render_template('payout/payout_battles.html', battles=battles, clan=clan, fromDate=from_date, toDate=to_date,
                            player_played=player_played, player_reserve=player_reserve, players=players,
                            player_gold=player_gold, gold=gold, player_defeats=player_defeats,
-                           player_fced_win=player_fced_win,
+                           player_fced_win=player_fced_win, victories_only=victories_only,
                            player_fced_defeat=player_fced_defeat, player_victories=player_victories,
                            player_fced_draws=player_fced_draws, player_draws=player_draws, player_points=player_points)
 
