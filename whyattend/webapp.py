@@ -224,10 +224,12 @@ def sync_players(clan_id=None):
             clan_info = wotapi.get_clan(str(clan_id))
             player_ids = clan_info['data'][str(clan_id)]['members'].keys()
             players_info = wotapi.get_players(player_ids)
+            member_info = wotapi.get_players_membership_info(player_ids)
             processed = set()
             for player_id in player_ids:
                 player = clan_info['data'][str(clan_id)]['members'][player_id]
                 player_data = players_info['data'][player_id]
+                member_data = member_info['data'][player_id]
                 p = Player.query.filter_by(wot_id=str(player['account_id'])).first()
                 if not player_data:
                     if p:
@@ -235,8 +237,9 @@ def sync_players(clan_id=None):
                     logger.info("Missing player info of " + player['account_name'])
                     continue  # API Error?
 
+                print member_data
                 since = datetime.datetime.fromtimestamp(
-                    float(player_data['clan']['since']))
+                    float(member_data['since']))
 
                 if p:
                     # Player exists, update information
