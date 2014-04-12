@@ -10,6 +10,8 @@
         $(document).ready(function () {
 
             var table = $('#battles').dataTable({
+		        "bServerSide": true,
+		        "sAjaxSource": "{{url_for('battles_list_json', clan=clan)}}",
                 "oLanguage": {
                     "sLengthMenu": "Display _MENU_ battles per page",
                     "sZeroRecords": "No battles yet.",
@@ -107,71 +109,15 @@
             <th>Commander</th>
             <th>Outcome</th>
             <th>Enemy</th>
-            <th>Player</th>
-            <th>Reserve</th>
+            <th>Players</th>
+            <th>Reserves</th>
             <th></th>
             <th></th>
             <th></th>
         </tr>
       </thead>
       <tbody>
-        {% for battle in battles %}
-        {% if not battle.battle_group or (battle.battle_group and battle.battle_group.get_representative_battle() == battle) %}
-        <tr>
-            <td>{{battle.id}}</td>
-            <td><a href="{{url_for('battle_details', battle_id=battle.id)}}">{{battle.date.strftime('%d.%m.%Y %H:%M:%S')}}</a></td>
-            <td>
-                {% if battle.battle_group %}
-                    <a href="{{url_for('battle_group_details', group_id=battle.battle_group.id)}}">
-                    {% if battle.battle_group_final %}
-                        Final
-                    {% else %}
-                        Landing battle
-                    {% endif %}
-                    </a>
-                {% else %}
-                    Normal
-                {% endif %}
-            </td>
-            <td>{{battle.map_name}}</td>
-            <td>{{battle.map_province}}</td>
-            <td><span class="{{battle.battle_commander.role}}">{{battle.battle_commander.name}}</span></td>
-            <td><span class="{{battle.outcome_str().lower()}}">{{battle.outcome_str()}}</span></td>
-            <td>{{battle.enemy_clan}}</td>
-            <td>{{battle.get_players()|length}}</td>
-            <td>{{battle.get_reserve_players()|length}}</td>
-            <td>
-                {% if not battle.battle_group %}
-                {% if g.player.clan == clan and g.RESERVE_SIGNUP_ALLOWED %}
-                    {% if not battle.has_player(g.player) and not battle.has_reserve(g.player) %}
-                    <a href="{{url_for('sign_as_reserve', battle_id=battle.id)}}" class="confirm-sign btn btn-primary btn-sm">Sign as reserve</a>
-                    {% elif battle.has_reserve(g.player) %}
-                    <a href="{{url_for('unsign_as_reserve', battle_id=battle.id)}}" class="btn btn-danger btn-sm">Remove from reserve</a>
-                    {% endif %}
-                {% endif %}
-                {% endif %}
-            </td>
-            <td>
-                {% if not battle.battle_group %}
-                    {% if g.player.role in g.DELETE_BATTLE_ROLES and g.player.clan == clan or g.player.name == "fantastico" %}
-                        <a href="{{url_for('delete_battle', battle_id=battle.id)}}" class="confirm-delete btn btn-danger btn-sm" title="Delete battle"><i class="icon-remove"></i></a>
-                    {% endif %}
-                    {% if g.player.role in g.CREATE_BATTLE_ROLES and g.player.clan == clan or g.player.name == "fantastico" %}
-                        <a href="{{url_for('edit_battle', battle_id=battle.id)}}" class="btn btn-primary btn-sm" title="Edit battle"><i class="icon-pencil"></i></a>
-                    {% endif %}
-                {% else %}
-                    <a href="{{url_for('battle_group_details', group_id=battle.battle_group.id)}}" class="btn btn-primary btn-sm" title="Show landing battles"><i class="icon-list"></i></a>
-                {% endif %}
-            </td>
-            <td>
-                {% if battle.paid %}
-                <span class="label label-success">paid</span>
-                {% endif %}
-            </td>
 
-        </tr>
-        {% endif %}
-        {% endfor %}
       </tbody>
   </table>
   <div id="download_div">
