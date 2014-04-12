@@ -48,7 +48,8 @@ ROLE_LABELS = {
     'recruiter': 'Recruiter',
     'private': 'Soldier',
     'recruit': 'Recruit',
-    'treasurer': 'Treasurer'
+    'treasurer': 'Treasurer',
+    'diplomat': 'Diplomat',
 }
 
 # List of player names that can do everything
