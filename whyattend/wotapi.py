@@ -36,6 +36,7 @@ def get_players(ids):
 def get_players_membership_info(ids):
     r = requests.get(API_URL + '/wot/clan/membersinfo/', timeout=API_REQUEST_TIMEOUT,
                      params={
+                         'fields': 'since',
                          'application_id': API_TOKEN,
                          'member_id': ','.join(ids)
                      })
