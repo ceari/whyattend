@@ -113,6 +113,8 @@ class Battle(Base):
     description = Column(Text)
     # duration of the battle in seconds
     duration = Column(Integer)
+    score_own_team = Column(Integer)
+    score_enemy_team = Column(Integer)
 
     # WoT map name
     map_name = Column(String(80))

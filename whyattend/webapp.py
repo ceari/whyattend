@@ -802,6 +802,7 @@ def create_battle():
                 battle.replay = Replay(None, pickle.dumps(replay))
 
             battle.replay.player_name = replay['first']['playerName']
+            battle.score_own_team, battle.score_enemy_team = replays.score(replay)
 
             for player_id in players:
                 player = Player.query.get(player_id)
@@ -972,6 +973,7 @@ def battles_list_json(clan):
             battle.map_province,
             '<span class="' + battle.commander_role + '">' + battle.commander_name + '</span>',
             '<span class="' + battle.outcome.lower() + '">' + battle.outcome + '</span>',
+            "%d-%d" % (battle.score_own_team or 0, battle.score_enemy_team or 0),
             battle.enemy_clan,
             battle.players,
             battle.reserves,
