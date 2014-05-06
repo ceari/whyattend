@@ -106,6 +106,19 @@ def guess_enemy_clan(replay_json):
     return players_list(replay_json, 1 if friendly_team == 2 else 2)[0]['clanAbbrev']
 
 
+def score(replay_json):
+    own_team = replay_json['first']['vehicles'].values()[0]['team']
+    own_team_deaths = 0
+    enemy_team_deaths = 0
+    for v in replay_json['second'][0]['vehicles'].itervalues():
+        if v['deathReason'] != -1:
+            if v['team'] == own_team:
+                own_team_deaths += 1
+            else:
+                enemy_team_deaths += 1
+    return enemy_team_deaths, own_team_deaths
+
+
 def player_performance(json_second, vehicles, players):
     tank_info_by_player_name = {}
     for k, v in json_second[1].iteritems():

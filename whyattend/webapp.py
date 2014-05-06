@@ -23,7 +23,7 @@ from flask import Flask, g, session, render_template, flash, redirect, request, 
 from flask import Response
 from flask_openid import OpenID
 from flask_cache import Cache
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, func
 from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename, Headers
 
@@ -804,6 +804,7 @@ def create_battle():
                 battle.replay = Replay(None, pickle.dumps(replay))
 
             battle.replay.player_name = replay['first']['playerName']
+            battle.score_own_team, battle.score_enemy_team = replays.score(replay)
 
             for player_id in players:
                 player = Player.query.get(player_id)
@@ -838,12 +839,158 @@ def battles_list(clan):
     """
     if not clan in config.CLAN_NAMES:
         abort(404)
-    battles = Battle.query.options(joinedload_all('battle_group.battles')).options(
-        joinedload_all('attendances.player')).filter_by(clan=clan)
-    if 'enemy' in request.args:
-        battles = battles.filter_by(enemy_clan=request.args.get('enemy', None))
-    battles = battles.all()
-    return render_template('battles/battles.html', clan=clan, battles=battles)
+
+    #enemy_clan = request.args.get('enemy', None)
+
+    #battles = Battle.query.options(joinedload_all('battle_group.battles')).options(
+    #    joinedload_all('attendances.player')).options(joinedload_all('battle_commander')).filter_by(clan=clan)
+    #if enemy_clan:
+    #    battles = battles.filter_by(enemy_clan=enemy_clan)
+    #battles = battles.all()
+
+    return render_template('battles/battles.html', clan=clan)
+
+
+@app.route('/battles/list/<clan>/json')
+@require_login
+def battles_list_json(clan):
+    if not clan in config.CLAN_NAMES:
+        abort(404)
+
+    offset = int(request.args.get('iDisplayStart'))
+    limit = int(request.args.get('iDisplayLength'))
+    search = request.args.get('sSearch', '')
+
+    sort_columns = []
+    for key in request.args:
+        if key.startswith('iSortCol_'):
+            column = int(request.args.get(key))
+            direction = request.args.get('sSortDir_' + key[len('iSortCol_'):], 'asc')
+            sort_columns.append((column, direction))
+
+    enemy_clan = request.args.get('enemy', None)
+
+    from sqlalchemy import case, desc, asc, select, func, literal
+
+    players_query = select([BattleAttendance.battle_id, func.count().label('players')],
+                           BattleAttendance.reserve == False).group_by(BattleAttendance.battle_id).alias()
+    reserves_query = select([BattleAttendance.battle_id, func.count().label('reserves')],
+                            BattleAttendance.reserve == True).group_by(BattleAttendance.battle_id).alias()
+    has_player_query = select([BattleAttendance.battle_id], and_(BattleAttendance.reserve == False,
+                                                                 BattleAttendance.player_id == g.player.id)).alias()
+    has_reserve_query = select([BattleAttendance.battle_id], and_(BattleAttendance.reserve == True,
+                                                                  BattleAttendance.player_id == g.player.id)).alias()
+
+    search_term = True
+    if search:
+        search_expression = '%' + search + '%'
+        search_term = or_(
+            Player.name.like(search_expression),
+            Battle.map_name.like(search_expression),
+            Battle.map_province.like(search_expression),
+            Battle.enemy_clan.like(search_expression),
+        )
+
+    battles = select([Battle, case([(Battle.victory == True, literal('Victory')),
+                                    (Battle.draw == True, literal('Draw'))], else_=literal('Defeat')).label('outcome'),
+                      players_query.c.players.label('players'), reserves_query.c.reserves.label('reserves'),
+                      Player.name.label('commander_name'),
+                      Player.role.label('commander_role'),
+                      case([(Battle.id.in_(has_player_query), True)], else_=False).label('was_player'),
+                      case([(Battle.id.in_(has_reserve_query), True)], else_=False).label('was_reserve')],
+                     and_(Battle.clan == clan,
+                          search_term,
+                          (Battle.enemy_clan == enemy_clan if enemy_clan else True))) \
+        .select_from(Battle.__table__.outerjoin(players_query, players_query.c.battle_id == Battle.id)
+                     .outerjoin(reserves_query, reserves_query.c.battle_id == Battle.id)
+                     .outerjoin(Player.__table__, Player.__table__.c.id == Battle.battle_commander_id))
+
+    for col, dir in sort_columns:
+        dir_op = desc if dir == 'desc' else asc
+
+        if col == 0:
+            battles = battles.order_by(dir_op(Battle.id))
+        elif col == 1:
+            battles = battles.order_by(dir_op(Battle.date))
+        elif col == 2:
+            battles = battles.order_by(dir_op(Battle.battle_group_id))
+        elif col == 3:
+            battles = battles.order_by(dir_op(Battle.map_name))
+        elif col == 4:
+            battles = battles.order_by(dir_op(Battle.map_province))
+        elif col == 5:
+            battles = battles.order_by(dir_op('commander_name'))
+        elif col == 6:
+            battles = battles.order_by(dir_op('outcome'))
+        elif col == 7:
+            battles = battles.order_by(dir_op(Battle.enemy_clan))
+        elif col == 8:
+            battles = battles.order_by(dir_op(battles.c.players))
+        elif col == 9:
+            battles = battles.order_by(dir_op(battles.c.reserves))
+
+    battles = list(db_session.execute(battles.offset(offset).limit(limit)))
+    battle_count = Battle.query.filter_by(clan=clan).filter(
+        Battle.enemy_clan == enemy_clan if enemy_clan else True).count()
+
+    def make_row(battle):
+        if battle.battle_group_id:
+            type = '<a href="' + url_for('battle_group_details', group_id=battle.battle_group_id) + '">'
+            if battle.battle_group_final:
+                type += 'Final'
+            else:
+                type += 'Landing battle'
+            type += '</a>'
+        else:
+            type = 'Normal'
+
+        reserve_button = ''
+        if not battle.battle_group_id:
+            if g.player.clan == clan and g.RESERVE_SIGNUP_ALLOWED:
+                if not battle.was_player and not battle.was_reserve:
+                    reserve_button = '<a href="' + url_for('sign_as_reserve',
+                                                           battle_id=battle.id) + '" class="confirm-sign btn btn-primary btn-sm">Sign as reserve</a>'
+                elif battle.was_reserve:
+                    reserve_button = '<a href="' + url_for('unsign_as_reserve',
+                                                           battle_id=battle.id) + '" class="btn btn-danger btn-sm">Remove from reserve</a>'
+
+        buttons = ''
+        if not battle.battle_group_id:
+            if g.player.name in config.ADMINS or g.player.role in g.DELETE_BATTLE_ROLES and g.player.clan == clan:
+                buttons += '<a href="' + url_for('delete_battle',
+                                                 battle_id=battle.id) + '" class="confirm-delete btn btn-danger btn-sm" title="Delete battle"><i class="icon-remove"></i></a>'
+            if g.player.name in config.ADMINS or g.player.role in g.CREATE_BATTLE_ROLES and g.player.clan == clan:
+                buttons += '<a href="' + url_for('edit_battle',
+                                                 battle_id=battle.id) + '" class="btn btn-primary btn-sm" title="Edit battle"><i class="icon-pencil"></i></a>'
+        else:
+            buttons += '<a href="' + url_for('battle_group_details',
+                                             group_id=battle.battle_group_id) + '" class="btn btn-primary btn-sm" title="Show landing battles"><i class="icon-list"></i></a>'
+
+        return [
+            battle.id,
+            '<a href="' + url_for('battle_details', battle_id=battle.id) + '">' + battle.date.strftime(
+                '%d.%m.%Y %H:%M:%S') + '</a>',
+            type,
+            battle.map_name,
+            battle.map_province,
+            '<span class="' + battle.commander_role + '">' + battle.commander_name + '</span>',
+            '<span class="' + battle.outcome.lower() + '">' + battle.outcome + '</span>',
+            "%d-%d" % (battle.score_own_team or 0, battle.score_enemy_team or 0),
+            battle.enemy_clan,
+            battle.players,
+            battle.reserves,
+            reserve_button,
+            buttons,
+            '<span class="label label-success">paid</span>' if battle.paid else '',
+        ]
+
+    response = {
+        'iTotalRecords': battle_count,
+        'iTotalDisplayRecords': battle_count,
+        'sEcho': int(request.args.get('sEcho')),
+        'aaData': [make_row(battle) for battle in battles]
+    }
+    return jsonify(response)
 
 
 @app.route('/battles/group/<int:group_id>')
