@@ -140,10 +140,10 @@
 
             </td>
             <td>
-                    {% if g.player.name in config.ADMINS or g.player.role in g.DELETE_BATTLE_ROLES and g.player.clan == clan %}
+                    {% if g.player and (g.player.role in g.DELETE_BATTLE_ROLES or g.player.name in g.ADMINS) %}
                         <a href="{{url_for('delete_battle', battle_id=battle.id)}}" class="confirm-delete btn btn-danger btn-sm" title="Delete battle"><i class="icon-remove"></i></a>
                     {% endif %}
-                    {% if g.player.name in config.ADMINS or g.player.role in g.CREATE_BATTLE_ROLES and g.player.clan == clan %}
+                    {% if g.player and (g.player.role in g.CREATE_BATTLE_ROLES or g.player.name in g.ADMINS) %}
                         <a href="{{url_for('edit_battle', battle_id=battle.id)}}" class="btn btn-primary btn-sm" title="Edit battle"><i class="icon-pencil"></i></a>
                     {% endif %}
             </td>
