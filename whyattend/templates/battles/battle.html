@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% block title %}Battles of {{ clan }}{% endblock %}
+{% block title %}{{battle.clan}} vs. {{battle.enemy_clan}}{% endblock %}
 {% block head %}
     {{super()}}
     <link href="{{url_for('static', filename='css/token-input.css')}}" rel="stylesheet" media="screen">
@@ -76,7 +76,7 @@
     <div class="row">
         <dl class="col-lg-3">
             <dt>Battle added by</dt>
-            <dd><a href="{{url_for('player', player_id=battle.creator.id)}}"><span class="{{battle.creator.role}}">{{battle.creator.name}}</span></a></dd>
+            <dd><a href="{{url_for('player_details', player_id=battle.creator.id)}}"><span class="{{battle.creator.role}}">{{battle.creator.name}}</span></a></dd>
             <dt>Outcome</dt>
             <dd><span class="{{battle.outcome_str().lower()}}">{{battle.outcome_str()}}</span></dd>
             <dt>Map</dt>
@@ -84,7 +84,7 @@
             <dt>Province</dt>
             <dd>{{battle.map_province}}</dd>
             <dt>Battle Commander</dt>
-            <dd><a href="{{url_for('player', player_id=battle.battle_commander.id)}}"><span class="{{battle.battle_commander.role}}">{{battle.battle_commander.name}}</span></a></dd>
+            <dd><a href="{{url_for('player_details', player_id=battle.battle_commander.id)}}"><span class="{{battle.battle_commander.role}}">{{battle.battle_commander.name}}</span></a></dd>
             <dt>Date</dt>
             <dd>{{battle.date.strftime('%d.%m.%Y %H:%M:%S')}}</dd>
             {% if battle.description %}
@@ -97,7 +97,7 @@
             <dd>
                 <ul>
                 {% for player in battle.get_players()|sort(attribute='name') %}
-                    <li><a href="{{url_for('player', player_id=player.id)}}">{{player.name}}</a></li>
+                    <li><a href="{{url_for('player_details', player_id=player.id)}}">{{player.name}}</a></li>
                 {% endfor %}
                 </ul>
             </dd>
@@ -110,7 +110,7 @@
             <dd>
                 <ul>
                 {% for player in battle.get_reserve_players()|sort(attribute='name') %}
-                    <li><a href="{{url_for('player', player_id=player.id)}}">{{player.name}}</a></li>
+                    <li><a href="{{url_for('player_details', player_id=player.id)}}">{{player.name}}</a></li>
                 {% endfor %}
                 </ul>
             </dd>
@@ -138,5 +138,23 @@
         <dt>Replay</dt>
         <dd><a href="{{url_for('download_replay', battle_id=battle.id)}}"><i class="icon-download"></i> Download</a></dd>
     </dl>
+    {% endif %}
+    {% if battle.additional_replays %}
+    <h5>Additional replays</h5>
+    <ul>
+    {% for replay in battle.additional_replays %}
+        <li><a href="{{url_for('download_additional_replay', replay_id=replay.id)}}"><i class="icon-download"></i> Download perspective of {{replay.unpickle().first.playerName}}</a>{% if g.player.name in g.ADMINS or g.player.role in g.DELETE_BATTLE_ROLES %}<a style="margin: 5px;" href="{{url_for('delete_replay', replay_id=replay.id)}}" class="confirm-delete btn btn-danger btn-xs"><i class="icon-remove"></i></a>{% endif %}</li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+    {% if g.STORE_REPLAYS_IN_DB %}
+    <p>Upload an additional replay for this battle</p>
+      <form action="{{url_for('add_replay', battle_id=battle.id)}}" method="POST" role="form" enctype="multipart/form-data">
+      <div class="form-group">
+        <input type="file" id="replay" name="replay">
+      </div>
+      <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-success">Upload</button>
+    </form>
     {% endif %}
 {% endblock %}

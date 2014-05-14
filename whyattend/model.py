@@ -114,7 +114,10 @@ class Battle(Base):
     draw = Column(Boolean)
     paid = Column(Boolean)
     description = Column(Text)
-    duration = Column(Integer) # duration of the battle in seconds
+    # duration of the battle in seconds
+    duration = Column(Integer)
+    score_own_team = Column(Integer)
+    score_enemy_team = Column(Integer)
 
     # WoT map name
     map_name = Column(String(80))
@@ -128,15 +131,15 @@ class Battle(Base):
     creator = relationship("Player", backref="battles_created", foreign_keys=[creator_id])
 
     replay_id = Column(Integer, ForeignKey('replay.id'))
-    replay = relationship("Replay", backref="battle", uselist=False)
+    replay = relationship("Replay", backref="battle", uselist=False, foreign_keys=[replay_id])
 
     battle_group_id = Column(Integer, ForeignKey('battlegroup.id'))
     battle_group = relationship("BattleGroup", backref="battles")
     # Is this the "final battle" of the group? Exactly one per group should be true
     battle_group_final = Column(Boolean)
 
-    def __init__(self, date, clan, enemy_clan, victory, draw, creator, battle_commander, map_name, map_province, duration,
-                 description='', replay=None, paid=False):
+    def __init__(self, date, clan, enemy_clan, victory, draw, creator, battle_commander, map_name, map_province,
+                 duration, description='', paid=False):
         self.date = date
         self.clan = clan
         self.enemy_clan = enemy_clan
@@ -247,6 +250,9 @@ class Replay(Base):
     # The replay file
     replay_blob = deferred(Column(Binary))
 
+    associated_battle_id = Column(Integer, ForeignKey('battle.id', use_alter=True, name="add_replay_battle_id"))
+    associated_battle = relationship("Battle", backref="additional_replays", foreign_keys=[associated_battle_id])
+    player_name = Column(String(100)) # Name of the player recording the replay
 
     def __init__(self, replay_blob, replay_pickle):
         self.replay_pickle = replay_pickle

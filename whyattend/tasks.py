@@ -19,8 +19,8 @@ import logging
 from celery import Celery
 from celery.utils.log import get_task_logger
 
-from . import config, model, wotapi
-from .model import Player, WebappData
+from . import config, wotapi
+from .model import Player, WebappData, db_session
 
 celery = Celery(broker=config.CELERY_BROKER_URL)
 celery.conf.update({'CELERY_RESULT_BACKEND': config.CELERY_RESULT_BACKEND})
@@ -28,15 +28,18 @@ celery.conf.update({'CELERY_RESULT_BACKEND': config.CELERY_RESULT_BACKEND})
 logger = get_task_logger(__name__)
 logger.setLevel(logging.INFO)
 
+
 @celery.task(rate_limit='5/s')
 def get_player_info(player_wot_id):
     logger.info("get_player_info(" + player_wot_id + ")")
     return wotapi.get_player(player_wot_id)
 
+
 @celery.task(rate_limit='1/s')
 def get_clan_info(clan_id):
     logger.info("get_clan(" + clan_id + ")")
     return wotapi.get_clan(clan_id)
+
 
 @celery.task(rate_limit='1/m')
 def synchronize_players(clan_id):
@@ -48,7 +51,6 @@ def synchronize_players(clan_id):
     db_session.commit()
     db_session.remove()
 
-    from model import db_session
     clan_info = get_clan_info.delay(str(clan_id)).wait()
     logger.info("Synchronizing " + clan_info['data'][str(clan_id)]['abbreviation'])
     processed = set()
@@ -57,8 +59,9 @@ def synchronize_players(clan_id):
         player_data = get_player_info.delay(str(player['account_id'])).wait()
         p = Player.query.filter_by(wot_id=str(player['account_id'])).first()
         if not player_data:
-            if p: processed.add(p.id) # skip this guy later when locking players
-            continue # API Error?
+            if p:
+                processed.add(p.id)  # skip this guy later when locking players
+            continue  # API Error?
 
         fame_position, fame_points = wotapi.get_fame_position_points(player['account_name'], str(player['account_id']))
 
@@ -70,8 +73,8 @@ def synchronize_players(clan_id):
             processed.add(p.id)
             p.locked = False
             p.clan = clan_info['data'][str(clan_id)]['abbreviation']
-            p.role = player['role'] # role might have changed
-            p.member_since = since # might have rejoined
+            p.role = player['role']  # role might have changed
+            p.member_since = since  # might have rejoined
         else:
             # New player
             p = Player(str(player['account_id']),
@@ -88,7 +91,8 @@ def synchronize_players(clan_id):
 
     # Lock players which are no longer in the clan
     for player in Player.query.filter_by(clan=clan_info['data'][str(clan_id)]['abbreviation']):
-        if player.id in processed or player.id is None or player.locked: continue
+        if player.id in processed or player.id is None or player.locked:
+            continue
         logger.info("Locking player " + player.name)
         player.locked = True
         player.lock_date = datetime.datetime.now()

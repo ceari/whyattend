@@ -5,7 +5,7 @@
 
 
 class ReverseProxied(object):
-    '''Wrap the application in this middleware and configure the
+    """Wrap the application in this middleware and configure the
     front-end server to add these headers, to let you quietly bind
     this to a URL other than / and to an HTTP scheme that is
     different than what is used locally.
@@ -20,7 +20,7 @@ class ReverseProxied(object):
         }
 
     :param app: the WSGI application
-    '''
+    """
 
     def __init__(self, app):
         self.app = app
@@ -34,7 +34,8 @@ class ReverseProxied(object):
                 environ['PATH_INFO'] = path_info[len(script_name):]
 
         server = environ.get('HTTP_X_FORWARDED_SERVER', '')
-        if server: environ['HTTP_HOST'] = server
+        if server:
+            environ['HTTP_HOST'] = server
 
         scheme = environ.get('HTTP_X_SCHEME', '')
         if scheme:
@@ -50,19 +51,19 @@ def pretty_date(d):
     """
     from math import fabs
     from datetime import datetime
+
     now = datetime.now()
     diff = now - d
-    total_seconds = diff.seconds + diff.days * 24*60*60
+    total_seconds = diff.seconds + diff.days * 24 * 60 * 60
     sec = int(fabs(total_seconds))
-    v = sec
 
     if sec < 60:
         v = sec
         unit = 'second' + ('s' if v != 1 else '')
-    elif sec < 60*60:
+    elif sec < 60 * 60:
         v = sec / 60
         unit = 'minute' + ('s' if v != 1 else '')
-    elif sec < 60*60*24:
+    elif sec < 60 * 60 * 24:
         v = sec / 60 / 60
         unit = 'hour' + ('s' if v != 1 else '')
     else:
@@ -70,8 +71,6 @@ def pretty_date(d):
         unit = 'day' + ('s' if v != 1 else '')
 
     if total_seconds < 0:
-        return 'in %i %s' % (v, unit) # future
+        return 'in %i %s' % (v, unit)  # future
     else:
-        return '%i %s ago' % (v, unit) # past
-
-
+        return '%i %s ago' % (v, unit)  # past

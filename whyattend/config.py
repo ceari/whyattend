@@ -30,8 +30,9 @@ CLAN_IDS = {
 UPLOAD_FOLDER = 'tmp/uploads'
 
 # Wargaming.net API token and base URL
+# API tokens can be generated using the Wargaming Developer Partner program
 API_URL = 'http://api.worldoftanks.eu/'
-API_TOKEN = 'd0a293dc77667c9328783d489c8cef73'
+API_TOKEN = ''
 
 # WoT Server region code
 WOT_SERVER_REGION_CODE = 'eu'
@@ -47,7 +48,8 @@ ROLE_LABELS = {
     'recruiter': 'Recruiter',
     'private': 'Soldier',
     'recruit': 'Recruit',
-    'treasurer': 'Treasurer'
+    'treasurer': 'Treasurer',
+    'diplomat': 'Diplomat',
 }
 
 # List of player names that can do everything
@@ -58,6 +60,7 @@ DELETE_BATTLE_ROLES = ('leader', 'vice_leader', 'treasurer')
 PAYOUT_ROLES = ('leader', 'vice_leader', 'treasurer')
 ADMIN_ROLES = ('leader', 'vice_leader', 'commander', 'treasurer')
 PLAYER_PERFORMANCE_ROLES = ('leader', 'vice_leader')
+COMMANDED_ROLES = ('leader', 'vice_leader', 'commander', 'treasurer')
 
 # How long after the battle date should reserves be able to sign in themselves
 RESERVE_SIGNUP_DURATION = datetime.timedelta(days=7)
@@ -84,12 +87,12 @@ MENU_LINKS = [
 
 # The URL prefix for the CW map that battle schedule links should lead to,
 # The province ID gets appended, e.g. "?province=ML_17"
-MAP_URL = "http://worldoftanks.eu/clanwars/maps/eventmap/"
+MAP_URL = "http://worldoftanks.eu/clanwars/maps/globalmap/"
 
 # Subdomain of the CW map Ajax URLs, e.g. "http://cw1.worldoftanks.eu"
 # In EU, cw1 is the regular map, cw2 is the campaign map
-MAP_SUBDOMAIN = "http://cw2.worldoftanks.eu"
-MAP_REGIONS = [1,2,3] # 3 map regions with IDs 1,2,3 in EU
+MAP_SUBDOMAIN = "http://cw1.worldoftanks.eu"
+MAP_REGIONS = [1, 2, 3]  # 3 map regions with IDs 1,2,3 in EU
 
 STATISTICS_VISIBLE = {
     'win_rate_by_commander': True,

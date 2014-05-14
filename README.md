@@ -40,6 +40,10 @@ defines a `max_allowed_packet` size in `my.cnf`, which might have to be increase
 The clan member roles can be synchronized with Wargaming's server by
 opening `/sync-players/<clanid>/?API_KEY=<configured API KEY>`
 
+`config.API_TOKEN` is used to authenticate your application instance with the Wargaming API.
+Tokens can be generated on the Wargaming Developer Partner program website, e.g.
+[https://eu.wargaming.net/developers/](https://eu.wargaming.net/developers/)
+
 `config.API_KEY` should be set to something random and secret, so only you
 can trigger the synchronization.
 
