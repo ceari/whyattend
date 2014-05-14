@@ -243,7 +243,7 @@ def sync_players(clan_id=None):
                 try:
                     fame_position, fame_points = wotapi.get_fame_position_points(player['account_name'], str(player['account_id']))
                 except:
-                    fame_position, fame_points = None, None
+                    fame_position, fame_points = 999999999, 0
 
                 since = datetime.datetime.fromtimestamp(
                     float(member_data['since']))
