@@ -25,7 +25,8 @@ def player_performance(battles, players):
         replay_data = battle.replay.unpickle()
         if not replay_data:
             continue
-        if replay_data['first']['clientVersionFromExe'] == '0, 8, 11 0':
+
+        if replay_data['first']['clientVersionFromExe'] in ('0, 8, 11 0', '0, 9, 0, 0'):
             players_perf = replays.player_performance(replay_data['second'], replay_data['second'][0]['vehicles'],
                                                       replay_data['second'][0]['players'])
         else:
