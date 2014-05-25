@@ -23,7 +23,7 @@ from flask import Flask, g, session, render_template, flash, redirect, request, 
 from flask import Response
 from flask_openid import OpenID
 from flask_cache import Cache
-from sqlalchemy import or_, and_, func
+from sqlalchemy import or_, and_, func, alias
 from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename, Headers
 
@@ -891,22 +891,29 @@ def battles_list_json(clan):
             Battle.enemy_clan.like(search_expression),
         )
 
+    battle_table = alias(Battle.__table__)
     battles = select([Battle, case([(Battle.victory == True, literal('Victory')),
                                     (Battle.draw == True, literal('Draw'))], else_=literal('Defeat')).label('outcome'),
+                      func.ifnull(Battle.battle_group_id, func.UUID()).label('unq_battle_group_id'),
                       players_query.c.players.label('players'), reserves_query.c.reserves.label('reserves'),
                       Player.name.label('commander_name'),
                       Player.role.label('commander_role'),
                       case([(Battle.id.in_(has_player_query), True)], else_=False).label('was_player'),
                       case([(Battle.id.in_(has_reserve_query), True)], else_=False).label('was_reserve')],
                      and_(Battle.clan == clan,
+                          (or_(Battle.date == select([func.max(battle_table.c.date)],
+                                                     Battle.battle_group_id == battle_table.c.battle_group_id
+                          ),
+                               Battle.battle_group_id == None)),
                           search_term,
                           (Battle.enemy_clan == enemy_clan if enemy_clan else True))) \
         .select_from(Battle.__table__.outerjoin(players_query, players_query.c.battle_id == Battle.id)
                      .outerjoin(reserves_query, reserves_query.c.battle_id == Battle.id)
-                     .outerjoin(Player.__table__, Player.__table__.c.id == Battle.battle_commander_id))
+                     .outerjoin(Player.__table__, Player.__table__.c.id == Battle.battle_commander_id)) \
+        .group_by('unq_battle_group_id')
 
-    for col, dir in sort_columns:
-        dir_op = desc if dir == 'desc' else asc
+    for col, sort_dir in sort_columns:
+        dir_op = desc if sort_dir == 'desc' else asc
 
         if col == 0:
             battles = battles.order_by(dir_op(Battle.id))
