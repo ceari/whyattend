@@ -1414,6 +1414,7 @@ def payout_battles(clan):
     battles = battles.all()
 
     clan_members = Player.query.filter_by(clan=clan, locked=False).all()
+    player_fced = defaultdict(int)
     player_fced_win = defaultdict(int)
     player_fced_defeat = defaultdict(int)
     player_fced_draws = defaultdict(int)
@@ -1435,6 +1436,7 @@ def payout_battles(clan):
 
         battle_commander = battle.battle_commander
         if not battle_commander.locked:
+            player_fced[battle_commander] += 1
             if battle.victory:
                 player_fced_win[battle_commander] += 1
             elif battle.draw:
@@ -1460,7 +1462,7 @@ def payout_battles(clan):
 
     players = set()
     for p in clan_members:
-        if player_played[p] or player_reserve[p] or player_fced_win[p] or player_fced_defeat[p]:
+        if player_played[p] or player_reserve[p] or player_fced[p]:
             players.add(p)
 
     player_points = dict()
