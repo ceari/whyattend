@@ -414,20 +414,21 @@ def create_profile():
             return render_template('create_profile.html', next_url=oid.get_next_url())
 
         player_data = wotapi.get_player(wot_id)
-        if not player_data or not player_data['data'][str(wot_id)] or not player_data['data'][str(wot_id)]['clan']:
+        player_clan_info = wotapi.get_players_membership_info([wot_id])
+        if not player_data or not player_data['data'][str(wot_id)]:
             flash(u'Error: Could not retrieve player information from Wargaming. Contact an admin for help :-)',
                   'error')
             return render_template('create_profile.html', next_url=oid.get_next_url())
 
         clan_ids_to_name = dict((v, k) for k, v in config.CLAN_IDS.iteritems())
-        clan_id = str(player_data['data'][str(wot_id)]['clan']['clan_id'])
+        clan_id = str(player_clan_info['data'][str(wot_id)]['clan_id'])
         clan = clan_ids_to_name[str(clan_id)]
         if clan_id not in config.CLAN_IDS.values():
             flash(u'You have to be in one of the clans to login', 'error')
             return render_template('create_profile.html', next_url=oid.get_next_url())
 
-        role = player_data['data'][str(wot_id)]['clan']['role']
-        member_since = datetime.datetime.fromtimestamp(float(player_data['data'][str(wot_id)]['clan']['since']))
+        role = player_clan_info['data'][str(wot_id)]['role']
+        member_since = datetime.datetime.fromtimestamp(float(player_clan_info['data'][str(wot_id)]['since']))
         if not role:
             flash(u'Error: Could not retrieve player role from wargaming server', 'error')
             return render_template('create_profile.html', next_url=oid.get_next_url())

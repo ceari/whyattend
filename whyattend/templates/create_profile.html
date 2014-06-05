@@ -7,10 +7,9 @@
     and we just need your confirmation to go ahead and create an account for you.</p>
   <form action="{{url_for('create_profile')}}" method=post>
       <input class="btn btn-default" type=submit value="Create account">
-      <input type=hidden name=next value="{{ next }}">
+      <input type=hidden name=next value="{{ next_url }}">
       <input name=_csrf_token type=hidden value="{{ csrf_token() }}">
   </form>
   <p>
-    If you don't want to proceed, you can <a href="{{ url_for('logout')
-    }}">sign out</a> again.
+    If you don't want to proceed, you can <a href="{{ url_for('logout')}}">sign out</a> again.
 {% endblock %}
