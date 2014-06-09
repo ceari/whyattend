@@ -140,6 +140,7 @@ def inject_constants():
     g.MENU_LINKS = config.MENU_LINKS
     g.MAP_URL = config.MAP_URL
     g.STORE_REPLAYS_IN_DB = config.STORE_REPLAYS_IN_DB
+    g.DOWNLOAD_REPLAY_ROLES = config.DOWNLOAD_REPLAY_ROLES
 
 
 def require_login(f):
@@ -1257,6 +1258,7 @@ def unsign_as_reserve(battle_id):
 
 @app.route('/battles/<int:battle_id>/download-replay/')
 @require_login
+@require_role(roles=config.DOWNLOAD_REPLAY_ROLES)
 def download_replay(battle_id):
     """
         Replay download handler. Returns the requested replay blob as binary download.
@@ -1279,6 +1281,7 @@ def download_replay(battle_id):
 
 @app.route('/replays/download/<int:replay_id>')
 @require_login
+@require_role(roles=config.DOWNLOAD_REPLAY_ROLES)
 def download_additional_replay(replay_id):
     """
         Replay download handler. Returns the requested replay blob as binary download.
@@ -1313,6 +1316,7 @@ def delete_replay(replay_id):
 
 @app.route('/battles/download-replays')
 @require_login
+@require_role(roles=config.DOWNLOAD_REPLAY_ROLES)
 def download_replays():
     battle_ids = map(int, request.args.getlist('ids[]'))
     if not battle_ids:

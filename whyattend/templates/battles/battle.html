@@ -133,13 +133,13 @@
         </dl>
         {% endif %}
     </div>
-    {% if battle.replay and battle.replay.replay_blob %}
+    {% if battle.replay and battle.replay.replay_blob and (g.player.name in g.ADMINS or g.player.role in g.DOWNLOAD_REPLAY_ROLES) %}
     <dl>
         <dt>Replay</dt>
         <dd><a href="{{url_for('download_replay', battle_id=battle.id)}}"><i class="icon-download"></i> Download</a></dd>
     </dl>
     {% endif %}
-    {% if battle.additional_replays %}
+    {% if battle.additional_replays and (g.player.name in g.ADMINS or g.player.role in g.DOWNLOAD_REPLAY_ROLES) %}
     <h5>Additional replays</h5>
     <ul>
     {% for replay in battle.additional_replays %}

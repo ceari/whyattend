@@ -121,7 +121,9 @@
       <tbody>
       </tbody>
   </table>
+  {% if g.player.name in g.ADMINS or g.player.role in g.DOWNLOAD_REPLAY_ROLES %}
   <div id="download_div">
     <a id="download" href="#"><i class="icon-download"></i> Download replays</a>
   </div>
+  {% endif %}
 {% endblock %}
