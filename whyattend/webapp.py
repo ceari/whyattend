@@ -26,6 +26,7 @@ from flask_cache import Cache
 from sqlalchemy import or_, and_, func, alias
 from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename, Headers
+from pytz import timezone
 
 from . import config, replays, wotapi, util, constants, analysis
 from .model import Player, Battle, BattleAttendance, Replay, BattleGroup, db_session, WebappData
@@ -656,6 +657,8 @@ def create_battle():
     all_players = Player.query.filter_by(clan=g.player.clan, locked=False).order_by('lower(name)').all()
     sorted_players = sorted(all_players, reverse=True, key=lambda p: p.player_role_value())
 
+    # User's timezone either from his saved settings or the server timezone as default
+    usertimezone = session.get('usertimezone', config.SERVER_TIMEZONE)
     # Prefill form with data from replay
     enemy_clan = ''
     players = []
@@ -725,6 +728,7 @@ def create_battle():
         map_name = request.form.get('map_name', '')
         province = request.form.get('province', '')
         enemy_clan = request.form.get('enemy_clan', '')
+        usertimezone = request.form.get('usertimezone', config.SERVER_TIMEZONE)
         battle_result = request.form.get('battle_result', '')
         battle_commander = Player.query.get(int(request.form['battle_commander']))
         description = request.form.get('description', '')
@@ -789,6 +793,11 @@ def create_battle():
                 errors = True
 
         if not errors:
+            server_tz = timezone(config.SERVER_TIMEZONE)
+            user_tz = timezone(usertimezone)
+            date = user_tz.localize(date).astimezone(server_tz)
+            session['usertimezone'] = usertimezone # Remember selected timezone
+
             battle = Battle(date, g.player.clan, enemy_clan, victory=(battle_result == 'victory'),
                             map_name=map_name, map_province=province,
                             draw=(battle_result == 'draw'), creator=g.player,
@@ -821,7 +830,7 @@ def create_battle():
             return redirect(url_for('battles_list', clan=g.player.clan))
 
     return render_template('battles/create.html', CLAN_NAMES=config.CLAN_NAMES, all_players=all_players,
-                           players=players,
+                           players=players, USER_TIMEZONES=config.USER_TIMEZONES, usertimezone=usertimezone,
                            enemy_clan=enemy_clan, filename=filename, folder=folder, replay=replay,
                            battle_commander=battle_commander,
                            map_name=map_name, province=province, description=description, replays=replays,

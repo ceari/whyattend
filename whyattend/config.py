@@ -10,6 +10,13 @@
 
 import datetime
 
+# Set timezone of the server. Europe/Amsterdam for EU cluster.
+SERVER_TIMEZONE = 'Europe/Amsterdam'
+# List of possible timezones for users to select when creating battles.
+USER_TIMEZONES = ('Europe/Amsterdam',
+                  'Europe/London',
+                  'Europe/Helsinki')
+
 # Database URI (see http://docs.sqlalchemy.org/en/latest/core/engines.html#supported-databases)
 DATABASE_URI = 'sqlite:///../tmp/test.db'
 # DATABASE_URI = 'mysql://user@host/database?charset=utf8&use_unicode=0' # forces UTF-8 encoding in DB

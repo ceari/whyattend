@@ -83,6 +83,17 @@
               </div>
 
               <div class="form-group">
+                  <label for="usertimezone" class="col-lg-2 control-label">Timezone</label>
+                  <div class="col-lg-10">
+                  <select class="form-control" id="usertimezone" name="usertimezone">
+                      {% for tz in USER_TIMEZONES %}
+                      <option value="{{tz}}" {{'selected="selected"' if tz==usertimezone else ''}}>{{tz}}</option>
+                      {% endfor %}
+                  </select>
+                  </div>
+              </div>
+
+              <div class="form-group">
                 <label for="map_name" class="col-lg-2 control-label">Duration (sec)</label>
                 <div class="col-lg-10">
                 <input  class="form-control" type="text" id="duration" name="duration" value="{{duration}}">
