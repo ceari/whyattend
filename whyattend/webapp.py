@@ -947,9 +947,8 @@ def battles_list_json(clan):
         elif col == 9:
             battles = battles.order_by(dir_op(battles.c.reserves))
 
+    battle_count = db_session.execute(select([func.count()]).select_from(battles.alias('battles'))).first()[0]
     battles = list(db_session.execute(battles.offset(offset).limit(limit)))
-    battle_count = Battle.query.filter_by(clan=clan).filter(
-        Battle.enemy_clan == enemy_clan if enemy_clan else True).count()
 
     def make_row(battle):
         if battle.battle_group_id:
