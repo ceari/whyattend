@@ -38,6 +38,7 @@ class Player(Base):
     locked = Column(Boolean)        # set to true if player left the clan. Login is no longer possible then.
     lock_date = Column(DateTime)    # When did the player leave
     email = Column(String(100), default='')
+    phone = Column(String(100), default='')
 
     gold_earned = Column(Integer)
 

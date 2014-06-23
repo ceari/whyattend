@@ -95,6 +95,12 @@
         </div>
       </div>
       <div class="form-group">
+        <label class="col-sm-2 control-label" for="phone">Phone number</label>
+        <div class="col-sm-4">
+            <input type="phone" class="form-control" name="phone" id="phone" placeholder="+49 123 56789" value="{{g.player.phone or ''}}">
+        </div>
+      </div>
+      <div class="form-group">
           <div class="col-sm-offset-2 col-sm-10">
              <button type="submit" class="btn btn-default">Save</button>
           </div>

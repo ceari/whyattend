@@ -11,6 +11,8 @@
           {% if g.player and (g.player.name in g.ADMINS or g.player.role in g.ADMIN_ROLES) %}
           <dt><abbr title="Only visible to admins">e-mail</abbr></dt>
           <dd>{{player.email}}</dd>
+          <dt><abbr title="Only visible to admins">Phone</abbr></dt>
+          <dd>{{player.phone}}</dd>
           {% endif %}
           <dt>Position</dt>
           <dd><span class="{{player.role}}">{{g.roles[player.role]}}</span></dd>

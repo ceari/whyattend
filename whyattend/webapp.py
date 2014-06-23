@@ -1819,6 +1819,7 @@ def profile():
 
     if request.method == 'POST':
         g.player.email = request.form.get('email', '')
+        g.player.phone = request.form.get('phone', '')
         db_session.add(g.player)
         db_session.commit()
     return render_template('players/profile.html', played_battles=played_battles, performance=performance,
