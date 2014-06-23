@@ -1717,8 +1717,9 @@ def clan_statistics(clan):
         win_ratio_by_map[map_name] = float(victories_by_map[map_name]) / battles_by_map[map_name]
 
     enemies_by_battle_count = defaultdict(int)
-    for enemy_clan in battles_by_enemy:
-        enemies_by_battle_count[battles_by_enemy[enemy_clan]] += 1
+    for bc in range(max(battles_by_enemy.values())):
+        enemies_by_battle_count[bc] = len([enemy_clan for enemy_clan in battles_by_enemy if
+                                       battles_by_enemy[enemy_clan] >= bc])
 
     battle_count_cutoff = 0
     for battle_count in range(1, max(battles_by_enemy.values())):
