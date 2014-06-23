@@ -5,7 +5,7 @@
     <ul>
         {% if g.player.name in g.ADMINS %}<li><a href="{{ url_for('sync_players', clan_id=g.clan_ids[g.player.clan]) }}?API_KEY={{ API_KEY }}">Trigger Clan Synchronisation for {{g.player.clan}}</a> (wait for the page to load, can take a few minutes)</li>{% endif %}
         {% if g.player.name in g.ADMINS %}<li><a href="{{ url_for('sync_players') }}?API_KEY={{ API_KEY }}">Trigger Clan Synchronisation for all managed clans</a> (wait for the page to load, can take a few minutes)</li>{% endif %}
-        <li><a href="{{url_for('export_emails', clan=g.player.clan)}}">Export player e-mail addresses (CSV)</a></li>
+        <li><a href="{{url_for('export_profiles', clan=g.player.clan)}}">Export player profile details (e-mail, phone) as CSV</a></li>
         <li>Last player synchronisation attempt: {{webapp_data.last_sync_attempt.strftime('%d.%m.%Y %H:%M:%S') if webapp_data.last_sync_attempt else 'Never'}}</li>
         <li>Last successful player synchronisation: {{webapp_data.last_successful_sync.strftime('%d.%m.%Y %H:%M:%S') if webapp_data.last_successful_sync else 'Never'}}</li>
     </ul>

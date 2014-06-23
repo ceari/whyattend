@@ -1826,23 +1826,23 @@ def profile():
                            battles_per_day=battles_per_day, player_battles_per_day=player_battles_per_day)
 
 
-@app.route('/admin/export-emails/<clan>')
+@app.route('/admin/export-profiles/<clan>')
 @require_login
 @require_clan_membership
 @require_role(config.ADMIN_ROLES)
-def export_emails(clan):
-    """ Return names and email addresses as CSV file """
+def export_profiles(clan):
+    """ Return names, email addresses and phone numbers as CSV file """
     csv_response = StringIO()
     csv_writer = csv.writer(csv_response)
-    csv_writer.writerow(["Name", "e-mail"])
+    csv_writer.writerow(["Name", "e-mail", "phone"])
 
-    for player in Player.query.filter_by(locked=False, clan=clan).order_by('email'):
-        csv_writer.writerow([player.name, player.email])
+    for player in Player.query.filter_by(locked=False, clan=clan).order_by('name'):
+        csv_writer.writerow([player.name, player.email, player.phone])
 
     headers = Headers()
     headers.add('Content-Type', 'text/csv')
     headers.add('Content-Disposition', 'attachment',
-                filename=secure_filename(clan + "_emails.csv"))
+                filename=secure_filename(clan + "_profiles.csv"))
     return Response(response=csv_response.getvalue(), headers=headers)
 
 
