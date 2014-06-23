@@ -1146,6 +1146,29 @@ def clan_players(clan):
                     reserve30[player] += 1
                     present30[player] += 1
 
+    if request.args.has_key('csv'):
+        csv_response = StringIO()
+        csv_writer = csv.writer(csv_response)
+        csv_writer.writerow(["Name", "Position", "Member Since", "Played", "Reserve", "#possible", "Played",
+                             "Presence", "30 Days Presence", "Last Battle", "Gold paid"])
+
+        for player in sorted(players, key=lambda p: p.name):
+            csv_writer.writerow([player.name, g.roles[player.role], player.member_since.strftime('%d.%m.%Y %H:%M'),
+                                 played[player], reserve[player], possible[player],
+                                 '%i' % (played[player] / possible[player] * 100.0 if possible[player] else 0),
+                                 '%i' % (present[player] / possible[player] * 100.0 if possible[player] else 0),
+                                 '%i' % (present30[player] / possible30[player] * 100.0 if possible30[player] else 0),
+                                 last_battle_by_player[player].date.strftime('%d.%m.%Y %H:%M') if
+                                    last_battle_by_player[player] else '',
+                                 player.gold_earned
+            ])
+
+        headers = Headers()
+        headers.add('Content-Type', 'text/csv')
+        headers.add('Content-Disposition', 'attachment',
+                    filename=secure_filename(clan + "_players.csv"))
+        return Response(response=csv_response.getvalue(), headers=headers)
+
     return render_template('players/players.html', clan=clan, players=players,
                            played=played, present=present, possible=possible, reserve=reserve,
                            played30=played30, present30=present30, possible30=possible30,
