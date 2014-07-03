@@ -26,7 +26,10 @@ def player_performance(battles, players):
         if not replay_data:
             continue
 
-        if replay_data['first']['clientVersionFromExe'] in ('0, 8, 11 0', '0, 9, 0, 0'):
+        replay_version_tokens = replay_data['first']['clientVersionFromExe'].split(",")
+        replay_major_version = int(replay_version_tokens[1])
+        replay_minor_version = int(replay_version_tokens[2])
+        if replay_major_version > 8 or (replay_major_version == 8 and replay_minor_version >= 11):
             players_perf = replays.player_performance(replay_data['second'], replay_data['second'][0]['vehicles'],
                                                       replay_data['second'][0]['players'])
         else:
