@@ -1630,8 +1630,10 @@ def players_commanded(clan):
 @require_login
 @require_role(config.COMMANDED_ROLES)
 def players_commanded_json():
-    from_date = request.args.get('fromDate', None) or abort(404)
-    to_date = request.args.get('toDate', None) or abort(404)
+    from_date = request.args.get('fromDate', None)
+    to_date = request.args.get('toDate', None)
+    if not from_date or not to_date:
+        return jsonify([])
 
     from_date = datetime.datetime.strptime(from_date, '%d.%m.%Y')
     to_date = datetime.datetime.strptime(to_date, '%d.%m.%Y') + datetime.timedelta(days=1)
