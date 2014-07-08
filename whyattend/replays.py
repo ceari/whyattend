@@ -59,7 +59,14 @@ def players_list(replay_json, team):
     :param team: 1 for first, 2 for second team
     :return:
     """
-    return [v for v in replay_json['second'][1].values() if v['team'] == team]
+    vehicles = [v for v in replay_json['second'][1].values() if v['team'] == team]
+    for v in vehicles:
+        if len(v['vehicleType'].split(":")) == 2:
+            v['vehicleType'] = v['vehicleType'].split(":")[1].replace("_", " ")
+        else:
+            # not spotted?
+            v['vehicleType'] = None
+    return vehicles
 
 
 def player_won(replay_json):
