@@ -19,7 +19,14 @@
 
               <ul style="padding-left: 5px;">
                   {% for player in replays.players_list(replay, 1)|sort %}
-                    <li>[{{player.clanAbbrev}}] {{player.name}}</li>
+                    <li>[{{player.clanAbbrev}}] {{player.name}}
+                        {% if player.vehicleType.split(":")|length == 2 %}
+                        (<span style="color: {{'green' if player.isAlive else 'red'}}">
+                        {{player.vehicleType.split(":")[1].replace("_", " ")}})</span>
+                        {% else %}
+                         (<span style="color: green">not spotted</span>)
+                        {% endif %}
+                    </li>
                   {% endfor %}
               </ul>
       </div>
@@ -28,7 +35,13 @@
           <strong>Team 2</strong>
               <ul style="padding-left: 5px;">
                   {% for player in replays.players_list(replay, 2)|sort %}
-                    <li>[{{player.clanAbbrev}}] {{player.name}}</li>
+                    <li>[{{player.clanAbbrev}}] {{player.name}}
+                        {% if player.vehicleType.split(":")|length == 2 %}
+                        (<span style="color: {{'green' if player.isAlive else 'red'}}">
+                        {{player.vehicleType.split(":")[1].replace("_", " ")}})</span>
+                        {% else %}
+                         (<span style="color: green">not spotted</span>)
+                        {% endif %}
                   {% endfor %}
               </ul>
       </div>

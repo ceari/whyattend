@@ -74,7 +74,7 @@
 {% block content %}
     <h2>Battle details <img style="width:32px; height:32px;" src="{{url_for('static', filename='img/clanicons/' + battle.clan + '.png')}}"/> {{battle.clan}}  vs. {{battle.enemy_clan}}</h2>
     <div class="row">
-        <dl class="col-lg-3">
+        <dl class="col-lg-2">
             <dt>Battle added by</dt>
             <dd><a href="{{url_for('player_details', player_id=battle.creator.id)}}"><span class="{{battle.creator.role}}">{{battle.creator.name}}</span></a></dd>
             <dt>Outcome</dt>
@@ -126,7 +126,7 @@
             {% endif %}
         </dl>
         {% if battle.replay.unpickle() %}
-        <dl class="col-lg-5">
+        <dl class="col-lg-6">
             <strong>Replay Details</strong>
             {% set replay = battle.replay.unpickle() %}
             {% include "replay_details.html" %}
