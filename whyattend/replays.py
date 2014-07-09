@@ -8,6 +8,7 @@
 import json
 import struct
 import pickle
+from copy import copy
 
 from .constants import WOT_TANKS
 
@@ -59,9 +60,9 @@ def players_list(replay_json, team):
     :param team: 1 for first, 2 for second team
     :return:
     """
-    vehicles = [v for v in replay_json['second'][1].values() if v['team'] == team]
+    vehicles = [copy(v) for v in replay_json['second'][1].values() if v['team'] == team]
     for v in vehicles:
-        if len(v['vehicleType'].split(":")) == 2:
+        if v['vehicleType'] and len(v['vehicleType'].split(":")) == 2:
             v['vehicleType'] = v['vehicleType'].split(":")[1].replace("_", " ")
         else:
             # not spotted?
