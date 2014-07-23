@@ -1798,7 +1798,7 @@ def player_performance(clan):
 def profile():
     """ Player profile page """
     clan_battles_query = Battle.query.filter_by(clan=g.player.clan)
-    played_battles = Battle.query.join(Battle.attendances).filter(Battle.attendances.any(player_id=g.player.id)) \
+    played_battles = Battle.query.join(Battle.attendances).filter(BattleAttendance.player_id == g.player.id) \
         .filter(BattleAttendance.reserve == False).distinct()
 
     performance = analysis.player_performance(played_battles, [g.player])
