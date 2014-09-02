@@ -815,7 +815,11 @@ def create_battle():
                 battle.replay = Replay(None, pickle.dumps(replay))
 
             battle.replay.player_name = replay['first']['playerName']
-            battle.score_own_team, battle.score_enemy_team = replays.score(replay)
+            if replay['second']:
+                battle.score_own_team, battle.score_enemy_team = replays.score(replay)
+            else:
+                battle.score_own_team, battle.score_enemy_team = 0, 0
+
 
             for player_id in players:
                 player = Player.query.get(player_id)
