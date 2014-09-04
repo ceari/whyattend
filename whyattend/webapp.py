@@ -1723,7 +1723,7 @@ def clan_statistics(clan):
             wins_by_enemy[battle.enemy_clan] += 1
             victories_by_map[battle.map_name] += 1
             wins_by_commander[battle.battle_commander] += 1
-    map_battles = list(battles_by_map.iteritems())
+    map_battles = sorted(list(battles_by_map.iteritems()), key=lambda m: m[1])
 
     win_ratio_by_commander = dict(
         (c, wins_by_commander[c] / float(battles_by_commander[c])) for c in battles_by_commander

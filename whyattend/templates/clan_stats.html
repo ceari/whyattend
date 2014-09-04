@@ -167,6 +167,7 @@
             </div>
         </div></div>
     </div>
+
     <div class="row">
         <div class="panel panel-default">
         <div style="min-height: 170px;" class="panel-body">
@@ -188,6 +189,27 @@
         </div>
         </div></div>
     </div>
+
+    <div class="row">
+        <div class="panel panel-default">
+        <div style="min-height: 170px;" class="panel-body">
+            <div class="col-lg-12">
+                <h4>Maps played</h4>
+                <table class="table table-striped">
+                    <thead>
+                        <tr><th>Map</th><th>Times played</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for map in map_battles|reverse %}
+                    <tr><td>{{map.0}}</td><td>{{map.1}}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div></div>
+    </div>
+
     <div class="row">
         <div class="panel panel-default">
         <div style="min-height: 170px;" class="panel-body">
