@@ -53,6 +53,9 @@ class Player(Base):
         self.locked = locked
         self.email = ''
 
+    def is_recruit(self):
+        return self.role == 'recruit'
+
     def battles_played(self):
         return BattleAttendance.query.filter_by(player=self, reserve=False)
 

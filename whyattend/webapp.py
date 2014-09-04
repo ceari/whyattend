@@ -1440,11 +1440,13 @@ def payout_battles(clan):
         to_date = request.form['toDate']
         gold = int(request.form['gold'])
         victories_only = request.form.get('victories_only', False)
+        recruit_factor = request.form['recruit_factor']
     else:
         from_date = request.args.get('fromDate')
         to_date = request.args.get('toDate')
         gold = int(request.args.get('gold'))
         victories_only = request.args.get('victories_only', False) == 'on'
+        recruit_factor = float(request.args.get('recruit_factor'))
 
     from_date = datetime.datetime.strptime(from_date, '%d.%m.%Y')
     to_date = datetime.datetime.strptime(to_date, '%d.%m.%Y') + datetime.timedelta(days=1)
@@ -1511,15 +1513,23 @@ def payout_battles(clan):
     for p in players:
         player_points[p] = player_fced_win[p] * 6 + player_fced_defeat[p] * 4 + player_fced_draws[p] * 2 + \
                            player_victories[p] * 3 + player_defeats[p] * 2 + player_draws[p] * 2 + player_reserve[p]
+
     total_points = sum(player_points[p] for p in players)
+    recruit_points = sum(player_points[p] for p in players if p.is_recruit())
+    others_points = total_points - recruit_points
+    others_gold_per_point = float(gold) / (recruit_factor * recruit_points + others_points)
+    recruit_gold_per_point = recruit_factor * others_gold_per_point
     player_gold = dict()
     for p in players:
-        player_gold[p] = int(round(player_points[p] / float(total_points) * gold))
+        if p.is_recruit():
+            player_gold[p] = int(round(player_points[p] * recruit_gold_per_point))
+        else:
+            player_gold[p] = int(round(player_points[p] * others_gold_per_point))
 
     return render_template('payout/payout_battles.html', battles=battles, clan=clan, fromDate=from_date, toDate=to_date,
                            player_played=player_played, player_reserve=player_reserve, players=players,
                            player_gold=player_gold, gold=gold, player_defeats=player_defeats,
-                           player_fced_win=player_fced_win, victories_only=victories_only,
+                           player_fced_win=player_fced_win, victories_only=victories_only, recruit_factor=recruit_factor,
                            player_fced_defeat=player_fced_defeat, player_victories=player_victories,
                            player_fced_draws=player_fced_draws, player_draws=player_draws, player_points=player_points)
 
