@@ -424,10 +424,12 @@ def create_profile():
 
         clan_ids_to_name = dict((v, k) for k, v in config.CLAN_IDS.iteritems())
         clan_id = str(player_clan_info['data'][str(wot_id)]['clan_id'])
-        clan = clan_ids_to_name[str(clan_id)]
+
         if clan_id not in config.CLAN_IDS.values():
             flash(u'You have to be in one of the clans to login', 'error')
             return render_template('create_profile.html', next_url=oid.get_next_url())
+
+        clan = clan_ids_to_name[str(clan_id)]
 
         role = player_clan_info['data'][str(wot_id)]['role']
         member_since = datetime.datetime.fromtimestamp(float(player_clan_info['data'][str(wot_id)]['since']))
