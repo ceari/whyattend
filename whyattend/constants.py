@@ -42,7 +42,12 @@ MAP_EN_NAME_BY_ID = {
     "85_winter": "Belogorsk-19",
     "73_asia_korea": "Sacred Valley",
     "60_asia_miao": "Pearl River",
-    "00_tank_tutorial": "Training area"
+    "00_tank_tutorial": "Training area",
+    "86_himmelsdorf_winter": "Himmelsdorf Winter",
+    "87_ruinberg_on_fire": "Ruinberg on Fire",
+    "63_tundra": "Tundra",
+    "84_winter": "Windstorm",
+    "83_kharkiv": "Kharkov"
 }
 
 
