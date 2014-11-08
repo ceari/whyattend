@@ -130,19 +130,21 @@
         #fromDate { width: 150px; }
         #toDate {width: 150px; }
         #gold {width: 150px; }
-        #recruit_factor {width: 50px; }
+        #recruit_factor {width: 70px; }
+        #points_per_resource {width: 70px; }
         form {margin-bottom: 20px; }
     </style>
 {% endblock %}
 {% block content %}
     <h2>Payout <img style="width:32px; height:32px;" src="{{url_for('static', filename='img/clanicons/' + clan + '.png')}}"> </h2>
     <h4><a href="{{url_for('reserve_conflicts', clan=clan)}}">Show reserve player conflicts</a></h4>
-    <form class="form-inline" action="{{url_for('payout_battles', clan=clan)}}" method="GET">
-    From <input class="form-control" type="datetime" id="fromDate" name="fromDate" placeholder="dd.mm.yyyy">
+    <form class="form" action="{{url_for('payout_battles', clan=clan)}}" method="GET">
+        From <input class="form-control" type="datetime" id="fromDate" name="fromDate" placeholder="dd.mm.yyyy">
         to <input class="form-control" type="datetime" id="toDate" name="toDate" placeholder="dd.mm.yyyy">
-        Victories only: <input type="checkbox" name="victories_only" id="victories_only">
+        Victories only: <input type="checkbox" name="victories_only" id="victories_only"><br/>
         Gold: <input id="gold" class="form-control" type="text" name="gold" placeholder="amount of gold" value="0">
         Gold/Point factor for recruits: <input id="recruit_factor" class="form-control" type="text" name="recruit_factor" placeholder="Factor for 'gold per point' for recruits" value="1.0">
+        Points per resource: <input id="points_per_resource" class="form-control" type="text" name="points_per_resource" placeholder="Points per resource" value="0.01">
     <h4>Battles in the selected range:</h4>
     <table class="table" id="battles">
         <thead>

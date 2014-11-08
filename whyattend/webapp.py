@@ -654,7 +654,6 @@ def edit_battle(battle_id):
 def create_battle():
     """
         Create battle form.
-    :return:
     """
     all_players = Player.query.filter_by(clan=g.player.clan, locked=False).order_by('lower(name)').all()
     sorted_players = sorted(all_players, reverse=True, key=lambda p: p.player_role_value())
@@ -670,6 +669,7 @@ def create_battle():
     map_name = ''
     province = ''
     duration = 15 * 60
+    stronghold = False
     battle_commander = None
     date = datetime.datetime.now()
     battle_groups = BattleGroup.query.filter_by(clan=g.player.clan).order_by('date').all()
@@ -702,13 +702,14 @@ def create_battle():
             if g.player in players:
                 battle_commander = g.player.id
             date = datetime.datetime.strptime(replay['first']['dateTime'], '%d.%m.%Y %H:%M:%S')
+            stronghold = replays.is_stronghold(replay)
 
             if not replay['second']:
                 flash(u'Error: Uploaded replay file is incomplete (Battle was left before it ended). ' +
                       u'Can not determine all information automatically.', 'error')
-            elif not replays.is_cw(replay):
+            elif not replays.is_cw(replay) and not replays.is_stronghold(replay):
                 flash(
-                    u'Error: Uploaded replay file is probably not from a clan war '
+                    u'Error: Uploaded replay file is probably not from a clan war or stronghold battle '
                     u'(Detected different clan tags in one of the team' +
                     u' or players from the same clan on both sides)', 'error')
             else:
@@ -735,7 +736,7 @@ def create_battle():
         battle_commander = Player.query.get(int(request.form['battle_commander']))
         description = request.form.get('description', '')
         duration = request.form.get('duration', 15 * 60)
-        battle_group = int(request.form['battle_group'])
+        battle_group = request.form.get('battle_group', -2)
         battle_group_title = request.form.get('battle_group_title', '')
         battle_group_description = request.form.get('battle_group_description', '')
         battle_group_final = request.form.get('battle_group_final', '') == 'on'
@@ -806,6 +807,9 @@ def create_battle():
                             battle_commander=battle_commander, description=description,
                             duration=duration)
 
+            if replays.is_stronghold(replay):
+                battle.stronghold = True
+
             if bg:
                 battle.battle_group_final = battle_group_final
                 battle.battle_group = bg
@@ -822,12 +826,13 @@ def create_battle():
             else:
                 battle.score_own_team, battle.score_enemy_team = 0, 0
 
-
             for player_id in players:
                 player = Player.query.get(player_id)
                 if not player:
                     abort(404)
                 ba = BattleAttendance(player, battle, reserve=False)
+                if battle.stronghold:
+                    ba.resources_earned = replays.resources_earned(replay['second'], player.wot_id)
                 db_session.add(ba)
 
             db_session.add(battle)
@@ -843,7 +848,7 @@ def create_battle():
                            battle_result=battle_result, date=date, battle_groups=battle_groups,
                            battle_group=battle_group, battle_group_title=battle_group_title, duration=duration,
                            battle_group_description=battle_group_description, battle_group_final=battle_group_final,
-                           sorted_players=sorted_players, battle_group_id=battle_group_id)
+                           sorted_players=sorted_players, battle_group_id=battle_group_id, stronghold=stronghold)
 
 
 @app.route('/battles/list/<clan>')
@@ -957,7 +962,9 @@ def battles_list_json(clan):
     battles = list(db_session.execute(battles.offset(offset).limit(limit)))
 
     def make_row(battle):
-        if battle.battle_group_id:
+        if battle.stronghold:
+            type = "Stronghold"
+        elif battle.battle_group_id:
             type = '<a href="' + url_for('battle_group_details', group_id=battle.battle_group_id) + '">'
             if battle.battle_group_final:
                 type += 'Final'
@@ -1441,12 +1448,14 @@ def payout_battles(clan):
         gold = int(request.form['gold'])
         victories_only = request.form.get('victories_only', False)
         recruit_factor = request.form['recruit_factor']
+        points_per_resource = float(request.form['points_per_resource'])
     else:
         from_date = request.args.get('fromDate')
         to_date = request.args.get('toDate')
         gold = int(request.args.get('gold'))
         victories_only = request.args.get('victories_only', False) == 'on'
         recruit_factor = float(request.args.get('recruit_factor'))
+        points_per_resource = float(request.args.get('points_per_resource'))
 
     from_date = datetime.datetime.strptime(from_date, '%d.%m.%Y')
     to_date = datetime.datetime.strptime(to_date, '%d.%m.%Y') + datetime.timedelta(days=1)
@@ -1467,6 +1476,8 @@ def payout_battles(clan):
     player_victories = defaultdict(int)
     player_defeats = defaultdict(int)
     player_draws = defaultdict(int)
+    player_resources = defaultdict(int)
+
     for battle in battles:
         if battle.battle_group and not battle.battle_group_final:
             continue  # only finals count
@@ -1477,6 +1488,11 @@ def payout_battles(clan):
         else:
             battle_players = battle.get_players()
             battle_reserves = battle.get_reserve_players()
+
+        if battle.stronghold:
+            for ba in battle.attendances:
+                player_resources[ba.player] += ba.resources_earned
+            continue
 
         battle_commander = battle.battle_commander
         if not battle_commander.locked:
@@ -1506,13 +1522,14 @@ def payout_battles(clan):
 
     players = set()
     for p in clan_members:
-        if player_played[p] or player_reserve[p] or player_fced[p]:
+        if player_played[p] or player_reserve[p] or player_fced[p] or player_resources[p]:
             players.add(p)
 
     player_points = dict()
     for p in players:
         player_points[p] = player_fced_win[p] * 6 + player_fced_defeat[p] * 4 + player_fced_draws[p] * 2 + \
-                           player_victories[p] * 3 + player_defeats[p] * 2 + player_draws[p] * 2 + player_reserve[p]
+                           player_victories[p] * 3 + player_defeats[p] * 2 + player_draws[p] * 2 + player_reserve[p] + \
+                           player_resources[p] * points_per_resource
 
     total_points = sum(player_points[p] for p in players)
     recruit_points = sum(player_points[p] for p in players if p.is_recruit())
@@ -1531,7 +1548,8 @@ def payout_battles(clan):
                            player_gold=player_gold, gold=gold, player_defeats=player_defeats,
                            player_fced_win=player_fced_win, victories_only=victories_only, recruit_factor=recruit_factor,
                            player_fced_defeat=player_fced_defeat, player_victories=player_victories,
-                           player_fced_draws=player_fced_draws, player_draws=player_draws, player_points=player_points)
+                           player_fced_draws=player_fced_draws, player_draws=player_draws, player_points=player_points,
+                           player_resources=player_resources, points_per_resource=points_per_resource)
 
 
 @app.route('/players/json')
