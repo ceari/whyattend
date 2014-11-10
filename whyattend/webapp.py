@@ -736,7 +736,7 @@ def create_battle():
         battle_commander = Player.query.get(int(request.form['battle_commander']))
         description = request.form.get('description', '')
         duration = request.form.get('duration', 15 * 60)
-        battle_group = request.form.get('battle_group', -2)
+        battle_group = int(request.form.get('battle_group', -2))
         battle_group_title = request.form.get('battle_group_title', '')
         battle_group_description = request.form.get('battle_group_description', '')
         battle_group_final = request.form.get('battle_group_final', '') == 'on'
