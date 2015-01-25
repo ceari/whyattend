@@ -911,7 +911,7 @@ def battles_list_json(clan):
     battle_table = alias(Battle.__table__)
     battles = select([Battle, case([(Battle.victory == True, literal('Victory')),
                                     (Battle.draw == True, literal('Draw'))], else_=literal('Defeat')).label('outcome'),
-                      func.ifnull(Battle.battle_group_id, func.concat('rand', func.random())).label('unq_battle_group_id'),
+                      func.ifnull(Battle.battle_group_id, func.random()).label('unq_battle_group_id'),
                       players_query.c.players.label('players'), reserves_query.c.reserves.label('reserves'),
                       Player.name.label('commander_name'),
                       Player.role.label('commander_role'),
