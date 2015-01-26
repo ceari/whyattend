@@ -303,8 +303,8 @@ def index():
             logger.info("Querying Wargaming server for provinces owned by clan " + str(clan_id) + " " + g.player.clan)
             try:
                 return wotapi.get_provinces(clan_id)
-            except Exception as e:
-                logger.error(str(e))
+            except Exception:
+                logger.exception("Error querying WG server for provinces owned")
                 return None
 
         @cache.memoize(timeout=60)
@@ -312,15 +312,14 @@ def index():
             logger.info("Querying Wargaming server for battle schedule of clan " + str(clan_id) + " " + g.player.clan)
             try:
                 return wotapi.get_battle_schedule(clan_id)
-            except Exception as e:
-                print e
-                logger.error(str(e))
+            except Exception:
+                logger.exception("Error querying WG server for battle schedule")
                 return None
 
         provinces_owned = cached_provinces_owned(config.CLAN_IDS[g.player.clan])
         total_revenue = 0
         if provinces_owned:
-            for p in provinces_owned['request_data']['items']:
+            for p in provinces_owned['items']:
                 total_revenue += p['revenue']
         scheduled_battles = cached_battle_schedule(config.CLAN_IDS[g.player.clan])
     else:

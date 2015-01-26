@@ -43,7 +43,7 @@
         </div>
         </div>
 
-        {% if provinces_owned and provinces_owned.request_data['items'] %}
+        {% if provinces_owned and provinces_owned['items'] %}
         <div class="row">
             <div class="col-lg-12">
               <div class="panel panel-default">
@@ -60,9 +60,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                    {% for item in provinces_owned.request_data['items'] %}
+                    {% for item in provinces_owned['items'] %}
                     <tr>
-                        <td><a href="http://worldoftanks.{{g.WOT_SERVER_REGION_CODE}}/clanwars/maps/?province={{item.id}}">{{item.name}}</a></td>
+                        <td><a href="{{item.url}}">{{item.name}}</a></td>
                         <td>{{item.arena_name}}</td>
                         <td>{{datetime.datetime.fromtimestamp(item.prime_time).strftime('%H:%M')}}</td>
                         <td style="color: gold">{{item.revenue}}</td>

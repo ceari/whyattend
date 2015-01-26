@@ -58,13 +58,11 @@ def get_clan(id):
 
 def get_scheduled_battles(clan_id):
     try:
-        r = requests.get('http://worldoftanks.' + WOT_SERVER_REGION_CODE.lower() +
-                         '/community/clans/' + str(clan_id) + '/battles/list/',
-                         params={'id': 'js-battles-table'},
-                         headers={'X-Requested-With': 'XMLHttpRequest',
-                                  'Accept': 'application/json, text/javascript, text/html, */*'},
+        r = requests.get('http://' + WOT_SERVER_REGION_CODE.lower() +
+                         '.wargaming.net/clans/' + str(clan_id) + '/battles/list',
+                         headers={'X-Requested-With': 'XMLHttpRequest'},
                          timeout=API_REQUEST_TIMEOUT)
-        if r.ok and r.json()['result'] == 'success':
+        if r.ok:
             return r.json()
         else:
             return None
@@ -73,11 +71,9 @@ def get_scheduled_battles(clan_id):
 
 
 def get_provinces(clan_id):
-    r = requests.get('http://worldoftanks.' + WOT_SERVER_REGION_CODE.lower() +
-                     '/community/clans/' + str(clan_id) + '/provinces/list/',
-                     params={'id': 'js-provinces-table'},
-                     headers={'X-Requested-With': 'XMLHttpRequest',
-                              'Accept': 'application/json, text/javascript, text/html, */*'},
+    r = requests.get('http://' + WOT_SERVER_REGION_CODE.lower() +
+                     '.wargaming.net/clans/' + str(clan_id) + '/provinces/list',
+                     headers={'X-Requested-With': 'XMLHttpRequest'},
                      timeout=API_REQUEST_TIMEOUT)
     if r.ok:
         return r.json()
@@ -125,7 +121,7 @@ def get_battle_schedule(clan_id):
     #battles, clans = get_battles(clan_id)
 
     scheduled_battles = []
-    for item in schedule['request_data']['items']:
+    for item in schedule['items']:
         province_ids = [p['id'] for p in item['provinces']]
         provinces = [{'id': p['id'], 'name': p['name']} for p in item['provinces']]
         at = datetime.datetime.fromtimestamp(item['time'])
