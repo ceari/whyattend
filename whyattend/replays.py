@@ -90,7 +90,7 @@ def player_team(replay_json):
 
 def is_stronghold(replay_json):
     """ Returns whether the replay is from a stronghold battle """
-    return replay_json['first']['battleType'] == 10
+    return replay_json['first']['battleType'] == 11
 
 
 def is_cw(replay_json):
