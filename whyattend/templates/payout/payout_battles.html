@@ -35,6 +35,8 @@
             fnShowHide(6);
             fnShowHide(7);
             fnShowHide(8);
+            fnShowHide(9);
+            fnShowHide(10);
         };
     </script>
 {% endblock %}
@@ -78,6 +80,8 @@
                 <th># battles drawn</th>
                 <th># battles lost</th>
                 <th># battles reserve</th>
+                <th>Resources</th>
+                <th>Points from resources</th>
                 <th>Points</th>
                 <th>Gold to pay</th>
             </tr>
@@ -94,6 +98,8 @@
                 <td>{{player_draws[player]}}</td>
                 <td>{{player_defeats[player]}}</td>
                 <td>{{player_reserve[player]}}</td>
+                <td>{{player_resources[player]}}</td>
+                <td>{{(player_resources[player] * points_per_resource)|round(2)}}</td>
                 <td>{{player_points[player]}}</td>
                 <td>{{player_gold[player]}}</td>
             </tr>

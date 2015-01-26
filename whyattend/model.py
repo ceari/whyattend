@@ -98,6 +98,7 @@ class BattleAttendance(Base):
     player = relationship("Player", backref="battles")
     battle = relationship("Battle", backref="attendances")
     reserve = Column(Boolean)
+    resources_earned = Column(Integer)
 
     def __init__(self, player, battle, reserve=False):
         self.player = player
@@ -133,6 +134,8 @@ class Battle(Base):
 
     replay_id = Column(Integer, ForeignKey('replay.id'))
     replay = relationship("Replay", backref="battle", uselist=False, foreign_keys=[replay_id])
+
+    stronghold = Column(Boolean)
 
     battle_group_id = Column(Integer, ForeignKey('battlegroup.id'))
     battle_group = relationship("BattleGroup", backref="battles")

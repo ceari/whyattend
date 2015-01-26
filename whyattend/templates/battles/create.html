@@ -75,6 +75,10 @@
             {% endif %}
             <form class="form-horizontal" action="{{url_for('create_battle')}}" method="POST" role="form" enctype="multipart/form-data">
 
+              {% if stronghold %}
+              <p class="alert alert-info">The replay was determined to be from a stronghold battle.</p>
+              {% endif %}
+
               <div class="form-group">
                 <label for="date" class="col-lg-2 control-label">Date &amp; Time</label>
                 <div class="col-lg-10">
@@ -107,6 +111,7 @@
                 </div>
               </div>
 
+              {% if not stronghold %}
               <div class="form-group">
                 <label for="province" class="col-lg-2 control-label">Province(s)</label>
                 <div class="col-lg-10">
@@ -117,6 +122,7 @@
                 </select>
                 </div>
               </div>
+              {% endif %}
 
               <div class="form-group">
                   <label for="battle_commander" class="col-lg-2 control-label">Battle commander</label>
@@ -151,6 +157,7 @@
                     </div>
               </div>
 
+              {% if not stronghold %}
               <div class="form-group">
                   <label for="battle_commander" class="col-lg-2 control-label">Battle Group</label>
                   <div class="col-lg-10">
@@ -177,6 +184,7 @@
                   </div>
                   </div>
               </div>
+              {% endif %}
 
               <div class="form-group">
                 <label for="description" class="col-lg-2 control-label">Description</label>

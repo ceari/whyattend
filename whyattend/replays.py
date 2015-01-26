@@ -71,13 +71,26 @@ def players_list(replay_json, team):
 
 
 def player_won(replay_json):
-    own_team = replay_json['first']['vehicles'].values()[0]['team']
+    own_team = get_own_team(replay_json)
     return replay_json['second'][0]['common']['winnerTeam'] == own_team
 
 
+def get_own_team(replay_json):
+    player_name = replay_json['first']['playerName']
+    for v in replay_json['first']['vehicles'].itervalues():
+        if v['name'] == player_name:
+            return v['team']
+
+
 def player_team(replay_json):
-    own_team = replay_json['first']['vehicles'].values()[0]['team']
+    """ Returns a list of names of the players on the replay recorder's team """
+    own_team = get_own_team(replay_json)
     return [v['name'] for v in replay_json['first']['vehicles'].values() if v['team'] == own_team]
+
+
+def is_stronghold(replay_json):
+    """ Returns whether the replay is from a stronghold battle """
+    return replay_json['first']['battleType'] == 10
 
 
 def is_cw(replay_json):
@@ -96,11 +109,11 @@ def is_cw(replay_json):
 def guess_clan(replay_json):
     """ Attempt to guess the friendly clan name from the replay.
         Use is_cw(replay_json) before calling this to confirm it was a clan war.
-    :param replay_json:
-    :return:
     """
-    # first chunk should only contain the own team, so first player's clan is the friendly clan
-    return replay_json['first']['vehicles'].values()[0]['clanAbbrev']
+    player_name = replay_json['first']['playerName']
+    for v in replay_json['first']['vehicles'].itervalues():
+        if v['name'] == player_name:
+            return v['clanAbbrev']
 
 
 def guess_enemy_clan(replay_json):
@@ -110,12 +123,12 @@ def guess_enemy_clan(replay_json):
     :param replay_json:
     :return:
     """
-    friendly_team = replay_json['first']['vehicles'].values()[0]['team']
-    return players_list(replay_json, 1 if friendly_team == 2 else 2)[0]['clanAbbrev']
+    own_team = get_own_team(replay_json)
+    return players_list(replay_json, 1 if own_team == 2 else 2)[0]['clanAbbrev']
 
 
 def score(replay_json):
-    own_team = replay_json['first']['vehicles'].values()[0]['team']
+    own_team = get_own_team(replay_json)
     own_team_deaths = 0
     enemy_team_deaths = 0
     for v in replay_json['second'][0]['vehicles'].itervalues():
@@ -125,6 +138,12 @@ def score(replay_json):
             else:
                 enemy_team_deaths += 1
     return enemy_team_deaths, own_team_deaths
+
+
+def resources_earned(json_second, player_id):
+    for v in json_second[0]['vehicles'].itervalues():
+        if str(v["accountDBID"]) == str(player_id):
+            return v["fortResource"]
 
 
 def player_performance(json_second, vehicles, players):
