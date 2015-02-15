@@ -26,15 +26,27 @@ def player_performance(battles, players):
         if not replay_data or not replay_data["second"]:
             continue
 
-        replay_version_tokens = replay_data['first']['clientVersionFromExe'].split(",")
-        replay_major_version = int(replay_version_tokens[1])
-        if " " in replay_version_tokens[2]:
-            replay_minor_version = int(replay_version_tokens[2].split()[0])
-        else:
-            replay_minor_version = int(replay_version_tokens[2])
-        if replay_major_version > 8 or (replay_major_version == 8 and replay_minor_version >= 11):
-            players_perf = replays.player_performance(replay_data['second'], replay_data['second'][0]['vehicles'],
-                                                      replay_data['second'][0]['players'])
+        replay_version_tokens = replay_data['first']['clientVersionFromExe'].split(".")
+        if len(replay_version_tokens) == 1:
+            # legacy format
+            replay_version_tokens = replay_data['first']['clientVersionFromExe'].split(",")
+            replay_major_version = int(replay_version_tokens[1])
+            if " " in replay_version_tokens[2]:
+                # very strange version format ...
+                replay_minor_version = int(replay_version_tokens[2].split()[0])
+            else:
+                replay_minor_version = int(replay_version_tokens[2])
+
+            if replay_major_version > 8 or (replay_major_version == 8 and replay_minor_version >= 11):
+                players_perf = replays.player_performance(replay_data['second'], replay_data['second'][0]['vehicles'],
+                                                          replay_data['second'][0]['players'])
+            else:
+                if not replay_data or not 'pickle' in replay_data or not replay_data['pickle']:
+                    continue
+                if not isinstance(replay_data['pickle']['vehicles'], dict):
+                    continue
+                players_perf = replays.player_performance(replay_data['second'], replay_data['pickle']['vehicles'],
+                                                          replay_data['pickle']['players'])
         else:
             if not replay_data or not 'pickle' in replay_data or not replay_data['pickle']:
                 continue
