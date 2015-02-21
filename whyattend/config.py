@@ -18,8 +18,7 @@ USER_TIMEZONES = ('Europe/Amsterdam',
                   'Europe/Helsinki')
 
 # Database URI (see http://docs.sqlalchemy.org/en/latest/core/engines.html#supported-databases)
-DATABASE_URI = 'sqlite:///../tmp/test.db'
-# DATABASE_URI = 'mysql://user@host/database?charset=utf8&use_unicode=0' # forces UTF-8 encoding in DB
+DATABASE_URI = 'mysql://user@host/database?charset=utf8&use_unicode=0' # forces UTF-8 encoding in DB
 
 # Path to temporary folder for OpenID authentication files
 OID_STORE_PATH = 'tmp/oid'
