@@ -2,7 +2,7 @@ import os
 
 DB_HOST = os.environ['DB_PORT_5432_TCP_ADDR']
 
-DATABASE_URI = 'postgresql+psycopg2://docker:docker@%s:5432/clanwars' % (DB_HOST, )
+DATABASE_URI = 'postgresql+psycopg2://docker:docker@%s:5432/docker' % (DB_HOST, )
 
 SECRET_KEY = "abcdefgh"
 CLAN_NAMES = ('WHY', )
