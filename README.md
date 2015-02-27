@@ -101,13 +101,13 @@ First, adjust the settings in docker_config.py.
 To build docker containers with a PostgreSQL database and another one with the whyattend
 web application simply run the following commands:
 
-`docker build -t whyattend_postgresql docker/postgres`
-`docker build -t webapp .`
+    docker build -t whyattend_postgresql docker/postgresql
+    docker build -t webapp .
 
 Then start the database container with:
 
-`docker run -d --name db whyattend_postgresql`
-`docker run -d -P --name web --link db:db webapp`
+    docker run -d --name db whyattend_postgresql
+    docker run -d -P --name web --link db:db webapp
 
 `docker ps -a` will then show you on which port the web application runs on the host
 system.
