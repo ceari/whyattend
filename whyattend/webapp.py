@@ -831,7 +831,7 @@ def create_battle():
                     abort(404)
                 ba = BattleAttendance(player, battle, reserve=False)
                 if battle.stronghold:
-                    ba.resources_earned = replays.resources_earned(replay['second'], player.wot_id)
+                    ba.resources_earned = replays.resources_earned(replay['second'], player.wot_id) or 0
                 db_session.add(ba)
 
             db_session.add(battle)
@@ -1490,7 +1490,7 @@ def payout_battles(clan):
 
         if battle.stronghold:
             for ba in battle.attendances:
-                player_resources[ba.player] += ba.resources_earned
+                player_resources[ba.player] += ba.resources_earned or 0
             continue
 
         battle_commander = battle.battle_commander
