@@ -132,6 +132,7 @@ def score(replay_json):
     own_team_deaths = 0
     enemy_team_deaths = 0
     for v in replay_json['second'][0]['vehicles'].itervalues():
+        v = v[0]
         if v['deathReason'] != -1:
             if v['team'] == own_team:
                 own_team_deaths += 1
@@ -142,6 +143,7 @@ def score(replay_json):
 
 def resources_earned(json_second, player_id):
     for v in json_second[0]['vehicles'].itervalues():
+        v = v[0]
         if str(v["accountDBID"]) == str(player_id):
             return v["fortResource"]
 
@@ -158,6 +160,7 @@ def player_performance(json_second, vehicles, players):
 
     perf = dict()
     for k, v in vehicles.iteritems():
+        v = v[0]
         if str(str(v['accountDBID'])) in players:
             player_name = players[str(v['accountDBID'])]['name']
         else:
