@@ -40,7 +40,7 @@ runs without errors or it might leave the database in a broken state.
 Make sure the `replay_blob` column in the generated replay table is large enough to hold
 WoT replay files. In MySQL, for example, the default BLOB type can only store
 around 64 kB. This can be changed by running the SQL statement
-`ALTER TABLE replay MODIFY replay_blob LONGBLOB`, for example. Additionally, MySQL
+`ALTER TABLE replay MODIFY replay_blob LONGBLOB` and `ALTER TABLE replay MODIFY replay_pickle LONGBLOB`, for example. Additionally, MySQL
 defines a `max_allowed_packet` size in `my.cnf`, which might have to be increased.
 
 ### Clan member synchronisation
