@@ -13,14 +13,6 @@ Dependencies
 * A somewhat recent Linux distribution. Windows and Mac OS X most likely
   work too but are not considered in the installation examples below.
 
-Deployment
-----------
-
-As a Python WSGI application, this web application can be deployed in
-various ways.
-See the Flask documentation (http://flask.pocoo.org/docs/deploying/) for
-further information.
-
 Installation
 ------------
 
@@ -64,7 +56,9 @@ For such libraries it might be easier to use a binary package provided by your L
 Deployment Examples
 -------------------
 
-There are many way to deploy the application. The following examples should serve as starting point.
+As a Python WSGI application, this web application can be deployed in
+various ways. See the Flask documentation (http://flask.pocoo.org/docs/deploying/) for
+further information. The following examples show tested and popular options.
 
 ## Apache + mod_wsgi
 
