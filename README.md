@@ -19,7 +19,6 @@ Installation
 Start off by configuring the application:
 
 * Copy `whyattend/config.py` to `local_config.py` and adjust the settings.
-  Make sure to read the
 * Put your clan's logo into `whyattend/static/img/clanicons`.
 * Replace `whyattend/static/img/header.jpg` with an image of your choice.
 * Copy `alembic.ini.template` to `alembic.ini` and set `sqlalchemy.url` to the same value as `DATABASE_URI`
