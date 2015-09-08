@@ -243,7 +243,7 @@ def sync_players(clan_id=None):
                     continue  # API Error?
 
                 since = datetime.datetime.fromtimestamp(
-                    float(member_data['since']))
+                    float(member_data['joined_at']))
 
                 if p:
                     # Player exists, update information
@@ -251,7 +251,7 @@ def sync_players(clan_id=None):
                     p.name = player['account_name']
                     p.openid = 'https://'+config.WOT_SERVER_REGION_CODE+'.wargaming.net/id/' + str(player_id) + '-' + player['account_name'] + '/'
                     p.locked = False
-                    p.clan = clan_info['data'][str(clan_id)]['abbreviation']
+                    p.clan = clan_info['data'][str(clan_id)]['tag']
                     p.role = player['role']  # role might have changed
                     p.member_since = since  # might have rejoined
                 else:
@@ -261,13 +261,13 @@ def sync_players(clan_id=None):
                                    'account_name'] + '/',
                                since,
                                player['account_name'],
-                               clan_info['data'][str(clan_id)]['abbreviation'],
+                               clan_info['data'][str(clan_id)]['tag'],
                                player['role'])
                     logger.info('Adding player ' + player['account_name'])
                 db_session.add(p)
 
             # All players of the clan in the DB, which are no longer in the clan
-            for player in Player.query.filter_by(clan=clan_info['data'][str(clan_id)]['abbreviation']):
+            for player in Player.query.filter_by(clan=clan_info['data'][str(clan_id)]['tag']):
                 if player.id in processed or player.id is None or player.locked:
                     continue
                 logger.info("Locking player " + player.name)
