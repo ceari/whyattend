@@ -57,6 +57,7 @@ ROLE_LABELS = {
     'vice_leader': 'Deputy Commander',
     'commander': 'Field Commander',
     'junior_officer': 'Junior Officer',
+    'executive_officer': 'Executive Officer',
     'personnel_officer': 'Personnel Officer',
     'reservist': 'Reservist',
     'recruiter': 'Recruiter',
