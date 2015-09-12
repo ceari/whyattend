@@ -119,7 +119,7 @@ def get_battles(clan_id):
 
 def get_battle_schedule(clan_id):
     schedule = get_scheduled_battles(clan_id)
-    #battles, clans = get_battles(clan_id)
+    # battles, clans = get_battles(clan_id)
 
     scheduled_battles = []
     for item in schedule['items']:
@@ -150,7 +150,7 @@ def get_battle_schedule(clan_id):
             'provinces': provinces,
             'time': at if item['time'] else None,
             'maps': maps,
-            #'enemies': enemies,
+            # 'enemies': enemies,
             'started': item['started']
         })
 

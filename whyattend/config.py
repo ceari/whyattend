@@ -18,7 +18,7 @@ USER_TIMEZONES = ('Europe/Amsterdam',
                   'Europe/Helsinki')
 
 # Database URI (see http://docs.sqlalchemy.org/en/latest/core/engines.html#supported-databases)
-DATABASE_URI = 'mysql://user@host/database?charset=utf8&use_unicode=0' # forces UTF-8 encoding in DB
+DATABASE_URI = 'mysql://user@host/database?charset=utf8&use_unicode=0'  # forces UTF-8 encoding in DB
 
 # Path to temporary folder for OpenID authentication files
 OID_STORE_PATH = 'tmp/oid'
@@ -53,32 +53,30 @@ API_KEY = 'mysecretkey'
 
 # Map WoT API clan roles to displayed name
 ROLE_LABELS = {
-    'leader': 'Commander',
-    'vice_leader': 'Deputy Commander',
-    'commander': 'Field Commander',
-    'junior_officer': 'Junior Officer',
-    'executive_officer': 'Executive Officer',
-    'personnel_officer': 'Personnel Officer',
-    'reservist': 'Reservist',
-    'recruiter': 'Recruiter',
-    'private': 'Soldier',
-    'recruit': 'Recruit',
-    'treasurer': 'Treasurer',
-    'diplomat': 'Diplomat',
+    "personnel_officer": "Personnel Officer",
+    "quartermaster": "Quartermaster",
+    "executive_officer": "Executive Officer",
+    "recruit": "Recruit",
+    "private": "Private",
+    "commander": "Commander",
+    "reservist": "Reservist",
+    "combat_officer": "Combat Officer",
+    "recruitment_officer": "Recruitment Officer",
+    "intelligence_officer": "Intelligence Officer"
 }
 
 # List of player names that can do everything
-ADMINS = ['fantastico',]
+ADMINS = ['fantastico', ]
 
-# Permission configuration. E.g. let only leader, vice_leader and treasurer create battles.
-CREATE_BATTLE_ROLES = ('leader', 'vice_leader', 'treasurer')
-DELETE_BATTLE_ROLES = ('leader', 'vice_leader', 'treasurer')
-PAYOUT_ROLES = ('leader', 'vice_leader', 'treasurer')
-ADMIN_ROLES = ('leader', 'vice_leader', 'commander', 'treasurer')
-PLAYER_PERFORMANCE_ROLES = ('leader', 'vice_leader')
-COMMANDED_ROLES = ('leader', 'vice_leader', 'commander', 'treasurer')
-DOWNLOAD_REPLAY_ROLES = ('leader', 'vice_leader', 'commander', 'recruiter',
-                         'treasurer', 'diplomat', 'private')
+# Permission configuration. E.g. let only leader and treasurer create battles.
+CREATE_BATTLE_ROLES = ('commander', 'executive_officer', 'quartermaster')
+DELETE_BATTLE_ROLES = ('commander', 'executive_officer', 'quartermaster')
+PAYOUT_ROLES = ('commander', 'executive_officer', 'quartermaster')
+ADMIN_ROLES = ('commander', )
+PLAYER_PERFORMANCE_ROLES = ('commander', )
+COMMANDED_ROLES = ('commander', 'executive_officer')
+DOWNLOAD_REPLAY_ROLES = ('commander', 'personnel_officer', 'executive_officer', 'private',
+                         'combat_officer', 'recruitment_officer', 'intelligence_officer', 'quartermaster')
 
 # How long after the battle date should reserves be able to sign in themselves
 RESERVE_SIGNUP_DURATION = datetime.timedelta(days=7)
