@@ -210,79 +210,78 @@ def sync_players(clan_id=None):
     :param clan_id:
     :return:
     """
-    if config.API_KEY != request.args['API_KEY']:
-        abort(403)
+    if config.API_KEY == request.args['API_KEY']:
+        if clan_id:
+            clan_ids = [clan_id]
+        else:
+            clan_ids = config.CLAN_IDS.values()
+        for clan_id in clan_ids:
+            logger.info("Clan member synchronization triggered for " + str(clan_id))
+            webapp_data = WebappData.get()
+            webapp_data.last_sync_attempt = datetime.datetime.now()
+            db_session.add(webapp_data)
+            db_session.commit()
+            db_session.remove()
 
-    if clan_id:
-        clan_ids = [clan_id]
-    else:
-        clan_ids = config.CLAN_IDS.values()
-    for clan_id in clan_ids:
-        logger.info("Clan member synchronization triggered for " + str(clan_id))
-        webapp_data = WebappData.get()
-        webapp_data.last_sync_attempt = datetime.datetime.now()
-        db_session.add(webapp_data)
-        db_session.commit()
-        db_session.remove()
+            clan_info = wotapi.get_clan(str(clan_id))
+            player_ids = clan_info['data'][str(clan_id)]['members'].keys()
+            players_info = wotapi.get_players(player_ids)
+            member_info_data = {}
+            for i in xrange(0, len(player_ids), 20):
+                member_info_data.update(wotapi.get_players_membership_info(player_ids[i:i+20])['data'])
 
-        clan_info = wotapi.get_clan(str(clan_id))
-        player_ids = clan_info['data'][str(clan_id)]['members'].keys()
-        players_info = wotapi.get_players(player_ids)
-        member_info_data = {}
-        for i in xrange(0, len(player_ids), 20):
-            member_info_data.update(wotapi.get_players_membership_info(player_ids[i:i + 20])['data'])
+            processed = set()
+            for player_id in player_ids:
+                player = clan_info['data'][str(clan_id)]['members'][player_id]
+                player_data = players_info['data'][player_id]
+                member_data = member_info_data[player_id]
+                p = Player.query.filter_by(wot_id=str(player['account_id'])).first()
+                if not player_data:
+                    if p:
+                        processed.add(p.id)  # skip this guy later when locking players
+                    logger.info("Missing player info of " + player['account_name'])
+                    continue  # API Error?
 
-        processed = set()
-        for player_id in player_ids:
-            player = clan_info['data'][str(clan_id)]['members'][player_id]
-            player_data = players_info['data'][player_id]
-            member_data = member_info_data[player_id]
-            p = Player.query.filter_by(wot_id=str(player['account_id'])).first()
-            if not player_data:
+                since = datetime.datetime.fromtimestamp(
+                    float(member_data['joined_at']))
+
                 if p:
-                    processed.add(p.id)  # skip this guy later when locking players
-                logger.info("Missing player info of " + player['account_name'])
-                continue  # API Error?
+                    # Player exists, update information
+                    processed.add(p.id)
+                    p.name = player['account_name']
+                    p.openid = 'https://'+config.WOT_SERVER_REGION_CODE+'.wargaming.net/id/' + str(player_id) + '-' + player['account_name'] + '/'
+                    p.locked = False
+                    p.clan = clan_info['data'][str(clan_id)]['tag']
+                    p.role = player['role']  # role might have changed
+                    p.member_since = since  # might have rejoined
+                else:
+                    # New player
+                    p = Player(str(player['account_id']),
+                               'https://'+config.WOT_SERVER_REGION_CODE+'.wargaming.net/id/' + str(player['account_id']) + '-' + player[
+                                   'account_name'] + '/',
+                               since,
+                               player['account_name'],
+                               clan_info['data'][str(clan_id)]['tag'],
+                               player['role'])
+                    logger.info('Adding player ' + player['account_name'])
+                db_session.add(p)
 
-            since = datetime.datetime.fromtimestamp(
-                float(member_data['since']))
+            # All players of the clan in the DB, which are no longer in the clan
+            for player in Player.query.filter_by(clan=clan_info['data'][str(clan_id)]['tag']):
+                if player.id in processed or player.id is None or player.locked:
+                    continue
+                logger.info("Locking player " + player.name)
+                player.locked = True
+                player.lock_date = datetime.datetime.now()
+                db_session.add(player)
 
-            if p:
-                # Player exists, update information
-                processed.add(p.id)
-                p.name = player['account_name']
-                p.openid = 'https://' + config.WOT_SERVER_REGION_CODE + '.wargaming.net/id/' + str(player_id) + '-' + \
-                           player['account_name'] + '/'
-                p.locked = False
-                p.clan = clan_info['data'][str(clan_id)]['abbreviation']
-                p.role = player['role']  # role might have changed
-                p.member_since = since  # might have rejoined
-            else:
-                # New player
-                p = Player(str(player['account_id']),
-                           'https://' + config.WOT_SERVER_REGION_CODE + '.wargaming.net/id/' + str(
-                               player['account_id']) + '-' + player[
-                               'account_name'] + '/',
-                           since,
-                           player['account_name'],
-                           clan_info['data'][str(clan_id)]['abbreviation'],
-                           player['role'])
-                logger.info('Adding player ' + player['account_name'])
-            db_session.add(p)
+            webapp_data.last_successful_sync = datetime.datetime.now()
+            db_session.add(webapp_data)
+            db_session.commit()
+            logger.info("Clan member synchronization successful")
 
-        # All players of the clan in the DB, which are no longer in the clan
-        for player in Player.query.filter_by(clan=clan_info['data'][str(clan_id)]['abbreviation']):
-            if player.id in processed or player.id is None or player.locked:
-                continue
-            logger.info("Locking player " + player.name)
-            player.locked = True
-            player.lock_date = datetime.datetime.now()
-            db_session.add(player)
-
-        webapp_data.last_successful_sync = datetime.datetime.now()
-        db_session.add(webapp_data)
-        db_session.commit()
-        logger.info("Clan member synchronization successful")
+    else:
+        abort(403)
 
     return redirect(url_for('index'))
 
@@ -642,8 +641,7 @@ def edit_battle(battle_id):
             return redirect(url_for('battles_list', clan=g.player.clan))
 
     return render_template('battles/edit.html', date=date, map_name=map_name, province=province, battle=battle,
-                           battle_groups=battle_groups, duration=duration,
-                           battle_group_description=battle_group_description,
+                           battle_groups=battle_groups, duration=duration, battle_group_description=battle_group_description,
                            battle_commander=battle_commander, enemy_clan=enemy_clan, battle_result=battle_result,
                            battle_group_final=battle_group_final, players=players, description=description,
                            replay=replay, replays=replays, all_players=all_players, sorted_players=sorted_players)
@@ -800,7 +798,7 @@ def create_battle():
             server_tz = timezone(config.SERVER_TIMEZONE)
             user_tz = timezone(usertimezone)
             date = user_tz.localize(date).astimezone(server_tz)
-            session['usertimezone'] = usertimezone  # Remember selected timezone
+            session['usertimezone'] = usertimezone # Remember selected timezone
 
             battle = Battle(date, g.player.clan, enemy_clan, victory=(battle_result == 'victory'),
                             map_name=map_name, map_province=province,
@@ -863,13 +861,13 @@ def battles_list(clan):
     if not clan in config.CLAN_NAMES:
         abort(404)
 
-    # enemy_clan = request.args.get('enemy', None)
+    #enemy_clan = request.args.get('enemy', None)
 
-    # battles = Battle.query.options(joinedload_all('battle_group.battles')).options(
+    #battles = Battle.query.options(joinedload_all('battle_group.battles')).options(
     #    joinedload_all('attendances.player')).options(joinedload_all('battle_commander')).filter_by(clan=clan)
-    # if enemy_clan:
+    #if enemy_clan:
     #    battles = battles.filter_by(enemy_clan=enemy_clan)
-    # battles = battles.all()
+    #battles = battles.all()
 
     return render_template('battles/battles.html', clan=clan)
 
@@ -877,7 +875,7 @@ def battles_list(clan):
 @app.route('/battles/list/<clan>/json')
 @require_login
 def battles_list_json(clan):
-    if clan not in config.CLAN_NAMES:
+    if not clan in config.CLAN_NAMES:
         abort(404)
 
     offset = int(request.args.get('iDisplayStart'))
@@ -926,7 +924,7 @@ def battles_list_json(clan):
                      and_(Battle.clan == clan,
                           (or_(Battle.date == select([func.max(battle_table.c.date)],
                                                      Battle.battle_group_id == battle_table.c.battle_group_id
-                                                     ),
+                          ),
                                Battle.battle_group_id == None)),
                           search_term,
                           (Battle.enemy_clan == enemy_clan if enemy_clan else True))) \
@@ -1173,9 +1171,9 @@ def clan_players(clan):
                                  '%i' % (present[player] / possible[player] * 100.0 if possible[player] else 0),
                                  '%i' % (present30[player] / possible30[player] * 100.0 if possible30[player] else 0),
                                  last_battle_by_player[player].date.strftime('%d.%m.%Y %H:%M') if
-                                 last_battle_by_player[player] else '',
+                                    last_battle_by_player[player] else '',
                                  player.gold_earned
-                                 ])
+            ])
 
         headers = Headers()
         headers.add('Content-Type', 'text/csv')
@@ -1320,7 +1318,7 @@ def download_replay(battle_id):
     response.headers['Content-Disposition'] = 'attachment; filename=' + \
                                               secure_filename(battle.date.strftime(
                                                   '%d.%m.%Y_%H_%M_%S') + '_' + battle.clan + '_' +
-                                                              battle.enemy_clan + '.wotreplay')
+                                              battle.enemy_clan + '.wotreplay')
     return response
 
 
@@ -1342,7 +1340,7 @@ def download_additional_replay(replay_id):
     response.headers['Content-Disposition'] = 'attachment; filename=' + \
                                               secure_filename(battle.date.strftime(
                                                   '%d.%m.%Y_%H_%M_%S') + '_' + battle.clan + '_' +
-                                                              battle.enemy_clan + '.wotreplay')
+                                              battle.enemy_clan + '.wotreplay')
     return response
 
 
@@ -1411,7 +1409,7 @@ def reserve_conflicts(clan):
             [battle.date - before_dt, battle.date + battle.duration + after_dt].
             Such battles overlap with the given battle. """
         return [b for b in ordered_battles if battle.date - before_dt <= b.date <=
-                battle.date + timedelta(seconds=battle.duration or (15 * 60)) + after_dt]
+                battle.date + timedelta(seconds=battle.duration or (15*60)) + after_dt]
 
     # noinspection PyShadowingNames
     def get_reserve_conflicts(battles):
@@ -1547,8 +1545,7 @@ def payout_battles(clan):
     return render_template('payout/payout_battles.html', battles=battles, clan=clan, fromDate=from_date, toDate=to_date,
                            player_played=player_played, player_reserve=player_reserve, players=players,
                            player_gold=player_gold, gold=gold, player_defeats=player_defeats,
-                           player_fced_win=player_fced_win, victories_only=victories_only,
-                           recruit_factor=recruit_factor,
+                           player_fced_win=player_fced_win, victories_only=victories_only, recruit_factor=recruit_factor,
                            player_fced_defeat=player_fced_defeat, player_victories=player_victories,
                            player_fced_draws=player_fced_draws, player_draws=player_draws, player_points=player_points,
                            player_resources=player_resources, points_per_resource=points_per_resource)
@@ -1648,7 +1645,7 @@ def payout_battles_json():
              battle.enemy_clan,
              battle.creator.name,
              battle.outcome_str()] for battle in battles
-            ]
+        ]
     })
 
 
@@ -1656,9 +1653,8 @@ def payout_battles_json():
 @require_login
 @require_role(config.COMMANDED_ROLES)
 def players_commanded(clan):
-    commanders = Player.query.filter_by(locked=False, clan=clan).filter(
-        Player.id.in_(db_session.query(Battle.battle_commander_id) \
-                      .distinct())).order_by(Player.name).all()
+    commanders = Player.query.filter_by(locked=False, clan=clan).filter(Player.id.in_(db_session.query(Battle.battle_commander_id) \
+                                .distinct())).order_by(Player.name).all()
 
     return render_template('players/commanding.html', commanders=commanders, clan=clan)
 
@@ -1679,7 +1675,7 @@ def players_commanded_json():
 
     battles = Battle.query.options(joinedload_all('battle_group.battles')).options(
         joinedload_all('attendances.player')).filter(Battle.date >= from_date).filter(Battle.date <= to_date) \
-        .filter_by(battle_commander=commander)
+                            .filter_by(battle_commander=commander)
     player_count = defaultdict(int)
     for battle in battles:
         if use_battle_groups:
@@ -1699,7 +1695,10 @@ def players_commanded_json():
         "sEcho": 1,
         "iTotalRecords": len(player_count),
         "iTotalDisplayRecords": len(player_count),
-        "aaData": [(k.name, v) for k, v in player_count.iteritems()]
+        "aaData": [
+            (k.name,
+             v) for k, v in player_count.iteritems()
+        ]
     })
 
 
@@ -1755,7 +1754,7 @@ def clan_statistics(clan):
     enemies_by_battle_count = defaultdict(int)
     for bc in range(max(battles_by_enemy.values() or [0])):
         enemies_by_battle_count[bc] = len([enemy_clan for enemy_clan in battles_by_enemy if
-                                           battles_by_enemy[enemy_clan] >= bc])
+                                       battles_by_enemy[enemy_clan] >= bc])
 
     battle_count_cutoff = 0
     for battle_count in range(1, max(battles_by_enemy.values() or [0])):
@@ -1809,7 +1808,7 @@ def player_performance(clan):
     to_date = request.form.get('toDate', None)
 
     if from_date is None:
-        from_date = datetime.datetime.now() - datetime.timedelta(days=4 * 7)
+        from_date = datetime.datetime.now() - datetime.timedelta(days=4*7)
     else:
         from_date = datetime.datetime.strptime(from_date, '%d.%m.%Y')
 
@@ -1818,8 +1817,7 @@ def player_performance(clan):
     else:
         to_date = datetime.datetime.strptime(to_date, '%d.%m.%Y') + datetime.timedelta(days=1)
 
-    battles = Battle.query.options(joinedload('replay')).filter_by(clan=clan).filter(Battle.date >= from_date,
-                                                                                     Battle.date <= to_date).all()
+    battles = Battle.query.options(joinedload('replay')).filter_by(clan=clan).filter(Battle.date>=from_date, Battle.date<=to_date).all()
     players = Player.query.filter_by(clan=clan, locked=False).all()
 
     result = analysis.player_performance(battles, players)
