@@ -160,7 +160,8 @@ def player_performance(json_second, vehicles, players):
 
     perf = dict()
     for k, v in vehicles.iteritems():
-        v = v[0]
+        if isinstance(v, list):
+            v = v[0] # new replay version format ..
         if str(str(v['accountDBID'])) in players:
             player_name = players[str(v['accountDBID'])]['name']
         else:
