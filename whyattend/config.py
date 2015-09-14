@@ -62,7 +62,8 @@ ROLE_LABELS = {
     "reservist": "Reservist",
     "combat_officer": "Combat Officer",
     "recruitment_officer": "Recruitment Officer",
-    "intelligence_officer": "Intelligence Officer"
+    "intelligence_officer": "Intelligence Officer",
+    "junior_officer": "Junior Officer",
 }
 
 # List of player names that can do everything
