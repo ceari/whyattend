@@ -59,9 +59,11 @@ def get_clan(id):
 
 def get_scheduled_battles(clan_id):
     try:
-        r = requests.get('http://' + WOT_SERVER_REGION_CODE.lower() +
-                         '.wargaming.net/clans/' + str(clan_id) + '/battles/list',
-                         headers={'X-Requested-With': 'XMLHttpRequest'},
+        r = requests.get(API_URL + '/wot/globalmap/clanbattles/',
+                         params={
+                            'application_id': API_TOKEN,
+                            'clan_id': clan_id
+                         },
                          timeout=API_REQUEST_TIMEOUT)
         if r.ok:
             return r.json()
@@ -119,39 +121,17 @@ def get_battles(clan_id):
 
 def get_battle_schedule(clan_id):
     schedule = get_scheduled_battles(clan_id)
-    # battles, clans = get_battles(clan_id)
 
     scheduled_battles = []
-    for item in schedule['items']:
-        province_ids = [p['id'] for p in item['provinces']]
-        provinces = [{'id': p['id'], 'name': p['name']} for p in item['provinces']]
+    for item in schedule['data']:
         at = datetime.datetime.fromtimestamp(item['time'])
-        maps = [m for m in item['arenas']]
-        #
-        # enemies = list()
-        # enemies_set = set()
-        # # find matching battle info from map information and extract enemy clans
-        # for battle in battles:
-        #     if battle['province_id'] in province_ids:
-        #         for cid in battle['combatants']:
-        #             if cid == str(clan_id):
-        #                 continue
-        #             if battle['combatants'][cid]['at'] != item['time'] and battle['at'] != item['time']:
-        #                 continue
-        #             if not clans[cid]['tag'] in enemies_set:
-        #                 enemies.append({
-        #                     'tag': clans[cid]['tag'],
-        #                     'url': clans[cid]['url'],
-        #                     'clan_id': cid
-        #                 })
-        #                 enemies_set.add(clans[cid]['tag'])
+        province = item['province_name']
+        front = item['front_name']
 
         scheduled_battles.append({
-            'provinces': provinces,
+            'province': province,
             'time': at if item['time'] else None,
-            'maps': maps,
-            # 'enemies': enemies,
-            'started': item['started']
+            'front': front
         })
 
     return scheduled_battles
