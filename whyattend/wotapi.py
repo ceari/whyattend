@@ -74,49 +74,19 @@ def get_scheduled_battles(clan_id):
 
 
 def get_provinces(clan_id):
-    r = requests.get('http://' + WOT_SERVER_REGION_CODE.lower() +
-                     '.wargaming.net/clans/' + str(clan_id) + '/provinces/list',
-                     headers={'X-Requested-With': 'XMLHttpRequest'},
-                     timeout=API_REQUEST_TIMEOUT)
-    if r.ok:
-        return r.json()
-
-
-def get_global_map_info(region):
-    r = requests.get(MAP_SUBDOMAIN +
-                     '/clanwars/maps/provinces/regions/' + str(region),
-                     params={'ct': 'json'},
-                     headers={'X-Requested-With': 'XMLHttpRequest',
-                              'Accept': 'application/json, text/javascript, text/html, */*'},
-                     timeout=API_REQUEST_TIMEOUT)
-    if r.ok:
-        return r.json()
-
-
-def get_battles(clan_id):
-    regions = [get_global_map_info(rid) for rid in MAP_REGIONS]
-    all_clans = dict()
-    all_region_provinces = dict()
-    # Merge information about the regions into single dicts
-    for region in regions:
-        all_clans.update(region['clans'])
-        all_region_provinces.update(region['provinces'])
-
-    # Find all battles the clan is involved in
-    clan_combats = list()
-    for prov_id in all_region_provinces:
-        province = all_region_provinces[prov_id]
-        if 'combats' in province and len(province['combats']) > 0:
-            p_combats = province['combats']
-            for combat_id in p_combats:
-                if str(clan_id) in p_combats[combat_id]['combatants'].keys():
-                    combat = p_combats[combat_id]
-                    combat.update({
-                        'province_id': prov_id,  # Add province ID to the combat dictionary
-                    })
-                    clan_combats.append(combat)
-
-    return clan_combats, all_clans
+    try:
+        r = requests.get(API_URL + '/wot/globalmap/clanprovinces/',
+                         params={
+                            'application_id': API_TOKEN,
+                            'clan_id': clan_id
+                         },
+                         timeout=API_REQUEST_TIMEOUT)
+        if r.ok:
+            return r.json()['data'][str(clan_id)]
+        else:
+            return None
+    except Exception:
+        return None
 
 
 def get_battle_schedule(clan_id):
