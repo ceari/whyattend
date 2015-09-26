@@ -422,7 +422,7 @@ def create_profile():
             return render_template('create_profile.html', next_url=oid.get_next_url())
 
         clan_ids_to_name = dict((v, k) for k, v in config.CLAN_IDS.iteritems())
-        clan_id = str(player_clan_info['data'][str(wot_id)]['clan_id'])
+        clan_id = str(player_clan_info['data'][str(wot_id)]['clan']['clan_id'])
 
         if clan_id not in config.CLAN_IDS.values():
             flash(u'You have to be in one of the clans to login', 'error')
@@ -431,7 +431,7 @@ def create_profile():
         clan = clan_ids_to_name[str(clan_id)]
 
         role = player_clan_info['data'][str(wot_id)]['role']
-        member_since = datetime.datetime.fromtimestamp(float(player_clan_info['data'][str(wot_id)]['since']))
+        member_since = datetime.datetime.fromtimestamp(float(player_clan_info['data'][str(wot_id)]['joined_at']))
         if not role:
             flash(u'Error: Could not retrieve player role from wargaming server', 'error')
             return render_template('create_profile.html', next_url=oid.get_next_url())
