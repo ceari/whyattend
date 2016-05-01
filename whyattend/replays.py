@@ -42,9 +42,9 @@ def parse_replay(replay_blob):
         try:
             pickle_start = second_chunk_start + second_chunk_length + 4
             pickle_length = struct.unpack('I',
-                                          replay_blob[
-                                               second_chunk_start +
-                                               second_chunk_length:second_chunk_start + second_chunk_length + 4])[0]
+                                          replay_blob[second_chunk_start +
+                                                      second_chunk_length:second_chunk_start +
+                                                                          second_chunk_length + 4])[0]
             the_pickle = pickle.loads(replay_blob[pickle_start:pickle_start + pickle_length])
         except pickle.UnpicklingError:
             the_pickle = None
@@ -103,7 +103,7 @@ def is_cw(replay_json):
     team_one = players_list(replay_json, 1)
     team_two = players_list(replay_json, 2)
     return len(set(p['clanAbbrev'] for p in team_one)) == 1 and len(set(p['clanAbbrev'] for p in team_two)) == 1 \
-        and guess_clan(replay_json) != guess_enemy_clan(replay_json)
+           and guess_clan(replay_json) != guess_enemy_clan(replay_json)
 
 
 def guess_clan(replay_json):
@@ -152,7 +152,7 @@ def player_performance(json_second, vehicles, players):
     tank_info_by_player_name = {}
     for k, v in json_second[1].iteritems():
         if not v['vehicleType']:
-             # unrevealed enemy tank?
+            # unrevealed enemy tank?
             continue
         # extract the tank text_id of the player
         tank_id = v['vehicleType'].split(':')[1]
@@ -161,12 +161,12 @@ def player_performance(json_second, vehicles, players):
     perf = dict()
     for k, v in vehicles.iteritems():
         if isinstance(v, list):
-            v = v[0] # new replay version format ..
+            v = v[0]  # new replay version format ..
         if str(str(v['accountDBID'])) in players:
             player_name = players[str(v['accountDBID'])]['name']
         else:
             player_name = players[v['accountDBID']]['name']
-        if not player_name in tank_info_by_player_name:
+        if player_name not in tank_info_by_player_name:
             continue
         perf[str(v['accountDBID'])] = {
             'tank_info': tank_info_by_player_name[player_name],
@@ -179,7 +179,7 @@ def player_performance(json_second, vehicles, players):
             'capturePoints': v['capturePoints'],
             'droppedCapturePoints': v['droppedCapturePoints'],
             'spotted': v['spotted'],
-            'survived': v['deathReason'] == -1,     # no death reason = survived?
+            'survived': v['deathReason'] == -1,  # no death reason = survived?
             'damageAssistedRadio': v['damageAssistedRadio'],
         }
     return perf

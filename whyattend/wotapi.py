@@ -4,11 +4,11 @@
 
 import requests
 import datetime
+import logging
 
-from config import API_URL, API_TOKEN, WOT_SERVER_REGION_CODE, MAP_SUBDOMAIN, MAP_REGIONS
+from config import API_URL, API_TOKEN, API_REQUEST_TIMEOUT
 
-# timeout for requests to WG server in seconds
-API_REQUEST_TIMEOUT = 30
+logger = logging.getLogger(__name__)
 
 
 def get_player(id):
@@ -70,6 +70,7 @@ def get_scheduled_battles(clan_id):
         else:
             return None
     except Exception:
+        logger.exception("Exception trying to get clan provinces from WG API")
         return None
 
 
@@ -86,6 +87,7 @@ def get_provinces(clan_id):
         else:
             return None
     except Exception:
+        logger.exception("Exception trying to get clan provinces from WG API")
         return None
 
 

@@ -23,7 +23,7 @@ from flask import Flask, g, session, render_template, flash, redirect, request, 
 from flask import Response
 from flask_openid import OpenID
 from flask_cache import Cache
-from sqlalchemy import or_, and_, func, alias
+from sqlalchemy import or_, and_, alias
 from sqlalchemy.orm import joinedload, joinedload_all
 from werkzeug.utils import secure_filename, Headers
 from pytz import timezone
@@ -200,8 +200,6 @@ def require_role(f, roles):
     return decorated_f
 
 
-############## API request handlers
-
 @app.route('/sync-players/')
 @app.route('/sync-players/<int:clan_id>')
 def sync_players(clan_id=None):
@@ -285,8 +283,6 @@ def sync_players(clan_id=None):
 
     return redirect(url_for('index'))
 
-
-############## Public request handlers
 
 @app.route("/")
 def index():

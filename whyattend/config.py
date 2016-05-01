@@ -118,6 +118,9 @@ STATISTICS_VISIBLE = {
     'win_rate_by_commander': True,
 }
 
+# timeout for requests to WG server in seconds
+API_REQUEST_TIMEOUT = 30
+
 # Override settings with local config, if present.
 # In the local_config.py the following lines should be removed
 try:

@@ -256,7 +256,7 @@ class Replay(Base):
 
     associated_battle_id = Column(Integer, ForeignKey('battle.id', use_alter=True, name="add_replay_battle_id"))
     associated_battle = relationship("Battle", backref="additional_replays", foreign_keys=[associated_battle_id])
-    player_name = Column(String(100)) # Name of the player recording the replay
+    player_name = Column(String(100))  # Name of the player recording the replay
 
     def __init__(self, replay_blob, replay_pickle):
         self.replay_pickle = replay_pickle
