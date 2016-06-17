@@ -926,8 +926,7 @@ def battles_list_json(clan):
                           (Battle.enemy_clan == enemy_clan if enemy_clan else True))) \
         .select_from(Battle.__table__.outerjoin(players_query, players_query.c.battle_id == Battle.id)
                      .outerjoin(reserves_query, reserves_query.c.battle_id == Battle.id)
-                     .outerjoin(Player.__table__, Player.__table__.c.id == Battle.battle_commander_id)) \
-        .group_by('unq_battle_group_id')
+                     .outerjoin(Player.__table__, Player.__table__.c.id == Battle.battle_commander_id))
 
     for col, sort_dir in sort_columns:
         dir_op = desc if sort_dir == 'desc' else asc
