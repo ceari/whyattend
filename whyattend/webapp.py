@@ -793,7 +793,7 @@ def create_battle():
         if not errors:
             server_tz = timezone(config.SERVER_TIMEZONE)
             user_tz = timezone(usertimezone)
-            date = user_tz.localize(date).astimezone(server_tz)
+            date = user_tz.localize(date).astimezone(server_tz).replace(tzinfo=None)
             session['usertimezone'] = usertimezone # Remember selected timezone
 
             battle = Battle(date, g.player.clan, enemy_clan, victory=(battle_result == 'victory'),

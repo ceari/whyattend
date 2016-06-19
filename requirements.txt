@@ -3,7 +3,7 @@ Flask-Cache==0.12
 Flask-OpenID==1.1.1
 Jinja2==2.7.1
 MarkupSafe==0.18
-SQLAlchemy==0.8.2
+SQLAlchemy==1.0.13
 Werkzeug==0.9.3
 itsdangerous==0.23
 python-openid==2.2.5
